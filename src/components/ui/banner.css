@@ -1,0 +1,202 @@
+/* ==========================================================================
+   L'essence Hero Slideshow - Optimized Performance Liquid Glass
+   ========================================================================== */
+
+/* Typography & Base */
+.banner-title {
+  font-family: var(--font-heading), serif;
+  letter-spacing: -0.01em;
+  text-shadow: 0 2px 15px rgba(122, 92, 92, 0.05);
+}
+
+.banner-description {
+  font-family: var(--font-body), sans-serif;
+  font-weight: 300;
+  letter-spacing: 0.02em;
+  line-height: 1.8;
+}
+
+/* GPU-Optimized Ambient Light Blobs (No layout shifts, no CPU blends) */
+.ambient-glow {
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  border-radius: 40% 60% 60% 40% / 40% 40% 60% 60%; /* Static shape - no border-radius animation */
+  filter: blur(80px); /* Lower blur cost for GPU */
+  opacity: 0.22; /* Soft opacity instead of expensive multiply mix-blend-mode */
+  pointer-events: none;
+  z-index: 1;
+  will-change: transform;
+  transform: translate3d(0, 0, 0); /* Promote to dedicated compositor layer */
+  backface-visibility: hidden;
+  animation: morphBlob 25s infinite alternate ease-in-out;
+}
+
+.glow-1 {
+  background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+  top: -5%;
+  left: 15%;
+}
+
+.glow-2 {
+  background: radial-gradient(circle, #FBCFE8 0%, transparent 70%);
+  bottom: -10%;
+  right: 15%;
+  animation-delay: -6s;
+}
+
+/* Composite-only animation utilizing only transform3d and rotate */
+@keyframes morphBlob {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+  }
+  50% {
+    transform: translate3d(40px, -50px, 0) rotate(90deg) scale(1.06);
+  }
+  100% {
+    transform: translate3d(-20px, 20px, 0) rotate(180deg) scale(0.96);
+  }
+}
+
+/* Translucent Liquid Glass Container - Optimized Blurs */
+.banner-glass {
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(16px) saturate(140%); /* Lighter blur cost, visually identical */
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow: 
+    0 25px 55px rgba(122, 92, 92, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -1px 15px rgba(255, 255, 255, 0.1);
+  border-radius: 32px;
+  will-change: transform, background-color, border-color, box-shadow;
+  transform: translate3d(0, 0, 0); /* Promote to GPU */
+  backface-visibility: hidden;
+  /* Targeted transitions to avoid costly layout reflow calculations */
+  transition: 
+    transform 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 0.5s ease,
+    border-color 0.5s ease,
+    box-shadow 0.5s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+/* High Performance GPU Shimmer */
+.banner-glass::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    transparent 100
+  );
+  transform: translate3d(-150%, 0, 0) skewX(-25deg); /* Use transform3d instead of 'left' */
+  will-change: transform;
+  pointer-events: none;
+}
+
+.banner-glass:hover {
+  background: rgba(255, 255, 255, 0.52);
+  border-color: rgba(255, 255, 255, 0.75);
+  box-shadow: 
+    0 35px 75px rgba(122, 92, 92, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transform: translate3d(0, -6px, 0); /* Hardware accelerated translate */
+}
+
+.banner-glass:hover::before {
+  transform: translate3d(150%, 0, 0) skewX(-25deg);
+  transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Glass Indicators - Optimized transitions */
+.banner-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(122, 92, 92, 0.4);
+  background: transparent;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.4s, background-color 0.4s;
+  cursor: pointer;
+  will-change: transform;
+}
+
+.banner-indicator:hover {
+  transform: scale(1.25);
+  border-color: var(--primary);
+  background: rgba(212, 165, 165, 0.2);
+}
+
+.banner-indicator.active {
+  width: 32px;
+  height: 10px;
+  border-radius: 5px;
+  border: none;
+  background: var(--content);
+  box-shadow: 0 2px 8px rgba(122, 92, 92, 0.3);
+}
+
+/* Floating Animation - Compositor Optimized */
+@keyframes float {
+  0% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -10px, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+
+.banner-floating {
+  animation: float 8s ease-in-out infinite;
+}
+
+/* Premium Buttons - Compositor Optimized */
+.banner-cta {
+  position: relative;
+  overflow: hidden;
+  will-change: transform, box-shadow;
+  transform: translate3d(0, 0, 0);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s;
+  box-shadow: 0 8px 20px rgba(122, 92, 92, 0.05);
+}
+
+.banner-cta::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 300%;
+  height: 300%;
+  background: radial-gradient(circle, rgba(255,255,255,0.35) 0%, transparent 70%);
+  transform: translate3d(-50%, -50%, 0) scale(0);
+  will-change: transform;
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.banner-cta:hover {
+  transform: translate3d(0, -3px, 0) scale(1.02);
+  box-shadow: 0 12px 28px rgba(122, 92, 92, 0.12);
+}
+
+.banner-cta:hover::after {
+  transform: translate3d(-50%, -50%, 0) scale(1);
+}
+
+/* Responsive Overrides */
+@media (max-width: 768px) {
+  .ambient-glow {
+    width: 300px;
+    height: 300px;
+    filter: blur(60px);
+  }
+  .banner-glass {
+    border-radius: 24px;
+    backdrop-filter: blur(12px) saturate(130%);
+    -webkit-backdrop-filter: blur(12px) saturate(130%);
+  }
+}

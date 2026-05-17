@@ -1,0 +1,218 @@
+{
+  "Index": {
+    "title": "Welcome",
+    "description": "New interface is under construction"
+  },
+  "Auth": {
+    "backToHome": "Home",
+    "loginTitle": "Welcome Back",
+    "loginSubtitle": "Please login to continue your fragrance journey",
+    "emailLabel": "Email Address",
+    "passwordLabel": "Password",
+    "rememberMe": "Remember Me",
+    "forgotPassword": "Forgot password?",
+    "loginSubmit": "Login",
+    "noAccount": "Don't have an account?",
+    "registerNow": "Register Now",
+    "loginSuccess": "Login successful!",
+    "loginFailed": "Login failed. Please try again.",
+    "emailInvalid": "Invalid email address",
+    "passwordTooShort": "Password must be at least 6 characters",
+    "usernameLabel": "User Name",
+    "confirmPasswordLabel": "Confirm Password",
+    "registerTitle": "Start Your Journey",
+    "registerSubtitle": "Join our elite fragrance community and unlock exclusive member benefits today.",
+    "benefit1": "Exclusive early access to new collections",
+    "benefit2": "Global authentic brand warranty",
+    "benefit3": "Reward points on every purchase",
+    "registerSubmit": "Create Account Now",
+    "hasAccount": "Already have an account?",
+    "loginNow": "Login Now",
+    "registerSuccess": "Registration successful! Please login.",
+    "registerFailed": "Registration failed. Please try again.",
+    "usernameTooShort": "Username must be at least 3 characters",
+    "passwordsNotMatch": "Confirm password does not match",
+    "orLoginWith": "Or login with",
+    "orRegisterWith": "Or sign up with"
+  },
+  "NewProducts": {
+    "title": "NEW ARRIVALS",
+    "addToCart": "Add to Cart",
+    "viewAll": "Explore All Collections",
+    "inStock": "{count} in stock",
+    "outOfStock": "Out of stock"
+  },
+  "SaleProducts": {
+    "title": "SPECIAL OFFERS",
+    "addToCart": "Add to Cart",
+    "viewAll": "Explore Deals",
+    "inStock": "{count} in stock",
+    "outOfStock": "Out of stock"
+  },
+  "Home": {
+    "bannerAria": "Homepage banner",
+    "bannerAlt": "L'essence — perfume bottle and roses in an elegant setting",
+    "bannerTitle": "A fragrance that lingers",
+    "bannerSubtitle": "Discover our premium collection — refined, personal, unforgettable.",
+    "bannerCta": "Shop collection",
+    "prevSlide": "Previous slide",
+    "nextSlide": "Next slide",
+    "goToSlide": "Go to slide {n}",
+    "aboutUs": "About us",
+    "brandsTitle": "OUR CURATED COLLECTION OF LUXURY FRAGRANCE BRANDS"
+  },
+  "Upload": {
+    "title": "Upload image",
+    "subtitle": "Images are compressed on the server (Sharp) and stored via ImgBB.",
+    "dropHint": "Drag and drop an image here or click to browse",
+    "formats": "PNG, JPG, WebP — up to ~12 MB",
+    "maxWidth": "Max width (px)",
+    "quality": "WebP quality (40–100)",
+    "upload": "Upload",
+    "uploading": "Uploading…",
+    "result": "Image link",
+    "copy": "Copy URL",
+    "copied": "Copied",
+    "open": "Open image",
+    "clear": "Clear",
+    "error": "Something went wrong",
+    "invalidFile": "Please choose a valid image file.",
+    "bytesSaved": "Size: {original} → {compressed} (saved space)"
+  },
+  "Topbar": {
+    "announcement1": "Welcome to L'essence - A symphony of radiant roses",
+    "announcement2": "Free shipping for all orders over 500k",
+    "announcement3": "10% off for your first purchase - Code: FIRSTLOVE",
+    "email": "Email",
+    "phone": "Hotline",
+    "changeLanguage": "Language"
+  },
+  "Navbar": {
+    "home": "Home",
+    "shop": "Shop",
+    "collections": "Collections",
+    "blog": "Knowledge Blog",
+    "support": "Support",
+    "upload": "Upload",
+    "search": "Search",
+    "searchPlaceholder": "Search products...",
+    "cart": "Cart",
+    "account": "Account"
+  },
+  "Admin": {
+    "dashboard": {
+      "greeting": "Good {timeOfDay}, Admin!",
+      "timeOfDay": {
+        "morning": "morning",
+        "noon": "afternoon",
+        "afternoon": "afternoon",
+        "evening": "evening",
+        "night": "night"
+      },
+      "quickStats": {
+        "revenue": "Today's Revenue",
+        "newOrders": "Orders",
+        "visits": "Web Visits",
+        "stable": "System Stable"
+      },
+      "stats": {
+        "totalProducts": "Total Products",
+        "inventoryValue": "Inventory Value",
+        "lowStock": "Low Stock",
+        "views": "Views (24h)",
+        "increase": "+{n} this month",
+        "needRestock": "Need restock"
+      },
+      "recentProducts": {
+        "title": "Recent Products",
+        "viewAll": "View All",
+        "active": "Active",
+        "lowStock": "Low Stock"
+      },
+      "insight": {
+        "title": "Optimize Sales",
+        "text": "\"Midnight Rose\" is receiving the most views. Try creating a special discount code to drive purchases!",
+        "cta": "Create Promo"
+      }
+    },
+    "nav": {
+      "dashboard": "Dashboard",
+      "products": "Products",
+      "brands": "Brands",
+      "orders": "Orders",
+      "users": "Users",
+      "settings": "Settings",
+      "logout": "Logout",
+      "exit": "Exit",
+      "toggleCollapse": "Collapse menu",
+      "toggleExpand": "Expand menu"
+    },
+    "header": {
+      "searchPlaceholder": "Search features...",
+      "account": "Account",
+      "role": "Master Panel"
+    },
+    "title": "Collection Management",
+    "subtitle": "List of current premium fragrance collections.",
+    "addNew": "Add New Product",
+    "editProduct": "Edit Product",
+    "createProduct": "Create New Product",
+    "backToList": "Back to List",
+    "saveToCollection": "Save to Collection",
+    "savingError": "Storage system error!",
+    "sections": {
+      "media": "Image & Brand",
+      "mediaDesc": "Visuals and classification",
+      "info": "Product Information",
+      "infoDesc": "Name, description, price and stock",
+      "seo": "SEO",
+      "seoDesc": "Optimize search display"
+    },
+    "fields": {
+      "brand": "Brand",
+      "tag": "Tag / Category",
+      "tags": {
+        "standard": "Standard",
+        "new": "Newest (NEW)",
+        "bestseller": "Best Seller",
+        "limited": "Limited"
+      },
+      "name": "Product Name",
+      "namePlaceholder": "e.g., Midnight Rose Eau de Parfum",
+      "description": "Fragrance Description",
+      "descriptionPlaceholder": "Tell a story about the scent layers...",
+      "price": "Selling Price ({currency})",
+      "size": "Capacity",
+      "sizePlaceholder": "e.g., 100ml",
+      "stock": "In Stock",
+      "discount": "Discount (%)",
+      "metaTitle": "Google Title",
+      "keywords": "Keywords",
+      "keywordsPlaceholder": "Separated by commas",
+      "metaDescription": "Search Description",
+      "status": "Status",
+      "ready": "Ready to publish"
+    },
+    "table": {
+      "product": "Product",
+      "stock": "Stock",
+      "price": "Price / Sale",
+      "rating": "Rating",
+      "actions": "Actions"
+    },
+    "loading": "Loading archive...",
+    "loadingProduct": "Loading product...",
+    "empty": "No products in collection yet.",
+    "deleteConfirm": "Are you sure you want to remove this product from the collection?",
+    "errorTitle": "Data connection error",
+    "errorText": "Unable to load product list. Please check server connection.",
+    "upload": {
+      "label": "Product image (auto-compressed)",
+      "error": "Failed to upload image. Please try again.",
+      "preview": "Product preview",
+      "remove": "Remove image",
+      "prompt": "Upload Image",
+      "hint": "WebP, max 1200px"
+    }
+  }
+}

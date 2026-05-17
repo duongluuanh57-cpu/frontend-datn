@@ -1,0 +1,162 @@
+/* ==========================================================================
+   L'essence Login Page - Sizing & Padding Fixes - Liquid Glass CSS
+   ========================================================================== */
+
+/* Outer Auth Page Wrapper - Forced 1 Frame (No Scroll) */
+.auth-page-container {
+  height: 100vh !important;
+  width: 100vw !important;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden !important; /* Complete scroll blockage */
+  background: var(--background); /* Soft pink background */
+  font-family: var(--font-body), sans-serif;
+}
+
+/* GPU-Optimized Background Blobs */
+.auth-bg-blob {
+  position: absolute;
+  width: 450px;
+  height: 450px;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.2;
+  pointer-events: none;
+  z-index: 0;
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  animation: authBlobAnim 22s infinite alternate ease-in-out;
+}
+
+.auth-blob-1 {
+  background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+  top: -10%;
+  right: -10%;
+}
+
+.auth-blob-2 {
+  background: radial-gradient(circle, #FBCFE8 0%, transparent 70%);
+  bottom: -10%;
+  left: -10%;
+  animation-delay: -5s;
+}
+
+@keyframes authBlobAnim {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(40px, -50px, 0) scale(1.06) rotate(90deg);
+  }
+  100% {
+    transform: translate3d(-20px, 30px, 0) scale(0.96) rotate(180deg);
+  }
+}
+
+/* Translucent Glassmorphic Auth Card - Compact spacing to fit in 1 frame */
+.auth-glass-card {
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow: 
+    0 25px 60px rgba(122, 92, 92, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.65);
+  border-radius: 32px;
+  will-change: transform, box-shadow;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.5s ease;
+}
+
+.auth-glass-card:hover {
+  transform: translate3d(0, -4px, 0);
+  box-shadow: 
+    0 35px 75px rgba(122, 92, 92, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+/* Luxury Typography */
+.auth-title-luxury {
+  font-family: var(--font-heading), serif;
+  font-weight: 500;
+  color: #7A5C5C;
+  letter-spacing: 0.01em;
+  text-shadow: 0 2px 10px rgba(122, 92, 92, 0.02);
+}
+
+/* Sleek Minimalist Inputs - Fixed Padding & Height */
+.auth-input-luxury {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(122, 92, 92, 0.08);
+  border-radius: 16px;
+  color: #7A5C5C;
+  font-size: 14px;
+  padding-left: 54px !important; /* Perfect left spacing for absolutely positioned icons */
+  padding-right: 20px !important;
+  height: 50px !important; /* Guaranteed standardized input height */
+  transition: 
+    background-color 0.3s ease, 
+    border-color 0.3s ease, 
+    box-shadow 0.3s ease;
+  will-change: box-shadow, border-color, background-color;
+}
+
+.auth-input-luxury.password-field {
+  padding-right: 54px !important; /* Space for eye icon on right */
+}
+
+.auth-input-luxury::placeholder {
+  color: rgba(122, 92, 92, 0.35);
+}
+
+.auth-input-luxury:focus {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: #D4A5A5;
+  box-shadow: 0 0 0 4px rgba(212, 165, 165, 0.15);
+}
+
+/* Premium Buttons - Fixed height & flex centering */
+.auth-submit-btn {
+  background: #7A5C5C;
+  color: white;
+  border-radius: 16px;
+  height: 50px !important; /* Guaranteed standard button block */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  will-change: transform, box-shadow;
+  transform: translate3d(0, 0, 0);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.4s ease, box-shadow 0.4s ease;
+  box-shadow: 0 8px 20px rgba(122, 92, 92, 0.12);
+}
+
+.auth-submit-btn:hover {
+  background: #D4A5A5;
+  transform: translate3d(0, -2px, 0);
+  box-shadow: 0 12px 26px rgba(212, 165, 165, 0.2);
+}
+
+/* Google Action Button - Fixed height & flex centering */
+.google-auth-btn {
+  background: rgba(255, 255, 255, 0.45);
+  border: 1px solid rgba(122, 92, 92, 0.1);
+  border-radius: 16px;
+  height: 50px !important; /* Match submit button height */
+  color: #7A5C5C;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, background-color, box-shadow;
+  transform: translate3d(0, 0, 0);
+}
+
+.google-auth-btn:hover {
+  background: rgba(255, 255, 255, 0.9);
+  transform: translate3d(0, -2px, 0);
+  box-shadow: 0 8px 18px rgba(122, 92, 92, 0.06);
+}

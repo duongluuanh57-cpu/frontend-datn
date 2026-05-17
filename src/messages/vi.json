@@ -1,0 +1,218 @@
+{
+  "Index": {
+    "title": "Chào mừng",
+    "description": "Giao diện mới đang được xây dựng"
+  },
+  "Auth": {
+    "backToHome": "Trang chủ",
+    "loginTitle": "Chào mừng trở lại",
+    "loginSubtitle": "Vui lòng đăng nhập để tiếp tục hành trình hương thơm của bạn",
+    "emailLabel": "Email",
+    "passwordLabel": "Mật khẩu",
+    "rememberMe": "Ghi nhớ tôi",
+    "forgotPassword": "Quên mật khẩu?",
+    "loginSubmit": "Đăng nhập",
+    "noAccount": "Chưa có tài khoản?",
+    "registerNow": "Đăng ký ngay",
+    "loginSuccess": "Đăng nhập thành công!",
+    "loginFailed": "Đăng nhập thất bại. Vui lòng thử lại.",
+    "emailInvalid": "Email không hợp lệ",
+    "passwordTooShort": "Mật khẩu phải ít nhất 6 ký tự",
+    "usernameLabel": "Tên người dùng",
+    "confirmPasswordLabel": "Xác nhận mật khẩu",
+    "registerTitle": "Bắt đầu hành trình",
+    "registerSubtitle": "Trở thành một phần của cộng đồng yêu hương thơm cao cấp và nhận ngay những đặc quyền riêng biệt.",
+    "benefit1": "Ưu đãi đặc biệt cho bộ sưu tập mới",
+    "benefit2": "Bảo hành chính hãng toàn cầu",
+    "benefit3": "Tích lũy điểm thưởng mỗi đơn hàng",
+    "registerSubmit": "Tạo tài khoản ngay",
+    "hasAccount": "Đã có tài khoản?",
+    "loginNow": "Đăng nhập ngay",
+    "registerSuccess": "Đăng ký thành công! Vui lòng đăng nhập.",
+    "registerFailed": "Đăng ký thất bại. Vui lòng thử lại.",
+    "usernameTooShort": "Tên người dùng phải ít nhất 3 ký tự",
+    "passwordsNotMatch": "Mật khẩu xác nhận không khớp",
+    "orLoginWith": "Hoặc đăng nhập bằng",
+    "orRegisterWith": "Hoặc đăng ký bằng"
+  },
+  "NewProducts": {
+    "title": "SẢN PHẨM MỚI",
+    "addToCart": "Thêm vào giỏ",
+    "viewAll": "Xem tất cả bộ sưu tập",
+    "inStock": "Còn {count}",
+    "outOfStock": "Hết hàng"
+  },
+  "SaleProducts": {
+    "title": "ƯU ĐÃI ĐẶC BIỆT",
+    "addToCart": "Thêm vào giỏ",
+    "viewAll": "Khám phá ưu đãi",
+    "inStock": "Còn {count}",
+    "outOfStock": "Hết hàng"
+  },
+  "Home": {
+    "bannerAria": "Banner trang chủ",
+    "bannerAlt": "L'essence — chai nước hoa và hoa hồng, không gian sang trọng",
+    "bannerTitle": "Hương thơm khơi gợi ký ức",
+    "bannerSubtitle": "Khám phá bộ sưu tập cao cấp — tinh tế như chính bạn.",
+    "bannerCta": "Vào cửa hàng",
+    "prevSlide": "Slide trước",
+    "nextSlide": "Slide sau",
+    "goToSlide": "Đến slide {n}",
+    "aboutUs": "Về chúng tôi",
+    "brandsTitle": "BỘ SƯU TẬP NHỮNG THƯƠNG HIỆU NƯỚC HOA THƯỢNG LƯU"
+  },
+  "Upload": {
+    "title": "Tải ảnh lên",
+    "subtitle": "Ảnh được nén trên server (Sharp) và lưu qua ImgBB.",
+    "dropHint": "Kéo thả ảnh vào đây hoặc bấm để chọn",
+    "formats": "JPG, PNG, WebP, HEIC... — Tối đa 12 MB (Tự động nén)",
+    "maxWidth": "Chiều rộng tối đa (px)",
+    "quality": "Chất lượng WebP (40–100)",
+    "upload": "Tải lên",
+    "uploading": "Đang tải…",
+    "result": "Liên kết ảnh",
+    "copy": "Sao chép URL",
+    "copied": "Đã sao chép",
+    "open": "Mở ảnh",
+    "clear": "Xóa",
+    "error": "Có lỗi xảy ra",
+    "invalidFile": "Vui lòng chọn file ảnh hợp lệ.",
+    "bytesSaved": "Dung lượng: {original} → {compressed} (sau nén)"
+  },
+  "Topbar": {
+    "announcement1": "Chào đón \"L'essence\" – Bản giao hưởng của những đóa hồng rạng rỡ",
+    "announcement2": "Miễn phí vận chuyển cho mọi đơn hàng lãng mạn từ 500k",
+    "announcement3": "Ưu đãi 10% cho lần đầu chạm ngõ L'essence – Mã: FIRSTLOVE",
+    "email": "Email liên hệ",
+    "phone": "Hotline",
+    "changeLanguage": "Ngôn ngữ"
+  },
+  "Navbar": {
+    "home": "Trang chủ",
+    "shop": "Cửa hàng",
+    "collections": "Bộ sưu tập",
+    "blog": "Góc chia sẻ kiến thức",
+    "support": "Hỗ trợ",
+    "upload": "Tải ảnh",
+    "search": "Tìm kiếm",
+    "searchPlaceholder": "Tìm kiếm sản phẩm...",
+    "cart": "Giỏ hàng",
+    "account": "Tài khoản"
+  },
+  "Admin": {
+    "dashboard": {
+      "greeting": "Chào buổi {timeOfDay}, Admin!",
+      "timeOfDay": {
+        "morning": "sáng",
+        "noon": "trưa",
+        "afternoon": "chiều",
+        "evening": "tối",
+        "night": "đêm"
+      },
+      "quickStats": {
+        "revenue": "Doanh thu",
+        "newOrders": "Đơn mới",
+        "visits": "Truy cập",
+        "stable": "Hệ thống ổn định"
+      },
+      "stats": {
+        "totalProducts": "Tổng sản phẩm",
+        "inventoryValue": "Giá trị kho hàng",
+        "lowStock": "Sắp hết hàng",
+        "views": "Lượt xem (24h)",
+        "increase": "+{n} tháng này",
+        "needRestock": "Cần nhập thêm"
+      },
+      "recentProducts": {
+        "title": "Sản phẩm mới nhất",
+        "viewAll": "Xem tất cả",
+        "active": "Đang kinh doanh",
+        "lowStock": "Sắp hết hàng"
+      },
+      "insight": {
+        "title": "Tối ưu hóa doanh số",
+        "text": "Sản phẩm \"Midnight Rose\" đang nhận được nhiều lượt xem nhất. Bạn hãy thử tạo mã giảm giá đặc biệt để thúc đẩy mua hàng nhé!",
+        "cta": "Tạo khuyến mãi"
+      }
+    },
+    "nav": {
+      "dashboard": "Dashboard",
+      "products": "Sản phẩm",
+      "brands": "Thương hiệu",
+      "orders": "Đơn hàng",
+      "users": "Người dùng",
+      "settings": "Cài đặt",
+      "logout": "Đăng xuất",
+      "exit": "Thoát",
+      "toggleCollapse": "Thu gọn menu",
+      "toggleExpand": "Mở rộng menu"
+    },
+    "header": {
+      "searchPlaceholder": "Tìm kiếm tính năng...",
+      "account": "Tài khoản",
+      "role": "Master Panel"
+    },
+    "title": "Quản lý bộ sưu tập",
+    "subtitle": "Danh sách các dòng nước hoa thượng lưu hiện có.",
+    "addNew": "Thêm sản phẩm mới",
+    "editProduct": "Chỉnh sửa sản phẩm",
+    "createProduct": "Tạo sản phẩm mới",
+    "backToList": "Danh sách",
+    "saveToCollection": "Lưu vào bộ sưu tập",
+    "savingError": "Lỗi hệ thống lưu trữ!",
+    "sections": {
+      "media": "Ảnh & thương hiệu",
+      "mediaDesc": "Hình ảnh và phân loại",
+      "info": "Thông tin sản phẩm",
+      "infoDesc": "Tên, mô tả, giá và kho",
+      "seo": "SEO",
+      "seoDesc": "Tối ưu hiển thị tìm kiếm"
+    },
+    "fields": {
+      "brand": "Thương hiệu",
+      "tag": "Phân loại (tag)",
+      "tags": {
+        "standard": "Tiêu chuẩn",
+        "new": "Mới nhất (NEW)",
+        "bestseller": "Bán chạy",
+        "limited": "Giới hạn"
+      },
+      "name": "Tên sản phẩm",
+      "namePlaceholder": "VD: Midnight Rose Eau de Parfum",
+      "description": "Mô tả hương thơm",
+      "descriptionPlaceholder": "Kể một câu chuyện về những tầng hương...",
+      "price": "Giá bán ({currency})",
+      "size": "Dung tích",
+      "sizePlaceholder": "VD: 100ml",
+      "stock": "Tồn kho",
+      "discount": "Chiết khấu (%)",
+      "metaTitle": "Tiêu đề Google",
+      "keywords": "Từ khóa",
+      "keywordsPlaceholder": "Ngăn cách bằng dấu phẩy",
+      "metaDescription": "Mô tả tìm kiếm",
+      "status": "Trạng thái",
+      "ready": "Sẵn sàng xuất bản"
+    },
+    "table": {
+      "product": "Sản phẩm",
+      "stock": "Kho",
+      "price": "Giá / Giảm giá",
+      "rating": "Đánh giá",
+      "actions": "Thao tác"
+    },
+    "loading": "Đang tải kho lưu trữ...",
+    "loadingProduct": "Đang tải sản phẩm...",
+    "empty": "Chưa có sản phẩm nào trong bộ sưu tập.",
+    "deleteConfirm": "Bạn có chắc chắn muốn xóa sản phẩm này khỏi bộ sưu tập?",
+    "errorTitle": "Lỗi kết nối dữ liệu",
+    "errorText": "Không thể tải danh sách sản phẩm. Vui lòng kiểm tra kết nối server.",
+    "upload": {
+      "label": "Hình ảnh sản phẩm (tự động nén)",
+      "error": "Không thể tải ảnh lên. Vui lòng thử lại.",
+      "preview": "Xem trước sản phẩm",
+      "remove": "Xóa ảnh",
+      "prompt": "Tải ảnh lên",
+      "hint": "Hỗ trợ JPG, PNG, HEIC... (Tự động nén)"
+    }
+  }
+}
