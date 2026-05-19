@@ -246,13 +246,17 @@ export default function AdminHomepageConfig() {
     value: string
   ) => {
     if (lang === 'vi') {
-      const next = [...galleryVi];
-      next[index] = { ...next[index], [field]: value };
-      setGalleryVi(next);
+      setGalleryVi(prev => {
+        const next = [...prev];
+        next[index] = { ...next[index], [field]: value };
+        return next;
+      });
     } else {
-      const next = [...galleryEn];
-      next[index] = { ...next[index], [field]: value };
-      setGalleryEn(next);
+      setGalleryEn(prev => {
+        const next = [...prev];
+        next[index] = { ...next[index], [field]: value };
+        return next;
+      });
     }
   };
 
@@ -273,13 +277,27 @@ export default function AdminHomepageConfig() {
       if (response.data && response.data.success && response.data.data) {
         const { titleVi, quoteVi, titleEn, quoteEn } = response.data.data;
         
-        // Populate Vietnamese fields
-        if (titleVi) handleGalleryFieldChange('vi', idx, 'title', titleVi);
-        if (quoteVi) handleGalleryFieldChange('vi', idx, 'quote', quoteVi);
-        
-        // Populate English fields
-        if (titleEn) handleGalleryFieldChange('en', idx, 'title', titleEn);
-        if (quoteEn) handleGalleryFieldChange('en', idx, 'quote', quoteEn);
+        // Populate Vietnamese fields atomically
+        setGalleryVi(prev => {
+          const next = [...prev];
+          next[idx] = {
+            ...next[idx],
+            title: titleVi || next[idx].title,
+            quote: quoteVi || next[idx].quote
+          };
+          return next;
+        });
+
+        // Populate English fields atomically
+        setGalleryEn(prev => {
+          const next = [...prev];
+          next[idx] = {
+            ...next[idx],
+            title: titleEn || next[idx].title,
+            quote: quoteEn || next[idx].quote
+          };
+          return next;
+        });
 
         toast.success('AI đã phân tích ảnh và hoàn thành nội dung song ngữ thành công!', {
           id: loadingToast,
