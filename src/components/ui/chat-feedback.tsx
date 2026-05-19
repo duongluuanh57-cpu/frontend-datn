@@ -1,91 +1,140 @@
 'use client';
 
 import { useState } from 'react';
+import { Star } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Star, Check } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 interface ChatFeedbackProps {
   messageId: string;
-  imagePath?: string;
   initialRating?: number;
-  onRatingSubmit?: (rating: number) => void;
+  onRatingSubmit: (rating: number) => void;
+  imagePath?: string;
 }
 
-export function ChatFeedback({ messageId, imagePath, initialRating, onRatingSubmit }: ChatFeedbackProps) {
-  const [rating, setRating] = useState(initialRating || 0);
-  const [hover, setHover] = useState(0);
-  const [submitted, setSubmitted] = useState(!!initialRating);
+const RATING_LABELS: Record<number, { label: string; emoji: string; color: string }> = {
+  5: { label: 'Tuyệt vời!',       emoji: '🌟', color: '#D4A5A5' },
+  4: { label: 'Cần cải thiện',    emoji: '🙂', color: '#C4A882' },
+  3: { label: 'Tạm được',         emoji: '😐', color: '#A0A0B0' },
+  2: { label: 'Tệ',               emoji: '😕', color: '#B07070' },
+  1: { label: 'Rất tệ',           emoji: '😞', color: '#9B4040' },
+};
 
-  const handleSubmit = async (selectedRating: number) => {
-    setRating(selectedRating);
-    setSubmitted(true);
-    
-    // Logic gửi feedback
-    console.log(`[Feedback] Message ${messageId}: ${selectedRating} stars`);
-    
-    if (onRatingSubmit) onRatingSubmit(selectedRating);
+export function ChatFeedback({ messageId, initialRating, onRatingSubmit, imagePath }: ChatFeedbackProps) {
+  const [hovered, setHovered]   = useState<number | null>(null);
+  const [submitted, setSubmitted] = useState<number | null>(initialRating ?? null);
+  const [aiReply, setAiReply]   = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-    // Nếu đánh giá thấp (<= 2 sao) và có ảnh, yêu cầu backend xóa cache
-    if (selectedRating <= 2 && imagePath) {
-      try {
-        const baseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api').replace(/\/$/, '');
-        console.log(`[Cache] Requesting cache clear for: ${imagePath}`);
-        
-        await fetch(`${baseUrl}/ai/cache/clear`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ imagePath })
-        });
-      } catch (err) {
-        console.error('Failed to clear redis cache', err);
+  // Called when user clicks a star
+  const handleRate = async (rating: number) => {
+    if (submitted !== null) return; // already rated
+
+    setSubmitted(rating);
+    onRatingSubmit(rating);
+    setIsLoading(true);
+
+    try {
+      const baseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api').replace(/\/$/, '');
+      const res = await fetch(`${baseUrl}/ai/feedback`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'text/plain' },
+        body: JSON.stringify({ messageId, rating }),
+      });
+
+      if (!res.ok) throw new Error('Failed to fetch AI feedback response');
+
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error('No reader');
+
+      const decoder = new TextDecoder();
+      let full = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        full += decoder.decode(value, { stream: true });
+        setAiReply(full); // stream into UI live
       }
+    } catch {
+      // Fallback: just show the label without streaming
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  const activeRating = submitted ?? hovered;
+
   return (
-    <div className="mt-2 px-1">
-      <AnimatePresence mode="wait">
-        {!submitted ? (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="flex items-center gap-3"
+    <div className="chat-feedback-wrapper">
+      {/* Star Row */}
+      <div
+        className="chat-feedback-stars"
+        onMouseLeave={() => !submitted && setHovered(null)}
+      >
+        {[1, 2, 3, 4, 5].map((star) => (
+          <motion.button
+            key={star}
+            type="button"
+            disabled={submitted !== null}
+            className="chat-feedback-star-btn"
+            onMouseEnter={() => !submitted && setHovered(star)}
+            onClick={() => handleRate(star)}
+            whileHover={submitted === null ? { scale: 1.25, y: -2 } : {}}
+            whileTap={submitted === null ? { scale: 0.9 }  : {}}
+            aria-label={`Rate ${star} star${star > 1 ? 's' : ''}`}
           >
-            <span className="text-[10px] text-[#7A5C5C]/60 font-medium uppercase tracking-wider">
-              AI chọn đúng không?
-            </span>
-            <div className="flex gap-1">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  onMouseEnter={() => setHover(star)}
-                  onMouseLeave={() => setHover(0)}
-                  onClick={() => handleSubmit(star)}
-                  className="transition-transform active:scale-90"
-                >
-                  <Star 
-                    size={14} 
-                    className={cn(
-                      "transition-colors",
-                      (hover || rating) >= star 
-                        ? 'fill-[#D4A5A5] text-[#D4A5A5]' 
-                        : 'text-[#7A5C5C]/20'
-                    )} 
-                  />
-                </button>
-              ))}
-            </div>
-          </motion.div>
-        ) : (
-          <motion.div 
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="flex items-center gap-2 text-[10px] text-[#D4A5A5] font-bold"
+            <Star
+              size={14}
+              className="chat-feedback-star-icon"
+              style={{
+                fill:
+                  activeRating !== null && star <= activeRating
+                    ? (RATING_LABELS[activeRating]?.color ?? '#D4A5A5')
+                    : 'transparent',
+                stroke:
+                  activeRating !== null && star <= activeRating
+                    ? (RATING_LABELS[activeRating]?.color ?? '#D4A5A5')
+                    : 'rgba(122,92,92,0.3)',
+                transition: 'fill 0.15s, stroke 0.15s',
+              }}
+            />
+          </motion.button>
+        ))}
+
+        {/* Label shown on hover / after submission */}
+        <AnimatePresence mode="wait">
+          {activeRating !== null && (
+            <motion.span
+              key={activeRating}
+              initial={{ opacity: 0, x: -4 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 4 }}
+              className="chat-feedback-label"
+              style={{ color: RATING_LABELS[activeRating]?.color }}
+            >
+              {RATING_LABELS[activeRating]?.emoji} {RATING_LABELS[activeRating]?.label}
+            </motion.span>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* AI adaptive reply (streamed) */}
+      <AnimatePresence>
+        {submitted !== null && (isLoading || aiReply) && (
+          <motion.div
+            initial={{ opacity: 0, height: 0, y: -4 }}
+            animate={{ opacity: 1, height: 'auto', y: 0 }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+            className="chat-feedback-ai-reply"
+            style={{ borderColor: RATING_LABELS[submitted]?.color + '40' }}
           >
-            <Check size={12} />
-            CẢM ƠN BẠN ĐÃ PHẢN HỒI!
+            {isLoading && !aiReply ? (
+              <span className="chat-feedback-typing">
+                <span /><span /><span />
+              </span>
+            ) : (
+              <span className="chat-feedback-ai-text">{aiReply}</span>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

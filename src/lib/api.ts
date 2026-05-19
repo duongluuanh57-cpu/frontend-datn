@@ -56,6 +56,106 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Silent Token Refresh handling to prevent random 401 logouts
+let isRefreshing = false;
+let failedQueue: any[] = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Check if error is 401 Unauthorized and not retried yet
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      if (
+        originalRequest.url?.includes('/auth/login') ||
+        originalRequest.url?.includes('/auth/refresh')
+      ) {
+        return Promise.reject(error);
+      }
+
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return api(originalRequest);
+          })
+          .catch((err) => Promise.reject(err));
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        // Dynamically import to avoid any instantiation ordering issues
+        const { useAuthStore } = await import('@/store/useAuthStore');
+        const { refreshToken, setAuth, logout, user } = useAuthStore.getState();
+
+        if (!refreshToken) {
+          logout();
+          if (typeof window !== 'undefined') {
+            window.location.href = '/login';
+          }
+          return Promise.reject(error);
+        }
+
+        // Call server to refresh the tokens
+        const res = await axios.post(`${apiBase.replace(/\/+$/, '')}/auth/refresh`, {
+          refreshToken,
+        });
+
+        if (res.data && res.data.success) {
+          const { accessToken: newAccessToken, refreshToken: newRefreshToken } = res.data.data;
+          
+          // Update the global Zustand auth store
+          if (user) {
+            setAuth(user, newAccessToken, newRefreshToken);
+          }
+          
+          processQueue(null, newAccessToken);
+          
+          // Retry original request with the new access token
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+          return api(originalRequest);
+        } else {
+          useAuthStore.getState().logout();
+          if (typeof window !== 'undefined') {
+            window.location.href = '/login';
+          }
+          processQueue(new Error('Refresh failed'), null);
+          return Promise.reject(error);
+        }
+      } catch (refreshErr) {
+        // Dynamically get the state and logout
+        const { useAuthStore } = await import('@/store/useAuthStore');
+        useAuthStore.getState().logout();
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login';
+        }
+        processQueue(refreshErr, null);
+        return Promise.reject(refreshErr);
+      } finally {
+        isRefreshing = false;
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
+
 export type ImgBBUploadResponseData = {
   url: string;
   displayUrl: string;

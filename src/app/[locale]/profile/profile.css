@@ -1,0 +1,457 @@
+/* L'essence Admin Dashboard Style Profile Page Stylesheet */
+
+.profile-page-shell {
+  min-height: 100vh;
+  background-color: var(--background);
+  position: relative;
+  overflow: hidden;
+  padding: 5rem 2rem 3rem;
+  font-family: var(--font-body), sans-serif;
+  color: var(--content);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Background blur bubbles */
+.profile-bubble-1 {
+  position: absolute;
+  top: -10%;
+  left: -10%;
+  width: 50vw;
+  height: 50vw;
+  background: var(--accent);
+  filter: blur(140px);
+  opacity: 0.15;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+}
+
+.profile-bubble-2 {
+  position: absolute;
+  bottom: -10%;
+  right: -5%;
+  width: 45vw;
+  height: 45vw;
+  background: #e7b8b8;
+  filter: blur(120px);
+  opacity: 0.22;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+}
+
+.profile-container {
+  width: 100%;
+  max-width: 1140px;
+  position: relative;
+  z-index: 10;
+}
+
+/* Main Dashboard Card Layout */
+.profile-dashboard-layout {
+  display: flex;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow: 
+    0 30px 70px -15px rgba(122, 92, 92, 0.08), 
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  min-height: 640px;
+  overflow: hidden;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+}
+
+/* Sidebar Styling */
+.profile-dashboard-sidebar {
+  width: 280px;
+  border-right: 1px solid rgba(122, 92, 92, 0.08);
+  background: rgba(255, 255, 255, 0.25);
+  padding: 2.5rem 1.8rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+/* Sidebar User Info Block */
+.profile-sidebar-user {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.profile-sidebar-avatar {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: white;
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 10px 24px rgba(192, 132, 151, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+  transition: all 0.3s ease;
+}
+
+.profile-sidebar-avatar:hover {
+  transform: scale(1.05);
+}
+
+.profile-sidebar-user h2 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--content);
+  margin: 0 0 4px 0;
+  letter-spacing: -0.01em;
+}
+
+.profile-sidebar-user p {
+  font-size: 0.8rem;
+  color: rgba(122, 92, 92, 0.6);
+  margin: 0;
+  max-width: 220px;
+  word-break: break-all;
+}
+
+/* Custom Role Badge inside Sidebar */
+.profile-sidebar-role {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-top: 10px;
+  letter-spacing: 0.05em;
+}
+
+.profile-sidebar-role.admin {
+  background: var(--primary);
+  color: white;
+}
+
+.profile-sidebar-role.user {
+  background: rgba(122, 92, 92, 0.06);
+  color: var(--content);
+  border: 1px solid rgba(122, 92, 92, 0.1);
+}
+
+/* Sidebar Menu Items */
+.profile-dashboard-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-grow: 1;
+}
+
+.profile-dashboard-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  border-radius: 14px;
+  color: rgba(122, 92, 92, 0.7);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.25s ease;
+}
+
+.profile-dashboard-menu-item:hover {
+  background: rgba(255, 255, 255, 0.5);
+  color: var(--content);
+}
+
+.profile-dashboard-menu-item.active {
+  background: var(--primary);
+  color: white;
+  box-shadow: 0 8px 20px -6px rgba(212, 165, 165, 0.4);
+}
+
+/* Main Content Workspace */
+.profile-dashboard-content {
+  flex-grow: 1;
+  padding: 3rem;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch; /* Momentum scroll on iOS/Safari */
+  will-change: scroll-position;       /* Hint to browser to create a composite layer for scrolling */
+  transform: translate3d(0, 0, 0);   /* GPU Acceleration trigger */
+}
+
+/* Dashboard Section Header */
+.profile-section-header {
+  border-bottom: 1px solid rgba(122, 92, 92, 0.08);
+  padding-bottom: 1.5rem;
+  margin-bottom: 2.2rem;
+}
+
+.profile-section-header h1 {
+  font-family: var(--font-heading), serif;
+  font-size: 2.2rem;
+  font-weight: 400;
+  color: var(--content);
+  margin: 0;
+  line-height: 1.1;
+}
+
+.profile-section-header p {
+  font-size: 0.9rem;
+  color: rgba(122, 92, 92, 0.6);
+  margin: 6px 0 0 0;
+}
+
+/* Detailed Information Grid */
+.profile-grid-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.profile-details-card {
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 20px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 20px -10px rgba(122, 92, 92, 0.02);
+  transition: all 0.3s ease;
+}
+
+.profile-details-card:hover {
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 10px 25px -10px rgba(122, 92, 92, 0.05);
+}
+
+.profile-card-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: rgba(122, 92, 92, 0.5);
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+
+.profile-card-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--content);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.profile-card-value.code {
+  font-family: monospace;
+  font-size: 0.85rem;
+  background: rgba(122, 92, 92, 0.06);
+  padding: 4px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+}
+
+/* Password Form Fields */
+.profile-form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 460px;
+}
+
+.profile-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.profile-field-group label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--content);
+}
+
+.profile-form-input {
+  width: 100%;
+  padding: 12px 16px;
+  background: white !important;
+  border: 1px solid rgba(122, 92, 92, 0.18) !important;
+  border-radius: 12px !important;
+  font-size: 0.9rem !important;
+  color: var(--content) !important;
+  transition: all 0.25s;
+}
+
+.profile-form-input:focus {
+  outline: none !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px rgba(212, 165, 165, 0.18) !important;
+}
+
+.btn-profile-submit {
+  padding: 12px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.25s;
+  margin-top: 10px;
+}
+
+.btn-profile-submit:hover:not(:disabled) {
+  background: #c39494;
+}
+
+.btn-profile-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Purchase History list styling */
+.profile-order-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.profile-order-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 16px;
+  transition: all 0.25s ease;
+}
+
+.profile-order-item:hover {
+  background: rgba(255, 255, 255, 0.75);
+}
+
+.profile-order-info h4 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--content);
+  margin: 0 0 4px 0;
+}
+
+.profile-order-info p {
+  font-size: 0.8rem;
+  color: rgba(122, 92, 92, 0.55);
+  margin: 0;
+}
+
+.profile-order-status {
+  padding: 4px 10px;
+  border-radius: 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.profile-order-status.delivered {
+  background: rgba(46, 204, 113, 0.1);
+  color: #27ae60;
+}
+
+.profile-order-status.pending {
+  background: rgba(241, 196, 15, 0.1);
+  color: #f1c40f;
+}
+
+/* Settings Options */
+.profile-setting-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 16px;
+}
+
+.profile-setting-toggle-info h4 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--content);
+  margin: 0 0 2px 0;
+}
+
+.profile-setting-toggle-info p {
+  font-size: 0.8rem;
+  color: rgba(122, 92, 92, 0.5);
+  margin: 0;
+}
+
+.profile-badge-status {
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: rgba(46, 204, 113, 0.12);
+  color: #27ae60;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+/* Alerts */
+.profile-alert {
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.profile-alert.success {
+  background: rgba(46, 204, 113, 0.1);
+  color: #27ae60;
+  border: 1px solid rgba(46, 204, 113, 0.2);
+}
+
+.profile-alert.danger {
+  background: rgba(231, 76, 60, 0.1);
+  color: #e74c3c;
+  border: 1px solid rgba(231, 76, 60, 0.2);
+}
+
+@media (max-width: 860px) {
+  .profile-dashboard-layout {
+    flex-direction: column;
+    min-height: auto;
+  }
+  .profile-dashboard-sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid rgba(122, 92, 92, 0.08);
+    padding: 2rem;
+  }
+  .profile-dashboard-menu {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .profile-dashboard-content {
+    padding: 2rem;
+  }
+}

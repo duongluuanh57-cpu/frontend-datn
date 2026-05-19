@@ -1,0 +1,11 @@
+# Target modern browsers to eliminate unnecessary legacy JS transforms and polyfills
+# This dramatically improves web performance and solves PageSpeed Insights "Legacy JavaScript" warnings.
+
+last 2 Chrome versions
+last 2 Firefox versions
+last 2 Safari versions
+last 2 Edge versions
+> 1%
+not dead
+not IE 11
+not op_mini all

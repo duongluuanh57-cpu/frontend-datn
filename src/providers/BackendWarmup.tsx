@@ -24,12 +24,14 @@ export function BackendWarmup() {
   const [showPreloader, setShowPreloader] = useState(false);
   const [percentage, setPercentage] = useState(0);
   const [statusText, setStatusText] = useState('');
-  const [backendReady, setBackendReady] = useState(false);
   const [isFadingOut, setIsFadingOut] = useState(false);
   const [errorGrace, setErrorGrace] = useState(false);
 
   const percentageRef = useRef(0);
   const isPreloaderFadingOutRef = useRef(false);
+  // Use a ref for backendReady so the animation loop always reads the latest
+  // value without needing to restart (avoids spawning duplicate RAF loops).
+  const backendReadyRef = useRef(false);
 
   // Status updates based on percentage & language
   useEffect(() => {
@@ -97,7 +99,7 @@ export function BackendWarmup() {
     const pollBackend = async () => {
       const ok = await pingBackend();
       if (ok) {
-        setBackendReady(true);
+        backendReadyRef.current = true;
         clearInterval(pollInterval);
       }
     };
@@ -133,11 +135,12 @@ export function BackendWarmup() {
 
       let increment = 0;
 
-      if (backendReady) {
-        // Backend is awake, accelerate quickly to 100%
-        increment = 3;
+      if (backendReadyRef.current) {
+        // Backend is awake — accelerate to 100% but cap at a sane speed
+        // so the user can see the transition instead of skipping instantly.
+        increment = 1.2;
       } else {
-        // Simulated progress
+        // Simulated progress — slow crawl while waiting for backend
         if (currentVal < 30) {
           increment = 0.8;
         } else if (currentVal < 60) {
@@ -164,10 +167,13 @@ export function BackendWarmup() {
       clearTimeout(fallbackTimeout);
       cancelAnimationFrame(animationFrameId);
     };
-  }, [showPreloader, backendReady, mounted]);
+  // NOTE: backendReadyRef is intentionally NOT in the dep array —
+  // we read its .current inside the loop without needing to restart the effect.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showPreloader, mounted]);
 
   const handleSkip = () => {
-    setBackendReady(true);
+    backendReadyRef.current = true;
     // Artificially boost loading to 100% to let user explore immediately
     percentageRef.current = 100;
     setPercentage(100);
