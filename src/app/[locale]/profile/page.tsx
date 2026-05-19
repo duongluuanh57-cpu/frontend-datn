@@ -115,6 +115,45 @@ export default function ProfilePage() {
     }
   }, [mounted, isAuthenticated]);
 
+  const fetchDistricts = (provinceCode: number) => {
+    setLoadingDistricts(true);
+    fetch(`https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`)
+      .then((res) => res.json())
+      .then((data) => {
+        setDistricts(data.districts || []);
+        setLoadingDistricts(false);
+      })
+      .catch((err) => {
+        console.error('Failed to fetch districts:', err);
+        setLoadingDistricts(false);
+      });
+  };
+
+  // Fetch provinces and districts from open-api.vn
+  React.useEffect(() => {
+    if (isEditingDetails && provinces.length === 0) {
+      setLoadingProvinces(true);
+      fetch('https://provinces.open-api.vn/api/')
+        .then((res) => res.json())
+        .then((data) => {
+          setProvinces(data);
+          setLoadingProvinces(false);
+          
+          if (editedProvince) {
+            const foundProvince = data.find((p: any) => p.name === editedProvince);
+            if (foundProvince) {
+              fetchDistricts(foundProvince.code);
+            }
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to fetch provinces:', err);
+          setLoadingProvinces(false);
+        });
+    }
+  }, [isEditingDetails]);
+
+
   if (!mounted || !isAuthenticated || !user) {
     return null; // Wait for client hydration or redirect
   }
@@ -226,43 +265,7 @@ export default function ProfilePage() {
     }
   };
 
-  // Fetch provinces and districts from open-api.vn
-  React.useEffect(() => {
-    if (isEditingDetails && provinces.length === 0) {
-      setLoadingProvinces(true);
-      fetch('https://provinces.open-api.vn/api/')
-        .then((res) => res.json())
-        .then((data) => {
-          setProvinces(data);
-          setLoadingProvinces(false);
-          
-          if (editedProvince) {
-            const foundProvince = data.find((p: any) => p.name === editedProvince);
-            if (foundProvince) {
-              fetchDistricts(foundProvince.code);
-            }
-          }
-        })
-        .catch((err) => {
-          console.error('Failed to fetch provinces:', err);
-          setLoadingProvinces(false);
-        });
-    }
-  }, [isEditingDetails]);
 
-  const fetchDistricts = (provinceCode: number) => {
-    setLoadingDistricts(true);
-    fetch(`https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`)
-      .then((res) => res.json())
-      .then((data) => {
-        setDistricts(data.districts || []);
-        setLoadingDistricts(false);
-      })
-      .catch((err) => {
-        console.error('Failed to fetch districts:', err);
-        setLoadingDistricts(false);
-      });
-  };
 
   const handleUpdateDetails = async () => {
     setDetailsError(null);
