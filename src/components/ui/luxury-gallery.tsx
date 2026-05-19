@@ -87,7 +87,7 @@ const GALLERY_IMAGES = {
 
 export function LuxuryGallery() {
   const locale = useLocale();
-  const defaultImages = locale === 'vi' ? GALLERY_IMAGES.vi : GALLERY_IMAGES.en;
+  const defaultImages = (locale === 'vi' ? GALLERY_IMAGES.vi : GALLERY_IMAGES.en).filter(img => img && img.url);
   const [currentImages, setCurrentImages] = useState(defaultImages);
 
   // Load custom gallery images from LocalStorage if available
@@ -99,7 +99,8 @@ export function LuxuryGallery() {
           const parsed = JSON.parse(saved);
           const customGallery = locale === 'vi' ? parsed.gallery : parsed.gallery_en;
           if (customGallery && Array.isArray(customGallery) && customGallery.length > 0) {
-            setCurrentImages(customGallery);
+            const cleanGallery = customGallery.filter((img: any) => img && img.url);
+            setCurrentImages(cleanGallery.length > 0 ? cleanGallery : defaultImages);
           } else {
             setCurrentImages(defaultImages);
           }
@@ -113,7 +114,7 @@ export function LuxuryGallery() {
     } else {
       setCurrentImages(defaultImages);
     }
-  }, [locale]);
+  }, [locale, defaultImages]);
   
   // Lightbox Modal states
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
@@ -325,11 +326,13 @@ export function LuxuryGallery() {
               className="p-2 md:p-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-[0_30px_70px_rgba(0,0,0,0.6)] w-fit h-fit max-w-[90vw] md:max-w-[75vw] flex items-center justify-center overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
-              <img
-                src={currentImages[selectedImageIndex].url}
-                alt={currentImages[selectedImageIndex].title}
-                className="max-w-[85vw] md:max-w-[70vw] max-h-[50vh] md:max-h-[60vh] w-auto h-auto rounded-xl object-contain select-none"
-              />
+              {currentImages[selectedImageIndex]?.url && (
+                <img
+                  src={currentImages[selectedImageIndex].url}
+                  alt={currentImages[selectedImageIndex].title}
+                  className="max-w-[85vw] md:max-w-[70vw] max-h-[50vh] md:max-h-[60vh] w-auto h-auto rounded-xl object-contain select-none"
+                />
+              )}
             </motion.div>
 
             {/* Bottom Caption Box */}
