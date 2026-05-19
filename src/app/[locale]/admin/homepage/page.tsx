@@ -12,11 +12,13 @@ import {
   Plus,
   Trash2,
   Check,
-  Globe
+  Globe,
+  Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLocale } from 'next-intl';
 import { ImageUpload } from '@/components/admin/ImageUpload';
+import api from '@/lib/api';
 import '@/components/ui/banner.css';
 import { Banner } from '@/components/ui/banner';
 
@@ -138,6 +140,7 @@ export default function AdminHomepageConfig() {
 
   const [galleryVi, setGalleryVi] = useState(DEFAULT_GALLERY.vi);
   const [galleryEn, setGalleryEn] = useState(DEFAULT_GALLERY.en);
+  const [galleryAiLoading, setGalleryAiLoading] = useState<Record<number, boolean>>({});
 
   // Load custom data from LocalStorage on mount
   useEffect(() => {
@@ -250,6 +253,50 @@ export default function AdminHomepageConfig() {
       const next = [...galleryEn];
       next[index] = { ...next[index], [field]: value };
       setGalleryEn(next);
+    }
+  };
+
+  // AI Automatic Image scanning for luxury quotes & titles
+  const handleGalleryImageUpload = async (idx: number, newUrl: string) => {
+    // 1. Update image url fields in both states
+    handleGalleryFieldChange('vi', idx, 'url', newUrl);
+    handleGalleryFieldChange('en', idx, 'url', newUrl);
+
+    if (!newUrl) return;
+
+    // 2. Start AI Vision analysis loading
+    setGalleryAiLoading(prev => ({ ...prev, [idx]: true }));
+    const loadingToast = toast.loading('AI đang quét và phân tích hình ảnh nghệ thuật...');
+
+    try {
+      const response = await api.post('/ai/scan-gallery-image', { imageUrl: newUrl });
+      if (response.data && response.data.success && response.data.data) {
+        const { titleVi, quoteVi, titleEn, quoteEn } = response.data.data;
+        
+        // Populate Vietnamese fields
+        if (titleVi) handleGalleryFieldChange('vi', idx, 'title', titleVi);
+        if (quoteVi) handleGalleryFieldChange('vi', idx, 'quote', quoteVi);
+        
+        // Populate English fields
+        if (titleEn) handleGalleryFieldChange('en', idx, 'title', titleEn);
+        if (quoteEn) handleGalleryFieldChange('en', idx, 'quote', quoteEn);
+
+        toast.success('AI đã phân tích ảnh và hoàn thành nội dung song ngữ thành công!', {
+          id: loadingToast,
+          duration: 3000
+        });
+      } else {
+        throw new Error(response.data?.error || 'Không nhận được dữ liệu hợp lệ từ AI');
+      }
+    } catch (err: any) {
+      console.error('Artistic AI Scan failed:', err);
+      toast.error('Không thể quét ảnh bằng AI. Vui lòng tự nhập thủ công.', {
+        id: loadingToast,
+        description: err.response?.data?.error || err.message || 'Lỗi kết nối AI.',
+        duration: 4000
+      });
+    } finally {
+      setGalleryAiLoading(prev => ({ ...prev, [idx]: false }));
     }
   };
 
@@ -436,16 +483,20 @@ export default function AdminHomepageConfig() {
                     </span>
                     <ImageUpload
                       value={galleryVi[idx].url}
-                      onChange={(newUrl) => {
-                        handleGalleryFieldChange('vi', idx, 'url', newUrl);
-                        handleGalleryFieldChange('en', idx, 'url', newUrl);
-                      }}
+                      onChange={(newUrl) => handleGalleryImageUpload(idx, newUrl)}
                       hideUrlInput={true}
                     />
                   </div>
 
                   {/* Bilingual Wording Fields */}
-                  <div className="space-y-3 bg-gray-50/50 p-3.5 rounded-xl border border-gray-100">
+                  <div className="relative space-y-3 bg-gray-50/50 p-3.5 rounded-xl border border-gray-100 overflow-hidden">
+                    {/* Glassmorphic AI Scanning Indicator Overlay */}
+                    {galleryAiLoading[idx] && (
+                      <div className="absolute inset-0 bg-white/75 backdrop-blur-sm z-10 flex flex-col items-center justify-center gap-2 shadow-inner">
+                        <Loader2 className="animate-spin text-[#7A5C5C]" size={20} />
+                        <span className="text-[10px] text-[#7A5C5C] font-bold uppercase tracking-wider animate-pulse select-none">AI đang quét ảnh...</span>
+                      </div>
+                    )}
                     {/* Vietnamese */}
                     <div className="space-y-2">
                       <span className="text-[9px] font-bold uppercase text-[#D4A5A5] flex items-center gap-1">
