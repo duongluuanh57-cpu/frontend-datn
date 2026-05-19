@@ -19,10 +19,6 @@ export default function NewBrandPage() {
     origin: '',
     logo: '',
     description: '',
-    gender: '',
-    scentGroup: '',
-    concentration: '',
-    group: '',
     status: 'active' as 'active' | 'inactive',
     featured: false
   });
@@ -46,10 +42,6 @@ export default function NewBrandPage() {
           origin: info.origin || prev.origin,
           logo: info.logo || prev.logo,
           description: info.description || prev.description,
-          gender: info.gender || prev.gender,
-          scentGroup: info.scentGroup || prev.scentGroup,
-          concentration: info.concentration || prev.concentration,
-          group: info.group || prev.group,
         }));
       }
     } catch (err) {
@@ -216,7 +208,7 @@ export default function NewBrandPage() {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 10 }}>
               {/* Quốc gia xuất xứ */}
               <div className="admin-field">
                 <label className="admin-label" htmlFor="origin">
@@ -228,21 +220,6 @@ export default function NewBrandPage() {
                   value={formData.origin}
                   onChange={(e) => setFormData({ ...formData, origin: e.target.value })}
                   placeholder="VD: France, Italy, United Kingdom..."
-                  className="admin-input"
-                />
-              </div>
-
-              {/* Giới tính */}
-              <div className="admin-field">
-                <label className="admin-label" htmlFor="gender">
-                  {isVi ? 'Giới tính' : 'Gender'}
-                </label>
-                <input
-                  id="gender"
-                  type="text"
-                  value={formData.gender}
-                  onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                  placeholder={isVi ? 'VD: Nam, Nữ, Unisex' : 'e.g., Men, Women, Unisex'}
                   className="admin-input"
                 />
               </div>
