@@ -1,16 +1,18 @@
 /* L'essence Admin Dashboard Style Profile Page Stylesheet */
 
 .profile-page-shell {
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
   background-color: var(--background);
   position: relative;
   overflow: hidden;
-  padding: 5rem 2rem 3rem;
+  padding: 1.5rem;
   font-family: var(--font-body), sans-serif;
   color: var(--content);
   display: flex;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
 }
 
 /* Background blur bubbles */
@@ -64,7 +66,11 @@
   box-shadow: 
     0 30px 70px -15px rgba(122, 92, 92, 0.08), 
     inset 0 1px 0 rgba(255, 255, 255, 0.95);
-  min-height: 640px;
+  width: 100%;
+  height: 82vh;
+  height: 82dvh;
+  max-height: 800px;
+  min-height: 520px;
   overflow: hidden;
   transform: translate3d(0, 0, 0);
   backface-visibility: hidden;
