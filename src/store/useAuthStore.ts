@@ -8,6 +8,8 @@ interface User {
   role: 'USER' | 'ADMIN' | 'SUBADMIN';
   avatar?: string;
   tenantId: string;
+  memberTier?: 'MEMBER' | 'VIP' | 'ELITE MEMBER';
+  createdAt?: string;
 }
 
 interface AuthState {

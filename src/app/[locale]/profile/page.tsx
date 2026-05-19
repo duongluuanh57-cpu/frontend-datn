@@ -204,6 +204,16 @@ export default function ProfilePage() {
 
   const isAdmin = user.role === 'ADMIN' || user.role === 'SUBADMIN';
 
+  const formatJoinDate = (dateStr?: string) => {
+    if (!dateStr) return 'Tháng 5, 2026';
+    try {
+      const date = new Date(dateStr);
+      return `Tháng ${date.getMonth() + 1}, ${date.getFullYear()}`;
+    } catch (e) {
+      return 'Tháng 5, 2026';
+    }
+  };
+
   // Sidebar Menu Configuration
   const menuItems = [
     { id: 'profile' as ActiveTab, name: 'Thông tin cá nhân', icon: UserIcon },
@@ -446,20 +456,22 @@ export default function ProfilePage() {
                     <div className="profile-details-card">
                       <div className="profile-card-label">Hạng thành viên</div>
                       <div className="profile-card-value" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        ELITE MEMBER <Heart size={14} style={{ fill: 'var(--primary)', stroke: 'var(--primary)' }} />
+                        {user.memberTier || 'MEMBER'}
+                        {user.memberTier === 'ELITE MEMBER' && (
+                          <Heart size={14} style={{ fill: 'var(--primary)', stroke: 'var(--primary)' }} />
+                        )}
+                        {user.memberTier === 'VIP' && (
+                          <span style={{ fontSize: '14px' }}>👑</span>
+                        )}
                       </div>
                     </div>
 
                     <div className="profile-details-card">
                       <div className="profile-card-label">Tham gia hệ thống</div>
-                      <div className="profile-card-value">
-                        <Calendar size={16} style={{ opacity: 0.7 }} /> Tháng 1, 2026
+                      <div className="profile-card-value" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Calendar size={16} style={{ opacity: 0.7 }} />
+                        <span>{formatJoinDate(user.createdAt)}</span>
                       </div>
-                    </div>
-
-                    <div className="profile-details-card">
-                      <div className="profile-card-label">Mùi hương yêu thích</div>
-                      <div className="profile-card-value">5 mùi hương</div>
                     </div>
 
                   </div>
