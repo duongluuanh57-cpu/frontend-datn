@@ -228,61 +228,59 @@ export default function ProfilePage() {
           
           {/* 1. Left Sidebar Panel */}
           <aside className="profile-dashboard-sidebar">
-            <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-              
-              {/* User Profiler block */}
-              <div className="profile-sidebar-user">
-                <div className="profile-sidebar-avatar">
-                  <UserIcon size={42} color="var(--primary)" strokeWidth={1.5} />
-                </div>
-                <h2>{user.username}</h2>
-                <p>{user.email}</p>
-                <div className={`profile-sidebar-role ${isAdmin ? 'admin' : 'user'}`}>
-                  <Shield size={12} strokeWidth={2.5} />
-                  {user.role}
-                </div>
+            
+            {/* User Profiler block */}
+            <div className="profile-sidebar-user">
+              <div className="profile-sidebar-avatar">
+                <UserIcon size={42} color="var(--primary)" strokeWidth={1.5} />
               </div>
+              <h2>{user.username}</h2>
+              <p>{user.email}</p>
+              <div className={`profile-sidebar-role ${isAdmin ? 'admin' : 'user'}`}>
+                <Shield size={12} strokeWidth={2.5} />
+                {user.role}
+              </div>
+            </div>
 
-              {/* Menu Tabs Navigation */}
-              <nav className="profile-dashboard-menu">
-                {menuItems.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => {
-                      setActiveTab(item.id);
-                      setStatusMessage(null);
-                    }}
-                    className={`profile-dashboard-menu-item ${activeTab === item.id ? 'active' : ''}`}
-                  >
-                    <item.icon size={18} strokeWidth={2} />
-                    <span>{item.name}</span>
-                  </button>
-                ))}
-              </nav>
+            {/* Menu Tabs Navigation */}
+            <nav className="profile-dashboard-menu">
+              {menuItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    setActiveTab(item.id);
+                    setStatusMessage(null);
+                  }}
+                  className={`profile-dashboard-menu-item ${activeTab === item.id ? 'active' : ''}`}
+                >
+                  <item.icon size={18} strokeWidth={2} />
+                  <span>{item.name}</span>
+                </button>
+              ))}
+            </nav>
 
-              {/* Actions Footer */}
-              <div style={{ marginTop: '2.5rem', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {isAdmin && (
-                  <button 
-                    onClick={() => router.push('/admin')}
-                    className="btn-profile-primary"
-                    style={{ width: '100%', justifyContent: 'center' }}
-                  >
-                    <LayoutDashboard size={16} strokeWidth={2.5} />
-                    Vào Dashboard
-                  </button>
-                )}
+            {/* Actions Footer */}
+            <div className="profile-sidebar-footer">
+              {isAdmin && (
                 <button 
-                  onClick={handleLogout}
-                  className="btn-profile-secondary"
+                  onClick={() => router.push('/admin')}
+                  className="btn-profile-primary"
                   style={{ width: '100%', justifyContent: 'center' }}
                 >
-                  <LogOut size={16} strokeWidth={2.5} />
-                  Đăng xuất
+                  <LayoutDashboard size={16} strokeWidth={2.5} />
+                  Vào Dashboard
                 </button>
-              </div>
-
+              )}
+              <button 
+                onClick={handleLogout}
+                className="btn-profile-secondary"
+                style={{ width: '100%', justifyContent: 'center' }}
+              >
+                <LogOut size={16} strokeWidth={2.5} />
+                Đăng xuất
+              </button>
             </div>
+
           </aside>
 
           {/* 2. Right Main Content Workspace */}

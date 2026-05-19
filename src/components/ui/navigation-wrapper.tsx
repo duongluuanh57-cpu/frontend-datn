@@ -26,7 +26,7 @@ export function NavigationWrapper({ children }: { children: React.ReactNode }) {
         {children}
       </main>
       {!isProfile && <Footer />}
-      <ChatWidget />
+      {!isProfile && <ChatWidget />}
     </div>
   );
 }
