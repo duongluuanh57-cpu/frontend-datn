@@ -189,7 +189,7 @@ export default function NewBrandPage() {
               <label className="admin-label" htmlFor="name">
                 {isVi ? 'Tên thương hiệu' : 'Brand Name'} *
               </label>
-              <div style={{ display: 'flex', gap: 10 }}>
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                 <input
                   id="name"
                   type="text"
@@ -205,22 +205,14 @@ export default function NewBrandPage() {
                   }}
                   placeholder="VD: Chanel, Dior, Creed..."
                   className="admin-input"
-                  style={{ flex: 1 }}
+                  style={{ width: '100%', paddingRight: isAiGenerating ? '75px' : '12px' }}
                 />
-                <button
-                  type="button"
-                  disabled={!formData.name.trim() || isAiGenerating}
-                  onClick={() => handleAiGenerateBrand(true)}
-                  className="admin-btn-submit"
-                  style={{ background: 'transparent', border: '1px solid var(--admin-border)', color: 'var(--admin-text)', padding: '0 16px', boxShadow: 'none' }}
-                >
-                  {isAiGenerating ? (
-                    <Loader2 size={14} className="animate-spin" />
-                  ) : (
-                    <Sparkles size={14} className="text-[#D4A5A5]" />
-                  )}
-                  <span style={{ marginLeft: 6 }}>{isVi ? 'AI Viết' : 'AI Generate'}</span>
-                </button>
+                {isAiGenerating && (
+                  <div style={{ position: 'absolute', right: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Loader2 size={14} className="animate-spin text-[#7A5C5C]" />
+                    <span className="text-[10px] text-[#7A5C5C] font-bold uppercase tracking-wider select-none animate-pulse">AI viết</span>
+                  </div>
+                )}
               </div>
             </div>
 
