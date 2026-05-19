@@ -420,69 +420,11 @@ export default function ProfilePage() {
                     
                     <div className="profile-details-card" style={{ gridColumn: 'span 2' }}>
                       <div className="profile-card-label">Tên tài khoản</div>
-                      {isEditingName ? (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%', marginTop: '6px' }}>
-                          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                            <input
-                              type="text"
-                              value={editedName}
-                              onChange={(e) => setEditedName(e.target.value)}
-                              className="profile-form-input"
-                              style={{ flexGrow: 1, padding: '8px 12px', fontSize: '0.9rem' }}
-                              disabled={editingSubmitting}
-                              placeholder="Nhập tên mới..."
-                              autoFocus
-                            />
-                            <button
-                              onClick={handleUpdateName}
-                              disabled={editingSubmitting}
-                              className="btn-profile-primary"
-                              style={{ padding: '8px 16px', borderRadius: '12px', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
-                            >
-                              {editingSubmitting ? 'Đang lưu...' : 'Lưu'}
-                            </button>
-                            <button
-                              onClick={() => {
-                                setIsEditingName(false);
-                                setEditedName(user.username);
-                                setEditingError(null);
-                              }}
-                              disabled={editingSubmitting}
-                              className="btn-profile-secondary"
-                              style={{ padding: '8px 16px', borderRadius: '12px', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
-                            >
-                              Hủy
-                            </button>
-                          </div>
-                          {editingError && (
-                            <span style={{ fontSize: '0.78rem', color: '#e74c3c', fontWeight: 500 }}>
-                              {editingError}
-                            </span>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="profile-card-value" style={{ justifyContent: 'space-between', width: '100%' }}>
-                          <span>{user.username}</span>
-                          <button
-                            onClick={() => {
-                              setIsEditingName(true);
-                              setEditingError(null);
-                              setEditingSuccess(null);
-                            }}
-                            className="btn-profile-secondary"
-                            style={{ padding: '6px 12px', borderRadius: '10px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}
-                          >
-                            <Edit2 size={12} />
-                            Chỉnh sửa
-                          </button>
-                        </div>
-                      )}
-                      {editingSuccess && (
-                        <div className="profile-alert success" style={{ marginTop: '8px', padding: '6px 10px', fontSize: '0.8rem' }}>
-                          {editingSuccess}
-                        </div>
-                      )}
+                      <div className="profile-card-value">
+                        {user.username}
+                      </div>
                     </div>
+
 
                     <div className="profile-details-card" style={{ gridColumn: 'span 2' }}>
                       <div className="profile-card-label">Địa chỉ email</div>

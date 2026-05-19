@@ -78,10 +78,10 @@
 }
 
 .profile-dashboard-sidebar {
-  width: 250px;
+  width: 270px; /* Slightly wider sidebar to accommodate Vietnamese text */
   border-right: 1px solid rgba(122, 92, 92, 0.08);
   background: rgba(255, 255, 255, 0.25);
-  padding: 2.2rem 1.6rem;
+  padding: 2.2rem 1.2rem; /* Adjusted horizontal padding for extra content width */
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
@@ -95,6 +95,57 @@
   flex-direction: column;
   gap: 12px;
   width: 100%;
+}
+
+/* Primary & Secondary Profile Buttons */
+.btn-profile-primary {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  padding: 11px 18px !important;
+  background: var(--primary) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 12px !important;
+  font-size: 0.88rem !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.25s ease !important;
+  width: 100% !important;
+  box-shadow: 0 4px 12px rgba(212, 165, 165, 0.2) !important;
+  box-sizing: border-box !important;
+}
+
+.btn-profile-primary:hover {
+  background: #c39494 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 16px rgba(212, 165, 165, 0.3) !important;
+}
+
+.btn-profile-secondary {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  padding: 11px 18px !important;
+  background: rgba(255, 255, 255, 0.5) !important;
+  color: rgba(122, 92, 92, 0.8) !important;
+  border: 1px solid rgba(122, 92, 92, 0.15) !important;
+  border-radius: 12px !important;
+  font-size: 0.88rem !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.25s ease !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.btn-profile-secondary:hover {
+  background: rgba(255, 255, 255, 0.8) !important;
+  color: var(--content) !important;
+  transform: translateY(-1px) !important;
+  border-color: rgba(122, 92, 92, 0.25) !important;
 }
 
 /* Sidebar User Info Block */
@@ -176,8 +227,8 @@
 .profile-dashboard-menu-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 16px;
+  gap: 10px;
+  padding: 10px 14px;
   background: transparent;
   border: none;
   border-radius: 12px;
@@ -187,6 +238,9 @@
   cursor: pointer;
   text-align: left;
   transition: all 0.25s ease;
+  white-space: nowrap; /* Prevent wrapping at all costs */
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .profile-dashboard-menu-item:hover {
