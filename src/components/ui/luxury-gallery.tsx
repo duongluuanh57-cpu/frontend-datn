@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { useLocale } from 'next-intl';
@@ -87,7 +87,9 @@ const GALLERY_IMAGES = {
 
 export function LuxuryGallery() {
   const locale = useLocale();
-  const defaultImages = (locale === 'vi' ? GALLERY_IMAGES.vi : GALLERY_IMAGES.en).filter(img => img && img.url);
+  const defaultImages = useMemo(() => {
+    return (locale === 'vi' ? GALLERY_IMAGES.vi : GALLERY_IMAGES.en).filter(img => img && img.url);
+  }, [locale]);
   const [currentImages, setCurrentImages] = useState(defaultImages);
 
   // Load custom gallery images from LocalStorage if available
