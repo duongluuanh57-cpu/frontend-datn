@@ -126,6 +126,7 @@ export default function NewBrandPage() {
             value={formData.logo} 
             onChange={(url) => setFormData(prev => ({ ...prev, logo: url }))} 
             onUploadStateChange={(uploading) => setIsLogoUploading(uploading)}
+            folder="brands"
           />
 
           <div className="admin-form-fields" style={{ marginTop: 10 }}>

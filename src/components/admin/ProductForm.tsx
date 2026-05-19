@@ -16,6 +16,7 @@ import {
   FileText,
   X,
   ChevronDown,
+  Plus,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/navigation';
@@ -78,6 +79,7 @@ export interface ProductFormData {
   brand: string;
   price: number;
   image: string;
+  images?: string[]; // Multiple images
   description: string;
   tag: string;
   scentGroup?: string;
@@ -130,6 +132,7 @@ const EMPTY_FORM = {
   brand: '',
   price: 0,
   image: '',
+  images: [] as string[],
   description: '',
   tag: '',
   scentGroup: '',
@@ -159,6 +162,7 @@ function toFormState(data?: ProductFormData) {
     brand: data.brand ?? '',
     price: data.price ?? 0,
     image: data.image ?? '',
+    images: data.images ?? [],
     description: data.description ?? '',
     tag: data.tag ?? '',
     scentGroup: data.scentGroup ?? '',
@@ -247,7 +251,7 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
   const { data: scentGroups } = useQuery({
     queryKey: ['admin-active-scent-groups-list'],
     queryFn: async () => {
-      const { data } = await api.get('/scent-groups');
+      const { data } = await api.get('/taxonomies/active?type=scent_group');
       return (data.data || []) as { _id: string; name: string; slug: string; status: string }[];
     }
   });
@@ -255,7 +259,7 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
   const { data: concentrations } = useQuery({
     queryKey: ['admin-active-concentrations-list'],
     queryFn: async () => {
-      const { data } = await api.get('/concentrations');
+      const { data } = await api.get('/taxonomies/active?type=concentration');
       return (data.data || []) as { _id: string; name: string; slug: string; status: string }[];
     }
   });
@@ -263,14 +267,14 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
   const { data: segments } = useQuery({
     queryKey: ['admin-active-segments-list'],
     queryFn: async () => {
-      const { data } = await api.get('/segments');
+      const { data } = await api.get('/taxonomies/active?type=segment');
       return (data.data || []) as { _id: string; name: string; slug: string; status: string }[];
     }
   });
 
   const addScentGroupMutation = useMutation({
     mutationFn: async (name: string) => {
-      const { data } = await api.post('/scent-groups', { name });
+      const { data } = await api.post('/taxonomies', { name, type: 'scent_group' });
       return data.data;
     },
     onSuccess: (newItem) => {
@@ -287,7 +291,7 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
 
   const addConcentrationMutation = useMutation({
     mutationFn: async (name: string) => {
-      const { data } = await api.post('/concentrations', { name });
+      const { data } = await api.post('/taxonomies', { name, type: 'concentration' });
       return data.data;
     },
     onSuccess: (newItem) => {
@@ -304,7 +308,7 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
 
   const addSegmentMutation = useMutation({
     mutationFn: async (name: string) => {
-      const { data } = await api.post('/segments', { name });
+      const { data } = await api.post('/taxonomies', { name, type: 'segment' });
       return data.data;
     },
     onSuccess: (newItem) => {
@@ -734,11 +738,85 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
             </div>
           </div>
 
-          <ImageUpload 
-            value={formData.image} 
-            onChange={(url) => update({ image: url })} 
-            onUploadStateChange={(uploading) => setIsImageUploading(uploading)}
-          />
+          {/* Ảnh chính */}
+          <div className="mb-4">
+            <ImageUpload 
+              value={formData.image} 
+              onChange={(url) => update({ image: url })} 
+              onUploadStateChange={(uploading) => setIsImageUploading(uploading)}
+              hideUrlInput={true}
+              folder="products"
+            />
+          </div>
+
+          {/* Ảnh phụ */}
+          <div>
+            <label className="admin-label mb-2 block">Ảnh phụ (Tối đa 9 ảnh phụ.)</label>
+            <div className="grid grid-cols-4 gap-2">
+              {(formData.images || []).map((url, index) => (
+                <div key={index} className="relative aspect-square rounded-lg overflow-hidden border border-gray-200">
+                  <img src={url} alt={`Ảnh phụ ${index + 1}`} className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newImages = (formData.images || []).filter((_, i) => i !== index);
+                      update({ images: newImages });
+                    }}
+                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              ))}
+              
+              {/* Nút thêm ảnh phụ */}
+              {(!formData.images || formData.images.length < 9) && (
+                <label className="relative aspect-square rounded-lg border-2 border-dashed border-gray-300 hover:border-gray-400 cursor-pointer flex items-center justify-center bg-gray-50 hover:bg-gray-100 transition-colors">
+                  <Plus size={24} className="text-gray-400" />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={async (e) => {
+                      const files = e.target.files;
+                      if (!files || files.length === 0) return;
+
+                      setIsImageUploading(true);
+                      const newUrls: string[] = [];
+
+                      try {
+                        for (let i = 0; i < files.length; i++) {
+                          const file = files[i];
+                          const formData = new FormData();
+                          formData.append('image', file);
+                          formData.append('maxWidth', '1920');
+                          formData.append('quality', '90');
+                          formData.append('folder', 'products');
+
+                          const { data } = await api.post('/media/upload-imgbb', formData, {
+                            headers: { 'Content-Type': 'multipart/form-data' },
+                          });
+
+                          if (data.success && data.data.url) {
+                            newUrls.push(data.data.url);
+                          }
+                        }
+
+                        update({ images: [...(formData.images || []), ...newUrls] });
+                      } catch (err) {
+                        console.error('Upload failed:', err);
+                        alert('Lỗi khi tải ảnh');
+                      } finally {
+                        setIsImageUploading(false);
+                        e.target.value = '';
+                      }
+                    }}
+                  />
+                </label>
+              )}
+            </div>
+          </div>
 
           <div className="admin-form-fields" style={{ marginTop: 10 }}>
             <div className="admin-field">

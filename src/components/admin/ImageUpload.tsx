@@ -12,9 +12,10 @@ interface ImageUploadProps {
   hideUrlInput?: boolean;
   maxWidth?: number;
   quality?: number;
+  folder?: string;
 }
 
-export function ImageUpload({ value, onChange, onUploadStateChange, hideUrlInput = false, maxWidth, quality }: ImageUploadProps) {
+export function ImageUpload({ value, onChange, onUploadStateChange, hideUrlInput = false, maxWidth, quality, folder }: ImageUploadProps) {
   const t = useTranslations('Admin.upload');
   const [isUploading, setIsUploading] = useState(false);
   const [preview, setPreview] = useState(value || '');
@@ -39,6 +40,7 @@ export function ImageUpload({ value, onChange, onUploadStateChange, hideUrlInput
       else formData.append('maxWidth', '1920');
       if (quality != null) formData.append('quality', String(quality));
       else formData.append('quality', '90');
+      if (folder) formData.append('folder', folder);
 
       const { data } = await api.post('/media/upload-imgbb', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
@@ -68,7 +70,8 @@ export function ImageUpload({ value, onChange, onUploadStateChange, hideUrlInput
       const { data } = await api.post('/media/upload-url', {
         url: url.trim(),
         maxWidth: maxWidth ?? 1920,
-        quality: quality ?? 90
+        quality: quality ?? 90,
+        folder
       });
 
       if (data.success && data.data.url) {
