@@ -6,7 +6,7 @@ import { Loader2, Sparkles, Award, ChevronLeft } from 'lucide-react';
 import { useLocale } from 'next-intl';
 import { Link, useRouter } from '@/navigation';
 import { ImageUpload } from '@/components/admin/ImageUpload';
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 
 export default function NewBrandPage() {
   const locale = useLocale();
@@ -26,14 +26,19 @@ export default function NewBrandPage() {
     status: 'active' as 'active' | 'inactive',
     featured: false
   });
+  const lastGeneratedNameRef = useRef('');
   const [isAiGenerating, setIsAiGenerating] = useState(false);
   const [isLogoUploading, setIsLogoUploading] = useState(false);
 
-  const handleAiGenerateBrand = async () => {
-    if (!formData.name.trim()) return;
+  const handleAiGenerateBrand = async (isManual = false) => {
+    const trimmedName = formData.name.trim();
+    if (!trimmedName) return;
+    if (!isManual && trimmedName === lastGeneratedNameRef.current) return;
+    
+    lastGeneratedNameRef.current = trimmedName;
     setIsAiGenerating(true);
     try {
-      const { data } = await api.post('/ai/generate-brand', { name: formData.name });
+      const { data } = await api.post('/ai/generate-brand', { name: trimmedName });
       if (data.success && data.data) {
         const info = data.data;
         setFormData((prev) => ({
@@ -49,7 +54,9 @@ export default function NewBrandPage() {
       }
     } catch (err) {
       console.error(err);
-      alert(isVi ? 'Không thể viết câu chuyện thương hiệu bằng AI. Vui lòng thử lại.' : 'AI brand generation failed. Please try again.');
+      if (isManual) {
+        alert(isVi ? 'Không thể viết câu chuyện thương hiệu bằng AI. Vui lòng thử lại.' : 'AI brand generation failed. Please try again.');
+      }
     } finally {
       setIsAiGenerating(false);
     }
@@ -189,6 +196,13 @@ export default function NewBrandPage() {
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onBlur={() => handleAiGenerateBrand(false)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAiGenerateBrand(false);
+                    }
+                  }}
                   placeholder="VD: Chanel, Dior, Creed..."
                   className="admin-input"
                   style={{ flex: 1 }}
@@ -196,7 +210,7 @@ export default function NewBrandPage() {
                 <button
                   type="button"
                   disabled={!formData.name.trim() || isAiGenerating}
-                  onClick={handleAiGenerateBrand}
+                  onClick={() => handleAiGenerateBrand(true)}
                   className="admin-btn-submit"
                   style={{ background: 'transparent', border: '1px solid var(--admin-border)', color: 'var(--admin-text)', padding: '0 16px', boxShadow: 'none' }}
                 >
