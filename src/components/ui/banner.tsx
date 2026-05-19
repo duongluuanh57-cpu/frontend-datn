@@ -82,12 +82,12 @@ const BannerBackground = ({
               zIndex: isActive ? 1 : 0,
             }}
           >
-            {shouldRender && (
+            {shouldRender && image && (
               <Image
                 src={image}
                 alt={`${altText} - Slide ${index + 1}`}
                 fill
-                priority={index === 0}
+                priority={index === 0 && !!image}
                 unoptimized
                 className="object-cover"
               />
