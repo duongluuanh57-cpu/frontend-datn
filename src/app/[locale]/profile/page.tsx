@@ -74,6 +74,23 @@ export default function ProfilePage() {
     }
   }, [user]);
 
+  React.useEffect(() => {
+    const fetchLatestProfile = async () => {
+      try {
+        const res = await api.get('/auth/me');
+        if (res.data && res.data.success) {
+          updateUser(res.data.data);
+        }
+      } catch (err) {
+        console.error('Failed to sync profile with database:', err);
+      }
+    };
+
+    if (mounted && isAuthenticated) {
+      fetchLatestProfile();
+    }
+  }, [mounted, isAuthenticated]);
+
   if (!mounted || !isAuthenticated || !user) {
     return null; // Wait for client hydration or redirect
   }
