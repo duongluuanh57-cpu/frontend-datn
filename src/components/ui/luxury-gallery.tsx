@@ -6,83 +6,16 @@ import Image from 'next/image';
 import { useLocale } from 'next-intl';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 
-const GALLERY_IMAGES = {
-  vi: [
-    {
-      url: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=1200&auto=format&fit=crop',
-      aspect: 'aspect-[3/4]',
-      title: 'Giọt Nắng Pha Lê',
-      quote: 'Hương thơm là tiếng thì thầm của tâm hồn.'
-    },
-    {
-      url: 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?q=80&w=1200&auto=format&fit=crop',
-      aspect: 'aspect-[1/1]',
-      title: 'Cánh Hồng Sương Sớm',
-      quote: 'Sự lãng mạn ẩn mình trong từng nốt hương.'
-    },
-    {
-      url: 'https://images.unsplash.com/photo-1547887537-6158d64c35b3?q=80&w=1200&auto=format&fit=crop',
-      aspect: 'aspect-[2/3]',
-      title: 'Tinh Hoa Cổ Điển',
-      quote: 'Định nghĩa lại vẻ đẹp vĩnh cửu của hoàng gia.'
-    },
-    {
-      url: 'https://images.unsplash.com/photo-1513201099705-a9746e1e201f?q=80&w=1200&auto=format&fit=crop',
-      aspect: 'aspect-[3/2]',
-      title: 'Lụa Mềm Tinh Khôi',
-      quote: 'Mịn màng và thanh tao tựa như làn da thứ hai.'
-    },
-    {
-      url: 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?q=80&w=1200&auto=format&fit=crop',
-      aspect: 'aspect-[3/4]',
-      title: 'Hương Thảo Mộc Niche',
-      quote: 'Sự giao thoa đầy say đắm giữa thiên nhiên và nghệ thuật.'
-    },
-    {
-      url: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=1200&auto=format&fit=crop',
-      aspect: 'aspect-[1/1]',
-      title: 'Khay Ngọc Kiêu Kỳ',
-      quote: 'Nơi lưu giữ những bí mật quyến rũ nhất.'
-    }
-  ],
-  en: [
-    {
-      url: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=1200&auto=format&fit=crop',
-      aspect: 'aspect-[3/4]',
-      title: 'Crystal Sunlight',
-      quote: 'Scent is the whisper of the soul.'
-    },
-    {
-      url: 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?q=80&w=1200&auto=format&fit=crop',
-      aspect: 'aspect-[1/1]',
-      title: 'Morning Dew Rose',
-      quote: 'Romance hidden in every single note.'
-    },
-    {
-      url: 'https://images.unsplash.com/photo-1547887537-6158d64c35b3?q=80&w=1200&auto=format&fit=crop',
-      aspect: 'aspect-[2/3]',
-      title: 'Classic Heritage',
-      quote: 'Redefining the eternal beauty of royalty.'
-    },
-    {
-      url: 'https://images.unsplash.com/photo-1513201099705-a9746e1e201f?q=80&w=1200&auto=format&fit=crop',
-      aspect: 'aspect-[3/2]',
-      title: 'Pristine Pure Silk',
-      quote: 'Smooth and sublime like a luxurious second skin.'
-    },
-    {
-      url: 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?q=80&w=1200&auto=format&fit=crop',
-      aspect: 'aspect-[3/4]',
-      title: 'Artisanal Niche',
-      quote: 'A captivating fusion of nature and fine art.'
-    },
-    {
-      url: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=1200&auto=format&fit=crop',
-      aspect: 'aspect-[1/1]',
-      title: 'Vanity Secrets',
-      quote: 'Where the most seductive mysteries reside.'
-    }
-  ]
+interface IGalleryImage {
+  url: string;
+  aspect: string;
+  title: string;
+  quote: string;
+}
+
+const GALLERY_IMAGES: { vi: IGalleryImage[]; en: IGalleryImage[] } = {
+  vi: [],
+  en: []
 };
 
 export function LuxuryGallery() {
@@ -90,7 +23,7 @@ export function LuxuryGallery() {
   const defaultImages = useMemo(() => {
     return (locale === 'vi' ? GALLERY_IMAGES.vi : GALLERY_IMAGES.en).filter(img => img && img.url);
   }, [locale]);
-  const [currentImages, setCurrentImages] = useState(defaultImages);
+  const [currentImages, setCurrentImages] = useState<IGalleryImage[]>(defaultImages);
 
   // Load custom gallery images from LocalStorage if available
   useEffect(() => {
