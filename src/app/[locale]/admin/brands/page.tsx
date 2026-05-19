@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { useLocale } from 'next-intl';
 import { Link } from '@/navigation';
 import React from 'react';
+import { toast } from 'sonner';
 
 interface Brand {
   _id: string;
@@ -60,6 +61,7 @@ export default function AdminBrandsPage() {
     mutationFn: async (id: string) => api.delete(`/brands/${id}`),
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ['admin-brands'] });
+      toast.success(isVi ? 'Đã xóa thương hiệu thành công!' : 'Brand deleted successfully!');
       setBrandToDelete(null);
       setSelectedIds(prev => prev.filter(item => item !== id));
     },
@@ -67,10 +69,10 @@ export default function AdminBrandsPage() {
       console.error(err);
       const isAuth = err.response?.status === 401 || err.message?.includes('Unauthorized') || err.response?.data?.message?.includes('đăng nhập');
       if (isAuth) {
-        alert(isVi ? 'Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại!' : 'Session expired. Please log in again!');
+        toast.error(isVi ? 'Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại!' : 'Session expired. Please log in again!');
         window.location.href = `/${locale}/login`;
       } else {
-        alert(isVi ? 'Không thể xóa thương hiệu này.' : 'Failed to delete brand.');
+        toast.error(err.response?.data?.message || (isVi ? 'Không thể xóa thương hiệu này.' : 'Failed to delete brand.'));
       }
       setBrandToDelete(null);
     }
@@ -81,12 +83,13 @@ export default function AdminBrandsPage() {
     mutationFn: async (ids: string[]) => api.post('/brands/bulk-delete', { ids }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-brands'] });
+      toast.success(isVi ? 'Đã xóa hàng loạt thương hiệu thành công!' : 'Bulk deleted brands successfully!');
       setSelectedIds([]);
       setShowBulkDeleteModal(false);
     },
     onError: (err: any) => {
       console.error(err);
-      alert(isVi ? 'Không thể xóa các thương hiệu đã chọn.' : 'Failed to delete selected brands.');
+      toast.error(err.response?.data?.message || (isVi ? 'Không thể xóa các thương hiệu đã chọn.' : 'Failed to delete selected brands.'));
       setShowBulkDeleteModal(false);
     }
   });

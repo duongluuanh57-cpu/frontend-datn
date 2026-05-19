@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import { useTranslations, useLocale } from 'next-intl';
 import { Link } from '@/navigation';
@@ -162,6 +163,7 @@ const EditableBannerLabel = ({
 };
 
 // Image Editor Modal (local component)
+// Image Editor Modal (local component)
 function ImageEditorModal({
   images,
   onClose,
@@ -179,39 +181,180 @@ function ImageEditorModal({
   setMaxWidth: (v?: number) => void;
   setQuality: (v?: number) => void;
 }) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white rounded-lg max-w-6xl w-full mx-4 p-6 shadow-lg overflow-auto">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">Chỉnh sửa ảnh Slides</h3>
-          <div className="flex items-center gap-3">
-            <label className="text-sm">Max W:</label>
-            <input type="number" value={maxWidth ?? ''} onChange={(e) => setMaxWidth(e.target.value ? Number(e.target.value) : undefined)} className="w-24 px-2 py-1 border rounded" />
-            <label className="text-sm">Quality:</label>
-            <input type="number" value={quality ?? ''} onChange={(e) => setQuality(e.target.value ? Number(e.target.value) : undefined)} className="w-20 px-2 py-1 border rounded" />
-            <button onClick={onClose} className="px-3 py-1 rounded bg-[#7A5C5C] text-white">Đóng</button>
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    // Lock body scroll
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, []);
+
+  if (!mounted) return null;
+
+  return createPortal(
+    <div style={{
+      position: 'fixed',
+      inset: 0,
+      background: 'rgba(15, 10, 8, 0.7)',
+      backdropFilter: 'blur(16px)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 99999,
+      padding: '24px',
+    }}>
+      <div style={{
+        background: 'var(--admin-surface, #ffffff)',
+        border: '1px solid var(--admin-border-subtle, #f0e9e4)',
+        borderRadius: '24px',
+        padding: '32px',
+        maxWidth: '1200px',
+        width: '100%',
+        maxHeight: '90vh',
+        boxShadow: '0 24px 64px rgba(15, 10, 8, 0.25)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '24px',
+        overflow: 'hidden',
+      }}>
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'between', flexWrap: 'wrap', gap: '16px', borderBottom: '1px solid var(--admin-border-subtle, #f0e9e4)', paddingBottom: '20px' }} className="flex justify-between w-full">
+          <div>
+            <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: 'var(--admin-text, #3d2e24)' }}>
+              Chỉnh sửa ảnh Slides Trang chủ
+            </h3>
+            <p style={{ margin: '4px 0 0 0', fontSize: '0.8125rem', color: 'var(--admin-text-secondary, #6b564c)' }}>
+              Tải lên hoặc liên kết các hình ảnh chất lượng cao để làm mới slideshow trang chủ.
+            </p>
+          </div>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <label style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--admin-text-secondary, #6b564c)' }}>Max W:</label>
+              <input 
+                type="number" 
+                value={maxWidth ?? ''} 
+                onChange={(e) => setMaxWidth(e.target.value ? Number(e.target.value) : undefined)} 
+                style={{
+                  width: '80px',
+                  padding: '6px 12px',
+                  border: '1px solid var(--admin-border, #e8e0da)',
+                  borderRadius: '8px',
+                  fontSize: '0.8125rem',
+                  background: 'transparent',
+                  outline: 'none',
+                }}
+              />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <label style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--admin-text-secondary, #6b564c)' }}>Quality:</label>
+              <input 
+                type="number" 
+                value={quality ?? ''} 
+                onChange={(e) => setQuality(e.target.value ? Number(e.target.value) : undefined)} 
+                style={{
+                  width: '70px',
+                  padding: '6px 12px',
+                  border: '1px solid var(--admin-border, #e8e0da)',
+                  borderRadius: '8px',
+                  fontSize: '0.8125rem',
+                  background: 'transparent',
+                  outline: 'none',
+                }}
+              />
+            </div>
+            <button 
+              onClick={onClose} 
+              style={{
+                background: 'var(--admin-accent, #7A5C5C)',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '10px',
+                padding: '8px 20px',
+                fontSize: '0.8125rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'var(--admin-accent-hover, #644646)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'var(--admin-accent, #7A5C5C)';
+              }}
+            >
+              Đóng
+            </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {images.map((img, idx) => (
-            <div key={idx} className="bg-gray-50 p-3 rounded">
-              <div className="h-40 mb-3 bg-white rounded overflow-hidden flex items-center justify-center border">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={img} alt={`Slide ${idx + 1}`} className="object-cover h-full w-full" />
+        {/* Content list */}
+        <div style={{ overflowY: 'auto', flex: 1, paddingRight: '4px' }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {images.map((img, idx) => (
+              <div 
+                key={idx} 
+                style={{
+                  background: 'var(--admin-surface-muted, #faf8f6)',
+                  border: '1px solid var(--admin-border-subtle, #f0e9e4)',
+                  borderRadius: '16px',
+                  padding: '16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px',
+                }}
+              >
+                <div style={{
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  color: 'var(--admin-accent, #7A5C5C)',
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                }}>
+                  Hình ảnh Slide {idx + 1}
+                </div>
+                
+                <div style={{
+                  height: '160px',
+                  width: '100%',
+                  position: 'relative',
+                  borderRadius: '12px',
+                  overflow: 'hidden',
+                  background: 'rgba(255, 255, 255, 0.4)',
+                  border: '1px solid var(--admin-border-subtle, #f0e9e4)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img 
+                    src={img} 
+                    alt={`Slide ${idx + 1}`} 
+                    className="object-cover h-full w-full"
+                    style={{ transition: 'transform 0.3s' }}
+                    onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.03)'}
+                    onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                  />
+                </div>
+                
+                <ImageUpload
+                  value={img}
+                  onChange={(url) => onChangeImage(idx, url)}
+                  hideUrlInput={false}
+                  maxWidth={maxWidth}
+                  quality={quality}
+                  folder="image"
+                />
               </div>
-              <ImageUpload
-                value={img}
-                onChange={(url) => onChangeImage(idx, url)}
-                hideUrlInput={false}
-                maxWidth={maxWidth}
-                quality={quality}
-              />
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
