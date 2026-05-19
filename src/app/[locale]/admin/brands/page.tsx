@@ -23,6 +23,10 @@ export default function AdminBrandsPage() {
   const queryClient = useQueryClient();
   const isVi = locale === 'vi';
 
+  const [brandToDelete, setBrandToDelete] = React.useState<Brand | null>(null);
+  const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = React.useState(false);
+
   // Lấy danh sách thương hiệu
   const { data: brands, isLoading, error } = useQuery({
     queryKey: ['admin-brands'],
@@ -54,8 +58,10 @@ export default function AdminBrandsPage() {
   // Mutation: Xóa thương hiệu
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => api.delete(`/brands/${id}`),
-    onSuccess: () => {
+    onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ['admin-brands'] });
+      setBrandToDelete(null);
+      setSelectedIds(prev => prev.filter(item => item !== id));
     },
     onError: (err: any) => {
       console.error(err);
@@ -66,6 +72,22 @@ export default function AdminBrandsPage() {
       } else {
         alert(isVi ? 'Không thể xóa thương hiệu này.' : 'Failed to delete brand.');
       }
+      setBrandToDelete(null);
+    }
+  });
+
+  // Mutation: Xóa hàng loạt thương hiệu
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => api.post('/brands/bulk-delete', { ids }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-brands'] });
+      setSelectedIds([]);
+      setShowBulkDeleteModal(false);
+    },
+    onError: (err: any) => {
+      console.error(err);
+      alert(isVi ? 'Không thể xóa các thương hiệu đã chọn.' : 'Failed to delete selected brands.');
+      setShowBulkDeleteModal(false);
     }
   });
 
@@ -74,6 +96,26 @@ export default function AdminBrandsPage() {
       id: brand._id,
       data: { featured: !brand.featured }
     });
+  };
+
+  const allFilteredIds = brands ? brands.map(b => b._id) : [];
+  const isAllSelected = allFilteredIds.length > 0 && allFilteredIds.every(id => selectedIds.includes(id));
+  const isSomeSelected = selectedIds.length > 0 && !isAllSelected;
+
+  const handleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedIds(prev => prev.filter(id => !allFilteredIds.includes(id)));
+    } else {
+      setSelectedIds(prev => Array.from(new Set([...prev, ...allFilteredIds])));
+    }
+  };
+
+  const handleSelectRow = (id: string) => {
+    if (selectedIds.includes(id)) {
+      setSelectedIds(selectedIds.filter(item => item !== id));
+    } else {
+      setSelectedIds([...selectedIds, id]);
+    }
   };
 
   if (error) {
@@ -111,6 +153,23 @@ export default function AdminBrandsPage() {
           <table className="admin-table">
             <thead>
               <tr>
+                <th style={{ width: '48px', textAlign: 'center', verticalAlign: 'middle' }}>
+                  <input
+                    type="checkbox"
+                    checked={isAllSelected}
+                    ref={(el) => {
+                      if (el) el.indeterminate = isSomeSelected;
+                    }}
+                    onChange={handleSelectAll}
+                    style={{
+                      cursor: 'pointer',
+                      accentColor: 'var(--admin-accent, #3d2e24)',
+                      borderRadius: '4px',
+                      width: '16px',
+                      height: '16px',
+                    }}
+                  />
+                </th>
                 <th>{isVi ? 'Thương hiệu' : 'Brand'}</th>
                 <th>{isVi ? 'Xuất xứ' : 'Origin'}</th>
                 <th>{isVi ? 'Trạng thái' : 'Status'}</th>
@@ -121,7 +180,7 @@ export default function AdminBrandsPage() {
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={5}>
+                  <td colSpan={6}>
                     <div className="admin-loading">
                       <Loader2 className="admin-loading__spinner animate-spin" />
                       <p>{isVi ? 'Đang tải danh sách thương hiệu...' : 'Loading brands catalog...'}</p>
@@ -130,7 +189,7 @@ export default function AdminBrandsPage() {
                 </tr>
               ) : !brands?.length ? (
                 <tr>
-                  <td colSpan={5}>
+                  <td colSpan={6}>
                     <div className="admin-empty">
                       <Sparkles className="admin-empty__icon" />
                       <p>{isVi ? 'Chưa có thương hiệu nào được tạo.' : 'No brand entries found.'}</p>
@@ -138,88 +197,473 @@ export default function AdminBrandsPage() {
                   </td>
                 </tr>
               ) : (
-                brands.map((brand) => (
-                  <tr key={brand._id}>
-                    <td>
-                      <div className="admin-table-product">
-                        <div className="admin-table-product__thumb flex items-center justify-center bg-[rgba(255,255,255,0.05)] rounded-xl overflow-hidden relative">
-                          {brand.logo ? (
-                            <Image
-                              src={brand.logo}
-                              alt={brand.name}
-                              fill
-                              sizes="52px"
-                              className="object-cover"
-                            />
-                          ) : (
-                            <Award className="text-[#D4A5A5]" size={22} />
-                          )}
+                brands.map((brand) => {
+                  const isChecked = selectedIds.includes(brand._id);
+                  return (
+                    <tr key={brand._id} style={isChecked ? { background: 'rgba(212, 165, 165, 0.05)' } : undefined}>
+                      <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => handleSelectRow(brand._id)}
+                          style={{
+                            cursor: 'pointer',
+                            accentColor: 'var(--admin-accent, #3d2e24)',
+                            borderRadius: '4px',
+                            width: '16px',
+                            height: '16px',
+                          }}
+                        />
+                      </td>
+                      <td>
+                        <div className="admin-table-product">
+                          <div className="admin-table-product__thumb flex items-center justify-center bg-[rgba(255,255,255,0.05)] rounded-xl overflow-hidden relative">
+                            {brand.logo ? (
+                              <Image
+                                src={brand.logo}
+                                alt={brand.name}
+                                fill
+                                sizes="52px"
+                                className="object-cover"
+                              />
+                            ) : (
+                              <Award className="text-[#D4A5A5]" size={22} />
+                            )}
+                          </div>
+                          <div>
+                            <Link href={`/admin/brands/${brand._id}`}>
+                              <p className="admin-table-product__name hover:underline hover:text-[var(--admin-accent)] transition-colors">{brand.name}</p>
+                            </Link>
+                            <p className="admin-table-product__meta truncate max-w-[300px]">
+                              {brand.description || (isVi ? 'Chưa có mô tả câu chuyện.' : 'No brand description.')}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <Link href={`/admin/brands/${brand._id}`}>
-                            <p className="admin-table-product__name hover:underline hover:text-[var(--admin-accent)] transition-colors">{brand.name}</p>
-                          </Link>
-                          <p className="admin-table-product__meta truncate max-w-[300px]">
-                            {brand.description || (isVi ? 'Chưa có mô tả câu chuyện.' : 'No brand description.')}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-                  <td>
-                    <span className="flex items-center gap-2 text-sm text-[#7A5C5C]">
-                      <Globe size={14} className="text-[#D4A5A5]" />
-                      {brand.origin || (isVi ? 'Chưa cập nhật' : 'Unknown')}
-                    </span>
-                  </td>
-                  <td>
-                    <span
-                      className={`admin-badge ${brand.status === 'active' ? 'admin-badge--ok' : 'admin-badge--low'}`}
-                    >
-                      {brand.status === 'active' 
-                        ? (isVi ? 'Đang hoạt động' : 'Active') 
-                        : (isVi ? 'Tạm ngừng' : 'Inactive')
-                      }
-                    </span>
-                  </td>
-                  <td>
-                    <button
-                      onClick={() => handleToggleFeatured(brand)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition ${
-                        brand.featured 
-                          ? 'bg-[#7A5C5C]/10 text-[#7A5C5C] border border-[#7A5C5C]/20'
-                          : 'bg-gray-100 text-gray-400 border border-gray-200 hover:bg-gray-200'
-                      }`}
-                    >
-                      {brand.featured ? <Check size={12} /> : <X size={12} />}
-                      {brand.featured ? (isVi ? 'Nổi bật' : 'Featured') : (isVi ? 'Thường' : 'Standard')}
-                    </button>
-                  </td>
-                  <td>
-                    <div className="admin-table-actions">
-                      <button
-                        type="button"
-                        className="admin-icon-btn admin-icon-btn--danger"
-                        aria-label={`Xóa ${brand.name}`}
-                        onClick={() => {
-                          const confirmMsg = isVi 
-                            ? `Bạn có chắc chắn muốn xóa thương hiệu "${brand.name}" khỏi hệ thống?`
-                            : `Are you sure you want to remove "${brand.name}" brand?`;
-                          if (confirm(confirmMsg)) {
-                            deleteMutation.mutate(brand._id);
+                      </td>
+                      <td>
+                        <span className="flex items-center gap-2 text-sm text-[#7A5C5C]">
+                          <Globe size={14} className="text-[#D4A5A5]" />
+                          {brand.origin || (isVi ? 'Chưa cập nhật' : 'Unknown')}
+                        </span>
+                      </td>
+                      <td>
+                        <span
+                          className={`admin-badge ${brand.status === 'active' ? 'admin-badge--ok' : 'admin-badge--low'}`}
+                        >
+                          {brand.status === 'active' 
+                            ? (isVi ? 'Đang hoạt động' : 'Active') 
+                            : (isVi ? 'Tạm ngừng' : 'Inactive')
                           }
-                        }}
-                      >
-                        <Trash2 size={17} />
-                      </button>
-                    </div>
-                  </td>
-                  </tr>
-                ))
+                        </span>
+                      </td>
+                      <td>
+                        <button
+                          onClick={() => handleToggleFeatured(brand)}
+                          className={`px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition ${
+                            brand.featured 
+                              ? 'bg-[#7A5C5C]/10 text-[#7A5C5C] border border-[#7A5C5C]/20'
+                              : 'bg-gray-100 text-gray-400 border border-gray-200 hover:bg-gray-200'
+                          }`}
+                        >
+                          {brand.featured ? <Check size={12} /> : <X size={12} />}
+                          {brand.featured ? (isVi ? 'Nổi bật' : 'Featured') : (isVi ? 'Thường' : 'Standard')}
+                        </button>
+                      </td>
+                      <td>
+                        <div className="admin-table-actions">
+                          <button
+                            type="button"
+                            className="admin-icon-btn admin-icon-btn--danger"
+                            aria-label={`Xóa ${brand.name}`}
+                            onClick={() => setBrandToDelete(brand)}
+                          >
+                            <Trash2 size={17} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
         </div>
       </div>
+
+      {/* Stunning Luxury Custom Modal for Deleting Single Brand */}
+      {brandToDelete && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(30, 20, 15, 0.45)',
+          backdropFilter: 'blur(10px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '16px',
+        }}>
+          <div style={{
+            background: 'var(--admin-surface, #ffffff)',
+            border: '1px solid var(--admin-border-subtle, #f0e9e4)',
+            borderRadius: '24px',
+            padding: '28px',
+            maxWidth: '440px',
+            width: '100%',
+            boxShadow: '0 24px 48px rgba(30, 20, 15, 0.15)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '20px',
+          }}>
+            {/* Header */}
+            <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+              <div style={{
+                background: 'rgba(239, 68, 68, 0.1)',
+                borderRadius: '16px',
+                padding: '12px',
+                color: 'var(--admin-danger, #ef4444)',
+                flexShrink: 0,
+              }}>
+                <AlertCircle size={24} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <h3 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 700, color: 'var(--admin-text, #3d2e24)' }}>
+                  {isVi ? 'Xác nhận xóa thương hiệu' : 'Confirm Delete Brand'}
+                </h3>
+                <p style={{ margin: '6px 0 0 0', fontSize: '0.875rem', lineHeight: '1.4', color: 'var(--admin-text-secondary, #6b564c)' }}>
+                  {isVi 
+                    ? `Bạn có chắc chắn muốn xóa vĩnh viễn thương hiệu này? Việc này sẽ xóa logo và các dữ liệu liên quan và không thể hoàn tác.`
+                    : `Are you sure you want to permanently delete this brand? This will erase the logo and all associated brand data and cannot be undone.`}
+                </p>
+              </div>
+            </div>
+
+            {/* Brand details preview card */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              background: 'var(--admin-surface-muted, #faf8f6)',
+              border: '1px solid var(--admin-border-subtle, #f0e9e4)',
+              borderRadius: '16px',
+              padding: '12px',
+            }}>
+              <div style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '12px',
+                overflow: 'hidden',
+                position: 'relative',
+                background: 'rgba(255, 255, 255, 0.1)',
+                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                {brandToDelete.logo ? (
+                  <Image
+                    src={brandToDelete.logo}
+                    alt={brandToDelete.name}
+                    fill
+                    sizes="48px"
+                    className="object-cover"
+                  />
+                ) : (
+                  <Award className="text-[#D4A5A5]" size={20} />
+                )}
+              </div>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <p style={{ margin: 0, fontSize: '0.8125rem', fontWeight: 600, color: 'var(--admin-text, #3d2e24)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {brandToDelete.name}
+                </p>
+                <p style={{ margin: '2px 0 0 0', fontSize: '0.75rem', color: 'var(--admin-text-muted, #9a857c)' }}>
+                  {brandToDelete.origin || (isVi ? 'Không rõ xuất xứ' : 'Unknown Origin')}
+                </p>
+              </div>
+            </div>
+
+            {/* Buttons */}
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '4px' }}>
+              <button
+                type="button"
+                disabled={deleteMutation.isPending}
+                onClick={() => setBrandToDelete(null)}
+                style={{
+                  flex: 1,
+                  background: 'transparent',
+                  border: '1px solid var(--admin-border, #e8e0da)',
+                  borderRadius: '12px',
+                  padding: '12px 20px',
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  color: 'var(--admin-text-secondary, #6b564c)',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  if (!deleteMutation.isPending) {
+                    e.currentTarget.style.background = 'rgba(61, 46, 36, 0.03)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent';
+                }}
+              >
+                {isVi ? 'Hủy' : 'Cancel'}
+              </button>
+              <button
+                type="button"
+                disabled={deleteMutation.isPending}
+                onClick={() => {
+                  deleteMutation.mutate(brandToDelete._id);
+                }}
+                style={{
+                  flex: 1,
+                  background: 'var(--admin-danger, #ef4444)',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '12px',
+                  padding: '12px 20px',
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  boxShadow: '0 4px 12px rgba(239, 68, 68, 0.2)',
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  if (!deleteMutation.isPending) {
+                    e.currentTarget.style.transform = 'translateY(-1px)';
+                    e.currentTarget.style.background = '#dc2626';
+                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(239, 68, 68, 0.3)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.background = 'var(--admin-danger, #ef4444)';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(239, 68, 68, 0.2)';
+                }}
+              >
+                {deleteMutation.isPending ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    {isVi ? 'Đang xóa...' : 'Deleting...'}
+                  </>
+                ) : (
+                  isVi ? 'Xác nhận xóa' : 'Confirm Delete'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Gorgeous Floating Glassmorphic Bulk Action Bar */}
+      {selectedIds.length > 0 && (
+        <div style={{
+          position: 'fixed',
+          bottom: '24px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: 'rgba(30, 20, 15, 0.9)',
+          backdropFilter: 'blur(16px)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRadius: '16px',
+          padding: '12px 24px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '20px',
+          boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3)',
+          zIndex: 100,
+          color: '#ffffff',
+        }}>
+          <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#f0e9e4' }}>
+            {isVi ? `Đã chọn ${selectedIds.length} thương hiệu` : `${selectedIds.length} brands selected`}
+          </span>
+          <div style={{ width: '1px', height: '16px', background: 'rgba(255, 255, 255, 0.15)' }} />
+          <button
+            type="button"
+            onClick={() => setShowBulkDeleteModal(true)}
+            style={{
+              background: 'rgba(239, 68, 68, 0.2)',
+              border: '1px solid rgba(239, 68, 68, 0.4)',
+              color: '#f87171',
+              borderRadius: '8px',
+              padding: '6px 16px',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(239, 68, 68, 0.3)';
+              e.currentTarget.style.transform = 'translateY(-1px)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)';
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
+          >
+            <Trash2 size={14} />
+            {isVi ? 'Xóa mục đã chọn' : 'Delete Selected'}
+          </button>
+        </div>
+      )}
+
+      {/* Stunning Custom Luxury Modal for Bulk Deleting Brands */}
+      {showBulkDeleteModal && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(30, 20, 15, 0.45)',
+          backdropFilter: 'blur(10px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '16px',
+        }}>
+          <div style={{
+            background: 'var(--admin-surface, #ffffff)',
+            border: '1px solid var(--admin-border-subtle, #f0e9e4)',
+            borderRadius: '24px',
+            padding: '28px',
+            maxWidth: '480px',
+            width: '100%',
+            boxShadow: '0 24px 48px rgba(30, 20, 15, 0.15)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '20px',
+          }}>
+            {/* Header */}
+            <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+              <div style={{
+                background: 'rgba(239, 68, 68, 0.1)',
+                borderRadius: '16px',
+                padding: '12px',
+                color: 'var(--admin-danger, #ef4444)',
+                flexShrink: 0,
+              }}>
+                <AlertCircle size={24} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <h3 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 700, color: 'var(--admin-text, #3d2e24)' }}>
+                  {isVi ? 'Xác nhận xóa hàng loạt' : 'Confirm Bulk Deletion'}
+                </h3>
+                <p style={{ margin: '6px 0 0 0', fontSize: '0.875rem', lineHeight: '1.4', color: 'var(--admin-text-secondary, #6b564c)' }}>
+                  {isVi 
+                    ? `Bạn có chắc chắn muốn xóa vĩnh viễn ${selectedIds.length} thương hiệu đã chọn? Thao tác này sẽ dọn dẹp sạch logo của chúng trên Cloud và không thể hoàn tác.`
+                    : `Are you sure you want to permanently delete the ${selectedIds.length} selected brands? This will clean up all associated cloud logos and cannot be undone.`}
+                </p>
+              </div>
+            </div>
+
+            {/* Scrollable list of selected items */}
+            <div style={{
+              background: 'var(--admin-surface-muted, #faf8f6)',
+              border: '1px solid var(--admin-border-subtle, #f0e9e4)',
+              borderRadius: '12px',
+              padding: '12px',
+              maxHeight: '130px',
+              overflowY: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px',
+            }}>
+              {brands?.filter(b => selectedIds.includes(b._id)).map((b) => (
+                <div key={b._id} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.75rem', color: 'var(--admin-text-secondary, #6b564c)' }}>
+                  <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--admin-accent-hover, #D4A5A5)' }} />
+                  <span style={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {b.name}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* Buttons */}
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '4px' }}>
+              <button
+                type="button"
+                disabled={bulkDeleteMutation.isPending}
+                onClick={() => setShowBulkDeleteModal(false)}
+                style={{
+                  flex: 1,
+                  background: 'transparent',
+                  border: '1px solid var(--admin-border, #e8e0da)',
+                  borderRadius: '12px',
+                  padding: '12px 20px',
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  color: 'var(--admin-text-secondary, #6b564c)',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  if (!bulkDeleteMutation.isPending) {
+                    e.currentTarget.style.background = 'rgba(61, 46, 36, 0.03)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent';
+                }}
+              >
+                {isVi ? 'Hủy' : 'Cancel'}
+              </button>
+              <button
+                type="button"
+                disabled={bulkDeleteMutation.isPending}
+                onClick={() => {
+                  bulkDeleteMutation.mutate(selectedIds);
+                }}
+                style={{
+                  flex: 1,
+                  background: 'var(--admin-danger, #ef4444)',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '12px',
+                  padding: '12px 20px',
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  boxShadow: '0 4px 12px rgba(239, 68, 68, 0.2)',
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  if (!bulkDeleteMutation.isPending) {
+                    e.currentTarget.style.transform = 'translateY(-1px)';
+                    e.currentTarget.style.background = '#dc2626';
+                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(239, 68, 68, 0.3)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.background = 'var(--admin-danger, #ef4444)';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(239, 68, 68, 0.2)';
+                }}
+              >
+                {bulkDeleteMutation.isPending ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    {isVi ? 'Đang xóa...' : 'Deleting...'}
+                  </>
+                ) : (
+                  isVi ? 'Xác nhận xóa' : 'Confirm Delete'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

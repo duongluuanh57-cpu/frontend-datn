@@ -38,10 +38,10 @@ export default function AdminTaxonomyPage() {
 
   // Define tab configuration
   const tabs = [
-    { id: 'tags' as TabType, labelVi: 'Quản lý Tag', labelEn: 'Tag Management', apiPath: '/tags', queryKey: 'admin-tags', icon: Hash },
-    { id: 'notes' as TabType, labelVi: 'Quản lý Nhóm hương', labelEn: 'Scent Groups', apiPath: '/scent-groups', queryKey: 'admin-scent-groups', icon: Layers },
-    { id: 'concentrations' as TabType, labelVi: 'Quản lý Nồng độ', labelEn: 'Concentration Levels', apiPath: '/concentrations', queryKey: 'admin-concentrations', icon: Sliders },
-    { id: 'segments' as TabType, labelVi: 'Quản lý Phân khúc nhóm', labelEn: 'Brand Segments', apiPath: '/segments', queryKey: 'admin-segments', icon: Sparkles },
+    { id: 'tags' as TabType, labelVi: 'Quản lý Tag', labelEn: 'Tag Management', apiPath: '/tags', queryKey: 'admin-tags', taxonomyType: null, icon: Hash },
+    { id: 'notes' as TabType, labelVi: 'Quản lý Nhóm hương', labelEn: 'Scent Groups', apiPath: '/taxonomies', queryKey: 'admin-scent-groups', taxonomyType: 'scent_group', icon: Layers },
+    { id: 'concentrations' as TabType, labelVi: 'Quản lý Nồng độ', labelEn: 'Concentration Levels', apiPath: '/taxonomies', queryKey: 'admin-concentrations', taxonomyType: 'concentration', icon: Sliders },
+    { id: 'segments' as TabType, labelVi: 'Quản lý Phân khúc nhóm', labelEn: 'Brand Segments', apiPath: '/taxonomies', queryKey: 'admin-segments', taxonomyType: 'segment', icon: Sparkles },
   ];
 
   const currentTabConfig = tabs.find(t => t.id === activeTab)!;
@@ -50,7 +50,10 @@ export default function AdminTaxonomyPage() {
   const { data: items, isLoading, error } = useQuery({
     queryKey: [currentTabConfig.queryKey],
     queryFn: async () => {
-      const { data } = await api.get(currentTabConfig.apiPath);
+      const url = currentTabConfig.taxonomyType 
+        ? `${currentTabConfig.apiPath}?type=${currentTabConfig.taxonomyType}` 
+        : currentTabConfig.apiPath;
+      const { data } = await api.get(url);
       return data.data as TaxonomyItem[];
     },
   });
@@ -104,12 +107,16 @@ export default function AdminTaxonomyPage() {
 
     setIsSaving(true);
     try {
-      const payload = {
+      const payload: any = {
         name: formData.name.trim(),
         slug: formData.slug.trim() || undefined, // empty string will fall back to server-side slugification
         status: formData.status,
         description: formData.description.trim() || undefined
       };
+
+      if (currentTabConfig.taxonomyType) {
+        payload.type = currentTabConfig.taxonomyType;
+      }
 
       if (editingItem) {
         // Update
