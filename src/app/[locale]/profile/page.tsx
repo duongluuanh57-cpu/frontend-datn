@@ -469,7 +469,7 @@ export default function ProfilePage() {
                           )}
                         </div>
                       ) : (
-                        <div className="profile-card-value" style={{ justifyContent: 'space-between', width: '100%' }}>
+                        <div className="profile-card-value" style={{ justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
                           <span>{user.email}</span>
                           <button
                             onClick={() => {
@@ -478,10 +478,10 @@ export default function ProfilePage() {
                               setEmailSuccess(null);
                             }}
                             className="btn-profile-secondary"
-                            style={{ padding: '6px 12px', borderRadius: '10px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                            style={{ padding: '8px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', flexShrink: 0 }}
+                            title="Chỉnh sửa"
                           >
-                            <Edit2 size={12} />
-                            Chỉnh sửa
+                            <Edit2 size={14} />
                           </button>
                         </div>
                       )}
@@ -538,10 +538,10 @@ export default function ProfilePage() {
                           setDetailsSuccess(null);
                         }}
                         className="btn-profile-secondary"
-                        style={{ padding: '8px 16px', borderRadius: '12px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+                        style={{ padding: '8px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', flexShrink: 0 }}
+                        title="Cập nhật"
                       >
                         <Edit2 size={14} />
-                        Cập nhật
                       </button>
                     )}
                   </div>
