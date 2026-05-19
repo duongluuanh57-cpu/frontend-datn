@@ -25,10 +25,15 @@ export default function EditBrandPage({ params }: PageProps) {
     origin: '',
     logo: '',
     description: '',
+    gender: '',
+    scentGroup: '',
+    concentration: '',
+    group: '',
     status: 'active' as 'active' | 'inactive',
     featured: false
   });
   const [isAiGenerating, setIsAiGenerating] = useState(false);
+  const [isLogoUploading, setIsLogoUploading] = useState(false);
 
   // Fetch brand data
   const { data: brand, isLoading, error } = useQuery({
@@ -48,6 +53,10 @@ export default function EditBrandPage({ params }: PageProps) {
         origin: brand.origin || '',
         logo: brand.logo || '',
         description: brand.description || '',
+        gender: brand.gender || '',
+        scentGroup: brand.scentGroup || '',
+        concentration: brand.concentration || '',
+        group: brand.group || '',
         status: brand.status || 'active',
         featured: brand.featured || false
       });
@@ -66,6 +75,10 @@ export default function EditBrandPage({ params }: PageProps) {
           origin: info.origin || prev.origin,
           logo: info.logo || prev.logo,
           description: info.description || prev.description,
+          gender: info.gender || prev.gender,
+          scentGroup: info.scentGroup || prev.scentGroup,
+          concentration: info.concentration || prev.concentration,
+          group: info.group || prev.group,
         }));
       }
     } catch (err) {
@@ -144,11 +157,15 @@ export default function EditBrandPage({ params }: PageProps) {
         <button
           type="submit"
           onClick={handleSubmit}
-          disabled={updateMutation.isPending}
-          className="admin-btn-submit"
+          disabled={updateMutation.isPending || isLogoUploading}
+          className="admin-btn-submit disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {updateMutation.isPending && <Loader2 className="animate-spin" size={14} />}
-          {isVi ? 'Lưu thay đổi' : 'Save Changes'}
+          {updateMutation.isPending || isLogoUploading ? (
+            <Loader2 className="animate-spin" size={14} />
+          ) : null}
+          {isLogoUploading 
+            ? (isVi ? 'Đang tải ảnh...' : 'Uploading logo...')
+            : (isVi ? 'Lưu thay đổi' : 'Save Changes')}
         </button>
       </div>
 
@@ -165,7 +182,11 @@ export default function EditBrandPage({ params }: PageProps) {
             </div>
           </div>
 
-          <ImageUpload value={formData.logo} onChange={(url) => setFormData(prev => ({ ...prev, logo: url }))} />
+          <ImageUpload 
+            value={formData.logo} 
+            onChange={(url) => setFormData(prev => ({ ...prev, logo: url }))} 
+            onUploadStateChange={(uploading) => setIsLogoUploading(uploading)}
+          />
 
           <div className="admin-form-fields" style={{ marginTop: 10 }}>
             <div className="admin-field">
@@ -248,18 +269,36 @@ export default function EditBrandPage({ params }: PageProps) {
               </div>
             </div>
 
-            <div className="admin-field">
-              <label className="admin-label" htmlFor="origin">
-                {isVi ? 'Quốc gia xuất xứ' : 'Country of Origin'}
-              </label>
-              <input
-                id="origin"
-                type="text"
-                value={formData.origin}
-                onChange={(e) => setFormData({ ...formData, origin: e.target.value })}
-                placeholder="VD: France, Italy, United Kingdom..."
-                className="admin-input"
-              />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              {/* Quốc gia xuất xứ */}
+              <div className="admin-field">
+                <label className="admin-label" htmlFor="origin">
+                  {isVi ? 'Quốc gia xuất xứ' : 'Country of Origin'}
+                </label>
+                <input
+                  id="origin"
+                  type="text"
+                  value={formData.origin}
+                  onChange={(e) => setFormData({ ...formData, origin: e.target.value })}
+                  placeholder="VD: France, Italy, United Kingdom..."
+                  className="admin-input"
+                />
+              </div>
+
+              {/* Giới tính */}
+              <div className="admin-field">
+                <label className="admin-label" htmlFor="gender">
+                  {isVi ? 'Giới tính' : 'Gender'}
+                </label>
+                <input
+                  id="gender"
+                  type="text"
+                  value={formData.gender}
+                  onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                  placeholder={isVi ? 'VD: Nam, Nữ, Unisex' : 'e.g., Men, Women, Unisex'}
+                  className="admin-input"
+                />
+              </div>
             </div>
 
             <div className="admin-field" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>

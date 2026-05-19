@@ -1,5 +1,57 @@
 /* L'essence — Admin design system */
 
+/* Custom Cursor Support inside Admin Panel */
+.admin-shell, .admin-shell * {
+  cursor: url('/cursor.png') 0 0, auto;
+}
+
+.admin-shell a,
+.admin-shell button,
+.admin-shell input[type="button"],
+.admin-shell input[type="submit"],
+.admin-shell select,
+.admin-shell label,
+.admin-shell [role="button"],
+.admin-shell [onclick],
+.admin-shell .clickable,
+.admin-shell .admin-select,
+.admin-shell .admin-btn-submit,
+.admin-shell .admin-upload__dropzone,
+.admin-shell .admin-upload__remove-btn,
+.admin-shell .admin-status-pill,
+.admin-shell .admin-icon-btn,
+.admin-shell .admin-nav-item,
+.admin-shell .admin-nav-item *,
+.admin-shell .admin-sidebar__toggle,
+.admin-shell .admin-sidebar__toggle *,
+.admin-shell .admin-logout-btn,
+.admin-shell .admin-logout-btn *,
+.admin-shell .admin-header__avatar,
+.admin-shell .admin-header__avatar *,
+.admin-shell .admin-header__exit,
+.admin-shell .admin-header__exit * {
+  cursor: url('/pointer.png') 0 0, pointer !important;
+}
+
+/* Ensure read-only input elements representing action fields also get the pointer cursor */
+.admin-shell input[readonly],
+.admin-shell .admin-input[readonly] {
+  cursor: url('/pointer.png') 0 0, pointer !important;
+}
+
+/* Standard text inputs get the normal custom cursor, but on focus/active get text cursor for selection */
+.admin-shell input:not([readonly]),
+.admin-shell textarea {
+  cursor: url('/cursor.png') 0 0, text;
+}
+
+.admin-shell input:not([readonly]):focus,
+.admin-shell textarea:focus,
+.admin-shell input:not([readonly]):active,
+.admin-shell textarea:active {
+  cursor: text !important;
+}
+
 .admin-shell {
   --admin-bg: #f5f1ed;
   --admin-surface: #ffffff;
@@ -27,7 +79,8 @@
   --admin-content-max: 1280px;
 
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   background: var(--admin-bg);
   color: var(--admin-text);
   font-family: var(--font-inter), system-ui, sans-serif;
@@ -225,9 +278,10 @@
 /* —— Main —— */
 .admin-main {
   flex: 1;
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   transition: margin-inline-start 0.4s var(--admin-ease);
 }
 
@@ -450,15 +504,19 @@
 
 .admin-content {
   flex: 1;
-  padding: 28px 32px 40px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 24px 32px 40px;
   max-width: calc(var(--admin-content-max) + 64px);
   width: 100%;
   margin-inline: auto;
 }
 
 .admin-content:has(.admin-form-page) {
-  padding-top: 14px;
-  padding-bottom: 14px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  overflow: hidden;
+  height: calc(100vh - var(--admin-header-h));
 }
 
 /* —— Dashboard —— */
@@ -1290,8 +1348,12 @@
 .admin-btn-submit {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  padding: 10px 22px;
+  height: 40px;
+  min-height: 40px;
+  padding: 0 24px;
+  box-sizing: border-box;
   border: none;
   border-radius: 999px;
   background: var(--admin-accent-hover);
@@ -1302,7 +1364,8 @@
   text-transform: uppercase;
   cursor: pointer;
   box-shadow: var(--admin-shadow-sm);
-  transition: background 0.2s, opacity 0.2s;
+  transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .admin-btn-submit:hover:not(:disabled) {
@@ -1310,15 +1373,42 @@
 }
 
 .admin-btn-submit:disabled {
-  opacity: 0.55;
+  background: var(--admin-accent);
+  opacity: 0.75;
   cursor: not-allowed;
+}
+
+/* Luxury loading spinner animation */
+@keyframes admin-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.admin-loading__spinner {
+  animation: admin-spin 1.2s linear infinite;
+  flex-shrink: 0;
+}
+
+.admin-btn__spinner {
+  width: 14px !important;
+  height: 14px !important;
+  min-width: 14px !important;
+  min-height: 14px !important;
+  margin: 0 !important;
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+  animation: admin-spin 0.8s linear infinite !important;
+  flex-shrink: 0 !important;
+  display: inline-block !important;
+  vertical-align: middle !important;
 }
 
 .admin-form-grid {
   display: grid;
   grid-template-columns: 280px 1fr 320px;
-  gap: 12px;
+  gap: 10px;
   align-items: stretch;
+  height: calc(100vh - var(--admin-header-h) - 105px);
 }
 
 @media (max-width: 1200px) {
@@ -1345,15 +1435,43 @@
   box-shadow: var(--admin-shadow-sm);
   display: flex;
   flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.admin-form-card::-webkit-scrollbar {
+  width: 6px;
+}
+
+.admin-form-card::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-form-card::-webkit-scrollbar-thumb {
+  background: rgba(74, 55, 40, 0.12);
+  border-radius: 99px;
+}
+
+.admin-form-card::-webkit-scrollbar-thumb:hover {
+  background: rgba(74, 55, 40, 0.25);
 }
 
 .admin-form-card__head {
+  position: sticky;
+  top: -14px;
+  margin-top: -14px;
+  padding-top: 14px;
+  background: var(--admin-surface);
+  z-index: 10;
   display: flex;
   align-items: center;
   gap: 10px;
   margin-bottom: 12px;
   padding-bottom: 8px;
   border-bottom: 1px solid var(--admin-border-subtle);
+  flex-shrink: 0;
 }
 
 .admin-form-card__head-icon {
@@ -1534,7 +1652,7 @@
   position: relative;
   width: 100%;
   aspect-ratio: 3 / 4;
-  max-height: 200px;
+  max-height: 150px;
   border-radius: var(--admin-radius);
   overflow: hidden;
   background: var(--admin-surface-muted);
@@ -1544,7 +1662,7 @@
 .admin-upload__preview img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .admin-upload__overlay {

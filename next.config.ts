@@ -7,11 +7,11 @@ const withNextIntl = createNextIntlPlugin('./src/i18n.ts');
 const nextConfig: NextConfig = {
   /* config options here */
   images: {
-    qualities: [70, 75, 80, 90],
+    qualities: [70, 75, 80, 90, 95, 100],
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'i.ibb.co',
+        hostname: '*.r2.dev',
         pathname: '/**',
       },
     ],

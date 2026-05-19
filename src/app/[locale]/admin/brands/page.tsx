@@ -156,70 +156,63 @@ export default function AdminBrandsPage() {
                           )}
                         </div>
                         <div>
-                          <p className="admin-table-product__name">{brand.name}</p>
+                          <Link href={`/admin/brands/${brand._id}`}>
+                            <p className="admin-table-product__name hover:underline hover:text-[var(--admin-accent)] transition-colors">{brand.name}</p>
+                          </Link>
                           <p className="admin-table-product__meta truncate max-w-[300px]">
                             {brand.description || (isVi ? 'Chưa có mô tả câu chuyện.' : 'No brand description.')}
                           </p>
                         </div>
                       </div>
                     </td>
-                    <td>
-                      <span className="flex items-center gap-2 text-sm text-[#7A5C5C]">
-                        <Globe size={14} className="text-[#D4A5A5]" />
-                        {brand.origin || (isVi ? 'Chưa cập nhật' : 'Unknown')}
-                      </span>
-                    </td>
-                    <td>
-                      <span
-                        className={`admin-badge ${brand.status === 'active' ? 'admin-badge--ok' : 'admin-badge--low'}`}
-                      >
-                        {brand.status === 'active' 
-                          ? (isVi ? 'Đang hoạt động' : 'Active') 
-                          : (isVi ? 'Tạm ngừng' : 'Inactive')
-                        }
-                      </span>
-                    </td>
-                    <td>
+                  <td>
+                    <span className="flex items-center gap-2 text-sm text-[#7A5C5C]">
+                      <Globe size={14} className="text-[#D4A5A5]" />
+                      {brand.origin || (isVi ? 'Chưa cập nhật' : 'Unknown')}
+                    </span>
+                  </td>
+                  <td>
+                    <span
+                      className={`admin-badge ${brand.status === 'active' ? 'admin-badge--ok' : 'admin-badge--low'}`}
+                    >
+                      {brand.status === 'active' 
+                        ? (isVi ? 'Đang hoạt động' : 'Active') 
+                        : (isVi ? 'Tạm ngừng' : 'Inactive')
+                      }
+                    </span>
+                  </td>
+                  <td>
+                    <button
+                      onClick={() => handleToggleFeatured(brand)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition ${
+                        brand.featured 
+                          ? 'bg-[#7A5C5C]/10 text-[#7A5C5C] border border-[#7A5C5C]/20'
+                          : 'bg-gray-100 text-gray-400 border border-gray-200 hover:bg-gray-200'
+                      }`}
+                    >
+                      {brand.featured ? <Check size={12} /> : <X size={12} />}
+                      {brand.featured ? (isVi ? 'Nổi bật' : 'Featured') : (isVi ? 'Thường' : 'Standard')}
+                    </button>
+                  </td>
+                  <td>
+                    <div className="admin-table-actions">
                       <button
-                        onClick={() => handleToggleFeatured(brand)}
-                        className={`px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition ${
-                          brand.featured 
-                            ? 'bg-[#7A5C5C]/10 text-[#7A5C5C] border border-[#7A5C5C]/20'
-                            : 'bg-gray-100 text-gray-400 border border-gray-200 hover:bg-gray-200'
-                        }`}
+                        type="button"
+                        className="admin-icon-btn admin-icon-btn--danger"
+                        aria-label={`Xóa ${brand.name}`}
+                        onClick={() => {
+                          const confirmMsg = isVi 
+                            ? `Bạn có chắc chắn muốn xóa thương hiệu "${brand.name}" khỏi hệ thống?`
+                            : `Are you sure you want to remove "${brand.name}" brand?`;
+                          if (confirm(confirmMsg)) {
+                            deleteMutation.mutate(brand._id);
+                          }
+                        }}
                       >
-                        {brand.featured ? <Check size={12} /> : <X size={12} />}
-                        {brand.featured ? (isVi ? 'Nổi bật' : 'Featured') : (isVi ? 'Thường' : 'Standard')}
+                        <Trash2 size={17} />
                       </button>
-                    </td>
-                    <td>
-                      <div className="admin-table-actions">
-                        <Link href={`/admin/brands/${brand._id}`}>
-                          <button
-                            type="button"
-                            className="admin-icon-btn"
-                            aria-label={`Sửa ${brand.name}`}
-                          >
-                            <Pencil size={17} />
-                          </button>
-                        </Link>
-                        <button
-                          type="button"
-                          className="admin-icon-btn admin-icon-btn--danger"
-                          aria-label={`Xóa ${brand.name}`}
-                          onClick={() => {
-                            const confirmMsg = isVi 
-                              ? `Bạn có chắc chắn muốn xóa thương hiệu "${brand.name}" khỏi hệ thống?`
-                              : `Are you sure you want to remove "${brand.name}" brand?`;
-                            if (confirm(confirmMsg)) {
-                              deleteMutation.mutate(brand._id);
-                            }
-                          }}
-                        >
-                          <Trash2 size={17} />
-                        </button>
-                      </div>
-                    </td>
+                    </div>
+                  </td>
                   </tr>
                 ))
               )}

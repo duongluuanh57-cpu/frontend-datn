@@ -4,6 +4,12 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Hide body initially to prevent flash before preloader */
+body {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
 /* Design System Component Classes - From MASTER.md */
 @layer components {
   /* Primary Button */
@@ -266,49 +272,41 @@ a {
   .shadow-xl { box-shadow: var(--shadow-xl); }
 }
 
-/* Custom Cursor - Elite SaaS 2026 Standards */
+/* Custom Cursor - Elite SaaS 2026 Standards (Performance-Optimized Inheritance) */
 @layer base {
-  /* Default cursor for everything */
+  /* Apply to root elements and let inheritance do the work */
   html,
-  html *,
-  html *::before,
-  html *::after {
-    cursor: url('/cursor.png') 0 0, auto !important;
+  body {
+    cursor: url('/cursor.png') 0 0, auto;
   }
 
-  /* Pointer cursor for clickable elements and interactive inputs */
-  html a, 
-  html a *,
-  html button, 
-  html button *,
-  html input,
-  html textarea,
-  html select,
-  html label,
-  html [role="button"],
-  html [role="button"] *,
-  html [onclick],
-  html .clickable,
-  html .clickable * {
-    cursor: url('/pointer.png') 0 0, pointer !important;
+  /* Interactive elements naturally inherit pointer custom cursor */
+  a, 
+  button, 
+  input, 
+  textarea, 
+  select, 
+  label, 
+  [role="button"], 
+  [onclick], 
+  .clickable {
+    cursor: url('/pointer.png') 0 0, pointer;
   }
 
-  /* REFINEMENT: Return to standard text cursor when focused on inputs for usability */
-  html input:focus,
-  html textarea:focus,
-  html input:active,
-  html textarea:active {
-    cursor: text !important;
+  /* Children of interactive elements inherit the pointer cursor naturally */
+  a *,
+  button *,
+  [role="button"] *,
+  .clickable * {
+    cursor: inherit;
   }
 
-  /* Specialized pointer for hover states */
-  html a:hover,
-  html a:hover *,
-  html button:hover,
-  html button:hover *,
-  html [role="button"]:hover,
-  html [role="button"]:hover * {
-    cursor: url('/pointer.png') 0 0, pointer !important;
+  /* Return to standard text cursor inside active inputs for usability */
+  input:focus,
+  textarea:focus,
+  input:active,
+  textarea:active {
+    cursor: text;
   }
 }
 

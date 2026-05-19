@@ -78,7 +78,7 @@ export function BrandUsp() {
   };
 
   return (
-    <section className="relative w-full bg-transparent pt-4 pb-10 lg:pt-6 lg:pb-14 overflow-hidden">
+    <section className="relative w-full bg-transparent pt-12 pb-10 lg:pt-20 lg:pb-14 overflow-hidden">
       
       {/* Decorative Liquid Glass Glowing Blobs in the background */}
       <div className="absolute top-1/2 left-1/4 -z-10 h-72 w-72 -translate-y-1/2 rounded-full bg-[#D4A5A5]/8 blur-[80px] pointer-events-none" />

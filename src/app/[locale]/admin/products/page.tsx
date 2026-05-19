@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import api from '@/lib/api';
-import { Plus, Pencil, Trash2, Loader2, Sparkles, AlertCircle, Search } from 'lucide-react';
+import api, { resolveImageUrl } from '@/lib/api';
+import { Plus, Pencil, Trash2, Loader2, Sparkles, AlertCircle, Search, ChevronDown, X } from 'lucide-react';
 import Image from 'next/image';
 import { useTranslations, useLocale } from 'next-intl';
 import { Link } from '@/navigation';
@@ -50,6 +50,9 @@ export default function AdminProductsPage() {
   const [stockFilter, setStockFilter] = useState('all');
   const [selectedTag, setSelectedTag] = useState('all');
   const [sortBy, setSortBy] = useState('bestSeller'); // Default sorted by Best Selling!
+  const [isBrandDropdownOpen, setIsBrandDropdownOpen] = useState(false);
+  const [brandSearchQuery, setBrandSearchQuery] = useState('');
+  const brandDropdownRef = useRef<HTMLDivElement>(null);
 
   const { data: products, isLoading, error } = useQuery({
     queryKey: ['admin-products'],
@@ -81,6 +84,23 @@ export default function AdminProductsPage() {
       ].filter(Boolean)))
     : (products ? Array.from(new Set(products.map(p => p.brand).filter(Boolean))) : []);
 
+  // Filter brands based on search query
+  const filteredBrands = brands.filter(brand => 
+    brand.toLowerCase().includes(brandSearchQuery.toLowerCase())
+  );
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (brandDropdownRef.current && !brandDropdownRef.current.contains(event.target as Node)) {
+        setIsBrandDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const filteredProducts = products
     ? products
         .filter((product) => {
@@ -106,9 +126,7 @@ export default function AdminProductsPage() {
 
           if (stockFilter === 'inStock' && product.quantityInStock <= 0) return false;
           if (stockFilter === 'lowStock' && (product.quantityInStock <= 0 || product.quantityInStock >= 10)) return false;
-          if (stockFilter === 'outOfStock' && product.quantityInStock > 0) return false;
-
-          if (selectedTag !== 'all' && product.tag !== selectedTag) return false;
+          if (selectedTag !== 'all' && (!product.tag || !product.tag.split(',').map(s => s.trim().toLowerCase()).includes(selectedTag.toLowerCase()))) return false;
 
           return true;
         })
@@ -274,40 +292,184 @@ export default function AdminProductsPage() {
             })}
           </div>
 
-          {/* Dropdown Filters (Stock & Brand) */}
-          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-            {/* Brand Autocomplete Input with Dropdown suggestions */}
-            <div style={{ position: 'relative' }}>
-              <input
-                type="text"
-                list="brand-suggestions"
-                placeholder={isVi ? 'Thương hiệu...' : 'Brand...'}
-                value={selectedBrand}
-                onChange={(e) => setSelectedBrand(e.target.value)}
-                style={{
-                  padding: '8px 12px',
-                  borderRadius: 'var(--admin-radius-md)',
-                  background: 'var(--admin-surface-muted)',
-                  border: '1px solid var(--admin-border-subtle)',
-                  color: 'var(--admin-text)',
-                  fontSize: '0.75rem',
-                  outline: 'none',
-                  width: '180px',
-                  transition: 'all 0.2s',
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = 'var(--admin-accent-hover, #D4A5A5)';
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = 'var(--admin-border-subtle)';
-                }}
-              />
-              <datalist id="brand-suggestions">
-                {brands.map((br) => (
-                  <option key={br} value={br} />
-                ))}
-              </datalist>
-            </div>
+          {/* Dropdown Filters (Stock & Brand) + Clear All Button */}
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+            {/* Brand Custom Dropdown */}
+            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+              <div ref={brandDropdownRef} style={{ position: 'relative' }}>
+                <button
+                  type="button"
+                  onClick={() => setIsBrandDropdownOpen(!isBrandDropdownOpen)}
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: 'var(--admin-radius-md)',
+                    background: 'var(--admin-surface-muted)',
+                    border: '1px solid var(--admin-border-subtle)',
+                    color: selectedBrand ? 'var(--admin-text)' : 'var(--admin-text-muted)',
+                    fontSize: '0.75rem',
+                    outline: 'none',
+                    width: '180px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    transition: 'all 0.2s',
+                    fontWeight: selectedBrand ? 500 : 400,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--admin-accent-hover, #D4A5A5)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--admin-border-subtle)';
+                  }}
+                >
+                  <span style={{ 
+                    overflow: 'hidden', 
+                    textOverflow: 'ellipsis', 
+                    whiteSpace: 'nowrap',
+                    flex: 1,
+                    textAlign: 'left'
+                  }}>
+                    {selectedBrand || (isVi ? 'Thương hiệu...' : 'Brand...')}
+                  </span>
+                  <ChevronDown 
+                    size={14} 
+                    style={{ 
+                      transition: 'transform 0.2s',
+                      transform: isBrandDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                      flexShrink: 0,
+                      marginLeft: '4px'
+                    }} 
+                  />
+                </button>
+
+                {isBrandDropdownOpen && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 'calc(100% + 4px)',
+                      left: 0,
+                      width: '240px',
+                      maxHeight: '280px',
+                      background: 'var(--admin-surface)',
+                      border: '1px solid var(--admin-border)',
+                      borderRadius: 'var(--admin-radius-md)',
+                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                      zIndex: 1000,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    {/* Search input inside dropdown */}
+                    <div style={{ padding: '8px', borderBottom: '1px solid var(--admin-border-subtle)' }}>
+                      <input
+                        type="text"
+                        placeholder={isVi ? 'Tìm thương hiệu...' : 'Search brand...'}
+                        value={brandSearchQuery}
+                        onChange={(e) => setBrandSearchQuery(e.target.value)}
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                          width: '100%',
+                          padding: '6px 10px',
+                          borderRadius: 'var(--admin-radius-sm)',
+                          background: 'var(--admin-surface-muted)',
+                          border: '1px solid var(--admin-border-subtle)',
+                          color: 'var(--admin-text)',
+                          fontSize: '0.75rem',
+                          outline: 'none',
+                        }}
+                      />
+                    </div>
+
+                    {/* Scrollable brand list */}
+                    <div
+                      style={{
+                        overflowY: 'auto',
+                        maxHeight: '220px',
+                        padding: '4px',
+                      }}
+                    >
+                      {/* Clear selection option */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedBrand('');
+                          setBrandSearchQuery('');
+                          setIsBrandDropdownOpen(false);
+                        }}
+                        style={{
+                          width: '100%',
+                          padding: '8px 12px',
+                          textAlign: 'left',
+                          background: !selectedBrand ? 'rgba(212, 165, 165, 0.1)' : 'transparent',
+                          border: 'none',
+                          borderRadius: 'var(--admin-radius-sm)',
+                          color: 'var(--admin-text-muted)',
+                          fontSize: '0.75rem',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s',
+                          fontStyle: 'italic',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = 'rgba(212, 165, 165, 0.15)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = !selectedBrand ? 'rgba(212, 165, 165, 0.1)' : 'transparent';
+                        }}
+                      >
+                        {isVi ? '-- Tất cả thương hiệu --' : '-- All Brands --'}
+                      </button>
+
+                      {filteredBrands.length === 0 ? (
+                        <div style={{ 
+                          padding: '16px', 
+                          textAlign: 'center', 
+                          color: 'var(--admin-text-muted)',
+                          fontSize: '0.75rem'
+                        }}>
+                          {isVi ? 'Không tìm thấy thương hiệu' : 'No brands found'}
+                        </div>
+                      ) : (
+                        filteredBrands.map((brand) => (
+                          <button
+                            key={brand}
+                            type="button"
+                            onClick={() => {
+                              setSelectedBrand(brand);
+                              setBrandSearchQuery('');
+                              setIsBrandDropdownOpen(false);
+                            }}
+                            style={{
+                              width: '100%',
+                              padding: '8px 12px',
+                              textAlign: 'left',
+                              background: selectedBrand === brand ? 'rgba(212, 165, 165, 0.15)' : 'transparent',
+                              border: 'none',
+                              borderRadius: 'var(--admin-radius-sm)',
+                              color: selectedBrand === brand ? 'var(--admin-accent-hover, #D4A5A5)' : 'var(--admin-text)',
+                              fontSize: '0.75rem',
+                              cursor: 'pointer',
+                              transition: 'all 0.15s',
+                              fontWeight: selectedBrand === brand ? 600 : 400,
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = 'rgba(212, 165, 165, 0.15)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = selectedBrand === brand ? 'rgba(212, 165, 165, 0.15)' : 'transparent';
+                            }}
+                          >
+                            {brand}
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              </div>
 
             {/* Stock Select */}
             <select
@@ -329,6 +491,48 @@ export default function AdminProductsPage() {
               <option value="lowStock">{isVi ? 'Sắp hết hàng (<10)' : 'Low Stock (<10)'}</option>
               <option value="outOfStock">{isVi ? 'Hết hàng' : 'Out of Stock'}</option>
             </select>
+
+            {/* Clear All Filters Button */}
+            {(searchQuery || selectedBrand || stockFilter !== 'all' || selectedTag !== 'all' || sortBy !== 'bestSeller') && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery('');
+                  setSelectedBrand('');
+                  setBrandSearchQuery('');
+                  setStockFilter('all');
+                  setSelectedTag('all');
+                  setSortBy('bestSeller');
+                }}
+                title={isVi ? 'Xóa tất cả bộ lọc' : 'Clear all filters'}
+                style={{
+                  padding: '8px 14px',
+                  borderRadius: 'var(--admin-radius-md)',
+                  background: 'rgba(212, 165, 165, 0.1)',
+                  border: '1px solid var(--admin-border-subtle)',
+                  color: 'var(--admin-accent-hover, #D4A5A5)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  transition: 'all 0.2s',
+                  whiteSpace: 'nowrap',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(212, 165, 165, 0.2)';
+                  e.currentTarget.style.borderColor = 'var(--admin-accent-hover, #D4A5A5)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(212, 165, 165, 0.1)';
+                  e.currentTarget.style.borderColor = 'var(--admin-border-subtle)';
+                }}
+              >
+                <X size={14} />
+                {isVi ? 'Xóa bộ lọc' : 'Clear Filters'}
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -339,6 +543,7 @@ export default function AdminProductsPage() {
             <thead>
               <tr>
                 <th>{t('table.product')}</th>
+                <th>{t('table.tag')}</th>
                 <th>{t('table.stock')}</th>
                 <th>{t('table.price')}</th>
                 <th>{t('table.rating')}</th>
@@ -348,7 +553,7 @@ export default function AdminProductsPage() {
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={5}>
+                  <td colSpan={6}>
                     <div className="admin-loading">
                       <Loader2 className="admin-loading__spinner" />
                       <p>{t('loading')}</p>
@@ -357,7 +562,7 @@ export default function AdminProductsPage() {
                 </tr>
               ) : !filteredProducts.length ? (
                 <tr>
-                  <td colSpan={5}>
+                  <td colSpan={6}>
                     <div className="admin-empty">
                       <Sparkles className="admin-empty__icon" />
                       <p>{searchQuery || selectedBrand !== 'all' || stockFilter !== 'all' || selectedTag !== 'all' ? (isVi ? 'Không tìm thấy sản phẩm khớp với bộ lọc' : 'No products match the selected filters') : t('empty')}</p>
@@ -372,7 +577,7 @@ export default function AdminProductsPage() {
                         <div className="admin-table-product__thumb">
                           {product.image && (
                             <Image
-                              src={product.image}
+                              src={resolveImageUrl(product.image)}
                               alt={product.name}
                               fill
                               sizes="52px"
@@ -381,12 +586,31 @@ export default function AdminProductsPage() {
                           )}
                         </div>
                         <div>
-                          <p className="admin-table-product__name">{product.name}</p>
+                          <Link href={`/admin/products/${product._id}`}>
+                            <p className="admin-table-product__name hover:underline hover:text-[var(--admin-accent)] transition-colors">{product.name}</p>
+                          </Link>
                           <p className="admin-table-product__meta" title={`${product.brand} • ${formatSizeString(product.size)}`}>
                             {product.brand} • {formatSizeString(product.size)}
                           </p>
                         </div>
                       </div>
+                    </td>
+                    <td>
+                      {product.tag ? (
+                        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                          {product.tag.split(',').map((singleTag, idx) => {
+                            const cleaned = singleTag.trim();
+                            if (!cleaned) return null;
+                            return (
+                              <span key={idx} className="admin-badge" style={{ border: '1px solid var(--admin-border-subtle)', background: 'var(--admin-surface-muted)', color: 'var(--admin-text-secondary)', padding: '2px 8px', borderRadius: '4px', fontSize: '0.6875rem', fontWeight: 600 }}>
+                                {cleaned}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <span style={{ opacity: 0.5 }}>—</span>
+                      )}
                     </td>
                     <td>
                       <span
@@ -431,15 +655,6 @@ export default function AdminProductsPage() {
                     </td>
                     <td>
                       <div className="admin-table-actions">
-                        <Link href={`/admin/products/${product._id}`}>
-                          <button
-                            type="button"
-                            className="admin-icon-btn"
-                            aria-label={`Sửa ${product.name}`}
-                          >
-                            <Pencil size={17} />
-                          </button>
-                        </Link>
                         <button
                           type="button"
                           className="admin-icon-btn admin-icon-btn--danger"

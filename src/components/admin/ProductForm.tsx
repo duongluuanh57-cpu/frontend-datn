@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import React, { useState, useRef, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import {
   Save,
   ChevronLeft,
@@ -13,6 +14,8 @@ import {
   Hash,
   Calendar,
   FileText,
+  X,
+  ChevronDown,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/navigation';
@@ -26,22 +29,37 @@ const parseExplanation = (text: string) => {
   return sections
     .map((sec) => sec.trim())
     .filter(Boolean)
+    .filter((sec) => /^\d\./.test(sec)) // Only keep sections starting with a number like "1.", "2."
     .map((sec) => {
       const lines = sec.split('\n');
-      const titleLine = lines[0].replace(/\*\*/g, '').trim();
-      const content = lines.slice(1).join('\n').trim();
+      let titleLine = lines[0].replace(/\*\*/g, '').trim();
+      let content = lines.slice(1).join('\n').trim();
+
+      // If the heading has explanation text on the same line, split at the colon
+      if (titleLine.length > 80 && titleLine.includes(':')) {
+        const colonIndex = titleLine.indexOf(':');
+        const realTitle = titleLine.substring(0, colonIndex + 1).trim();
+        const firstBullet = titleLine.substring(colonIndex + 1).trim();
+        titleLine = realTitle;
+        content = firstBullet + (content ? '\n' + content : '');
+      }
+
       return { title: titleLine, content };
     });
 };
 
 const formatBullets = (content: string) => {
+  if (!content) return null;
   return content
     .split('\n')
     .map((line) => line.trim())
-    .filter(Boolean)
+    .filter((line) => {
+      const clean = line.replace(/^[-*•\s]+/, '').trim();
+      return clean.length > 0; // Filter out empty lines or lines with only bullets/dashes/asterisks
+    })
     .map((line, idx) => {
-      // Remove leading dash/bullet
-      const cleanLine = line.replace(/^[-*]\s+/, '');
+      // Remove leading dash/bullet/asterisk cleanly (even if no space after it)
+      const cleanLine = line.replace(/^[-*•\s]*/, '').trim();
       // Highlight bold parts
       const parts = cleanLine.split(/\*\*(.*?)\*\*/g);
       return (
@@ -62,6 +80,10 @@ export interface ProductFormData {
   image: string;
   description: string;
   tag: string;
+  scentGroup?: string;
+  concentration?: string;
+  segment?: string;
+  gender?: string;
   rating: number;
   reviewsCount: number;
   size: string;
@@ -110,6 +132,10 @@ const EMPTY_FORM = {
   image: '',
   description: '',
   tag: '',
+  scentGroup: '',
+  concentration: '',
+  segment: '',
+  gender: '',
   rating: 5,
   reviewsCount: 0,
   size: '',
@@ -127,10 +153,34 @@ const EMPTY_FORM = {
 
 function toFormState(data?: ProductFormData) {
   if (!data) return { ...EMPTY_FORM };
-  const keywords = Array.isArray(data.keywords)
-    ? data.keywords.join(', ')
-    : (data.keywords ?? '');
-  return { ...EMPTY_FORM, ...data, keywords };
+  
+  return {
+    name: data.name ?? '',
+    brand: data.brand ?? '',
+    price: data.price ?? 0,
+    image: data.image ?? '',
+    description: data.description ?? '',
+    tag: data.tag ?? '',
+    scentGroup: data.scentGroup ?? '',
+    concentration: data.concentration ?? '',
+    segment: data.segment ?? '',
+    gender: data.gender ?? '',
+    rating: data.rating ?? 5,
+    reviewsCount: data.reviewsCount ?? 0,
+    size: data.size ?? '',
+    quantityInStock: data.quantityInStock ?? 0,
+    discountPercentage: data.discountPercentage ?? 0,
+    discountStartDate: (data as any).discountStartDate ?? null,
+    discountEndDate: (data as any).discountEndDate ?? null,
+    metaTitle: data.metaTitle ?? '',
+    metaDescription: data.metaDescription ?? '',
+    keywords: Array.isArray(data.keywords)
+      ? data.keywords.join(', ')
+      : (data.keywords ?? ''),
+    priceReport: data.priceReport ?? '',
+    sizeReport: data.sizeReport ?? '',
+    discountReport: data.discountReport ?? '',
+  };
 }
 
 export const formatSizeString = (sizeStr: string) => {
@@ -165,9 +215,18 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState(() => toFormState(initialData));
   const [isAiGenerating, setIsAiGenerating] = useState(false);
+  const isGeneratingRef = React.useRef(false);
+  const debounceTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
   const [isSizeModalOpen, setIsSizeModalOpen] = useState(false);
   const [loadingSizes, setLoadingSizes] = useState<Record<string, boolean>>({});
   const isVi = t('saveToCollection')?.includes('Lưu') || false;
+
+  interface TagItem {
+    _id: string;
+    name: string;
+    slug: string;
+    status: 'active' | 'inactive';
+  }
 
   const { data: brands } = useQuery({
     queryKey: ['admin-active-brands-list'],
@@ -177,17 +236,111 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
     }
   });
 
+  const { data: tags } = useQuery({
+    queryKey: ['admin-active-tags-list'],
+    queryFn: async () => {
+      const { data } = await api.get('/tags');
+      return data.data as TagItem[];
+    }
+  });
+
+  const { data: scentGroups } = useQuery({
+    queryKey: ['admin-active-scent-groups-list'],
+    queryFn: async () => {
+      const { data } = await api.get('/scent-groups');
+      return (data.data || []) as { _id: string; name: string; slug: string; status: string }[];
+    }
+  });
+
+  const { data: concentrations } = useQuery({
+    queryKey: ['admin-active-concentrations-list'],
+    queryFn: async () => {
+      const { data } = await api.get('/concentrations');
+      return (data.data || []) as { _id: string; name: string; slug: string; status: string }[];
+    }
+  });
+
+  const { data: segments } = useQuery({
+    queryKey: ['admin-active-segments-list'],
+    queryFn: async () => {
+      const { data } = await api.get('/segments');
+      return (data.data || []) as { _id: string; name: string; slug: string; status: string }[];
+    }
+  });
+
+  const addScentGroupMutation = useMutation({
+    mutationFn: async (name: string) => {
+      const { data } = await api.post('/scent-groups', { name });
+      return data.data;
+    },
+    onSuccess: (newItem) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-active-scent-groups-list'] });
+      handleScentGroupToggle(newItem.name);
+      setCustomScentGroup('');
+      toast.success(isVi ? 'Đã lưu nhóm hương vào database!' : 'Scent group saved to database!');
+    },
+    onError: (err) => {
+      console.error(err);
+      toast.error(isVi ? 'Không thể thêm nhóm hương' : 'Failed to add scent group');
+    }
+  });
+
+  const addConcentrationMutation = useMutation({
+    mutationFn: async (name: string) => {
+      const { data } = await api.post('/concentrations', { name });
+      return data.data;
+    },
+    onSuccess: (newItem) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-active-concentrations-list'] });
+      handleConcentrationToggle(newItem.name);
+      setCustomConcentration('');
+      toast.success(isVi ? 'Đã lưu nồng độ vào database!' : 'Concentration level saved to database!');
+    },
+    onError: (err) => {
+      console.error(err);
+      toast.error(isVi ? 'Không thể thêm nồng độ' : 'Failed to add concentration level');
+    }
+  });
+
+  const addSegmentMutation = useMutation({
+    mutationFn: async (name: string) => {
+      const { data } = await api.post('/segments', { name });
+      return data.data;
+    },
+    onSuccess: (newItem) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-active-segments-list'] });
+      handleSegmentToggle(newItem.name);
+      setCustomSegment('');
+      toast.success(isVi ? 'Đã lưu phân khúc vào database!' : 'Brand segment saved to database!');
+    },
+    onError: (err) => {
+      console.error(err);
+      toast.error(isVi ? 'Không thể thêm phân khúc' : 'Failed to add brand segment');
+    }
+  });
+
   const [priceReport, setPriceReport] = useState<string | null>(initialData?.priceReport || null);
+  const [aiAnalyzed, setAiAnalyzed] = useState<boolean>(Boolean(initialData?.priceReport || initialData?.sizeReport || initialData?.discountReport));
+  const [isImageUploading, setIsImageUploading] = useState(false);
   const [sizeReport, setSizeReport] = useState<string | null>(initialData?.sizeReport || null);
   const [discountReport, setDiscountReport] = useState<string | null>(initialData?.discountReport || null);
 
   const handleAiGenerateProduct = async () => {
-    if (!formData.name.trim()) return;
+    if (!formData.name.trim() || isGeneratingRef.current) return;
+    isGeneratingRef.current = true;
     setIsAiGenerating(true);
+    
+    const loadingToastId = toast.loading(isVi ? '🤖 AI đang tự điền nội dung sản phẩm...' : '🤖 AI is generating product content...');
+    
     try {
       const { data } = await api.post('/ai/generate-product', {
         name: formData.name,
+        image: formData.image,
         availableBrands: brands?.map((b) => b.name) || [],
+        availableScentGroups: scentGroups?.map((s) => s.name) || [],
+        availableConcentrations: concentrations?.map((c) => c.name) || [],
+        availableSegments: segments?.map((s) => s.name) || [],
+        availableGenders: ['Nam', 'Nữ', 'Unisex'],
       });
       if (data.success && data.data) {
         const info = data.data;
@@ -203,24 +356,105 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
           metaTitle: info.metaTitle || prev.metaTitle,
           metaDescription: info.metaDescription || prev.metaDescription,
           keywords: Array.isArray(info.keywords) ? info.keywords.join(', ') : (info.keywords || prev.keywords),
-          image: info.image || prev.image,
+          scentGroup: info.scentGroup || prev.scentGroup,
+          concentration: info.concentration || prev.concentration,
+          segment: info.segment || prev.segment,
+          gender: info.gender || prev.gender,
         }));
 
         // Store the AI generated reports
         setPriceReport(info.priceReport || null);
         setSizeReport(info.sizeReport || null);
         setDiscountReport(info.discountReport || null);
+        setAiAnalyzed(true);
+        
+        // Show success toast
+        toast.dismiss(loadingToastId);
+        toast.success(isVi ? '✨ AI đã điền xong nội dung!' : '✨ AI content generated successfully!');
       }
     } catch (err) {
       console.error(err);
-      alert(isVi ? 'Không thể viết thông tin sản phẩm bằng AI. Vui lòng thử lại.' : 'AI product generation failed. Please try again.');
+      toast.dismiss(loadingToastId);
+      toast.error(isVi ? '❌ Không thể viết thông tin sản phẩm bằng AI. Vui lòng thử lại.' : '❌ AI product generation failed. Please try again.');
     } finally {
       setIsAiGenerating(false);
+      isGeneratingRef.current = false;
     }
   };
 
   const update = (patch: Partial<typeof formData>) => {
     setFormData((prev) => ({ ...prev, ...patch }));
+  };
+
+  const selectedTags = formData.tag
+    ? formData.tag.split(',').map((s) => s.trim()).filter(Boolean)
+    : [];
+
+  const handleTagToggle = (slug: string) => {
+    let nextTags;
+    if (selectedTags.includes(slug)) {
+      nextTags = selectedTags.filter((t) => t !== slug);
+    } else {
+      nextTags = [...selectedTags, slug];
+    }
+    update({ tag: nextTags.join(',') });
+  };
+
+  const [isTagModalOpen, setIsTagModalOpen] = useState(false);
+
+  // States and toggles for Gender, Scent Group, Concentration, Segment (Multiple Selection)
+  const [isGenderModalOpen, setIsGenderModalOpen] = useState(false);
+  const [isScentGroupModalOpen, setIsScentGroupModalOpen] = useState(false);
+  const [isConcentrationModalOpen, setIsConcentrationModalOpen] = useState(false);
+  const [isSegmentModalOpen, setIsSegmentModalOpen] = useState(false);
+
+  const [customGender, setCustomGender] = useState('');
+  const [customScentGroup, setCustomScentGroup] = useState('');
+  const [customConcentration, setCustomConcentration] = useState('');
+  const [customSegment, setCustomSegment] = useState('');
+
+  const selectedGenders = formData.gender
+    ? formData.gender.split(',').map((s) => s.trim()).filter(Boolean)
+    : [];
+  
+  const selectedScentGroups = formData.scentGroup
+    ? formData.scentGroup.split(',').map((s) => s.trim()).filter(Boolean)
+    : [];
+
+  const selectedConcentrations = formData.concentration
+    ? formData.concentration.split(',').map((s) => s.trim()).filter(Boolean)
+    : [];
+
+  const selectedSegments = formData.segment
+    ? formData.segment.split(',').map((s) => s.trim()).filter(Boolean)
+    : [];
+
+  const handleGenderToggle = (val: string) => {
+    const next = selectedGenders.includes(val)
+      ? selectedGenders.filter((v) => v !== val)
+      : [...selectedGenders, val];
+    update({ gender: next.join(',') });
+  };
+
+  const handleScentGroupToggle = (val: string) => {
+    const next = selectedScentGroups.includes(val)
+      ? selectedScentGroups.filter((v) => v !== val)
+      : [...selectedScentGroups, val];
+    update({ scentGroup: next.join(',') });
+  };
+
+  const handleConcentrationToggle = (val: string) => {
+    const next = selectedConcentrations.includes(val)
+      ? selectedConcentrations.filter((v) => v !== val)
+      : [...selectedConcentrations, val];
+    update({ concentration: next.join(',') });
+  };
+
+  const handleSegmentToggle = (val: string) => {
+    const next = selectedSegments.includes(val)
+      ? selectedSegments.filter((v) => v !== val)
+      : [...selectedSegments, val];
+    update({ segment: next.join(',') });
   };
 
   // AI Price Suggestion State
@@ -242,6 +476,32 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
     onApply: (price: number) => void;
   } | null>(null);
 
+  // Auto-trigger AI generation when product name is entered (with debounce)
+  useEffect(() => {
+    // Clear existing timeout
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+
+    // Only trigger if:
+    // 1. Product name is not empty
+    // 2. Not already generating
+    // 3. Not editing an existing product (only for new products)
+    if (formData.name.trim() && !isGeneratingRef.current && !productId && brands && brands.length > 0) {
+      // Set new debounce timeout (2 seconds)
+      debounceTimeoutRef.current = setTimeout(() => {
+        handleAiGenerateProduct();
+      }, 2000);
+    }
+
+    // Cleanup on unmount
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, [formData.name]); // Only depend on formData.name
+
   const dynamicPriceReport = priceReport || `
 **1. Các tiêu chí cốt lõi để AI gợi ý giá:**
 * Phân tích định vị thương hiệu của dòng nước hoa cao cấp **${formData.name || 'Sản phẩm'}** thuộc nhà hương danh tiếng **${formData.brand || 'L\'essence'}**.
@@ -259,7 +519,7 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
 **4. Quyết định & Khuyến nghị mức Markup (15%):**
 * Áp dụng biên lợi nhuận tiêu chuẩn **${priceMarkupPercentage}%** của L'essence Studio nhằm đảm bảo khả năng tái đầu tư và duy trì dịch vụ chăm sóc khách hàng VIP đẳng cấp.
 
-**5. Nguồn tham khảo & Đối chiếu của Gemma 4:**
+**5. Nguồn tham khảo & Đối chiếu của Gemini 3.1 Flash Lite:**
 * Dữ liệu định giá niêm yết chính hãng tại website official của **${formData.brand || 'hãng'}** và cổng tra cứu Fragrantica.com cho dòng **${formData.name || 'nước hoa này'}**.
 * Chỉ số giá bán lẻ của các department store lớn bao gồm Sephora.com và Harrods.com làm hệ quy chiếu giá gốc toàn cầu.
 `.trim();
@@ -280,7 +540,7 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
 **4. Khuyến nghị cấu trúc phân bổ dung tích:**
 * Tập trung phân phối dung tích **10ml** làm mũi nhọn phễu khách hàng, và dung tích **100ml** làm nguồn thu lợi nhuận chính cho dòng sản phẩm **${formData.brand || 'này'}**.
 
-**5. Nguồn tham khảo & Đối chiếu của Gemma 4:**
+**5. Nguồn tham khảo & Đối chiếu của Gemini 3.1 Flash Lite:**
 * Dữ liệu phân bổ size bán chạy tại cổng thông tin Fragrantica và Basenotes cho dòng **${formData.name || 'nước hoa này'}**.
 * Báo cáo xu hướng tiêu dùng nước hoa niche & designer phân khúc cao cấp khu vực Châu Á Thái Bình Dương năm 2026.
 `.trim();
@@ -301,7 +561,7 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
 **4. Khuyến nghị lập lịch chiết khấu sự kiện:**
 * Đề xuất lên lịch áp dụng chiết khấu tự động (Start/End Date) vào các ngày lễ lớn để tạo tâm lý khan hiếm (FOMO) cho khách hàng VIP.
 
-**5. Nguồn tham khảo & Đối chiếu của Gemma 4:**
+**5. Nguồn tham khảo & Đối chiếu của Gemini 3.1 Flash Lite:**
 * Chỉ số khuyến mãi trung bình của phân khúc nước hoa cao cấp tại thị trường Châu Âu và Đông Nam Á.
 * Dữ liệu chiến dịch ưu đãi VIP của các thương hiệu hàng đầu như Chanel, Dior, Creed, Tom Ford.
 `.trim();
@@ -311,7 +571,7 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
 
   const handleOpenPriceSuggestion = async (sizeParam?: string, basePriceParam?: number, onApplyCallback?: (price: number) => void) => {
     if (!formData.name.trim()) {
-      alert(isVi ? 'Vui lòng điền Tên sản phẩm trước khi gợi ý giá!' : 'Please enter the Product Name before requesting a price suggestion!');
+      toast.error(isVi ? 'Vui lòng nhập Tên sản phẩm trước để AI phân tích.' : 'Please enter Product Name first so AI can analyze.');
       return;
     }
     setIsPriceSuggestModalOpen(true);
@@ -354,7 +614,7 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
       }
     } catch (err) {
       console.error(err);
-      alert(isVi ? 'Không thể lấy gợi ý giá bằng AI. Vui lòng thử lại.' : 'AI price suggestion failed. Please try again.');
+      toast.error(isVi ? 'Không thể lấy gợi ý giá bằng AI. Vui lòng thử lại.' : 'AI price suggestion failed. Please try again.');
     } finally {
       setIsSuggestingPrice(false);
     }
@@ -405,7 +665,7 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
       router.push('/admin/products');
       router.refresh();
     } catch {
-      alert(t('savingError'));
+      toast.error(t('savingError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -418,6 +678,13 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
       })
     : [];
   const selectedSizes = parsedSizes.map(p => p.sz);
+  const isFormComplete = Boolean(
+    formData.name.trim() &&
+    formData.brand &&
+    formData.price > 0 &&
+    formData.image &&
+    formData.size.trim()
+  );
 
   return (
     <>
@@ -436,13 +703,21 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
           </div>
         </div>
 
-        <button type="submit" disabled={isSubmitting} className="admin-btn-submit">
-          {isSubmitting ? (
-            <Loader2 size={16} className="admin-loading__spinner" />
+        <button 
+          type="submit" 
+          disabled={isSubmitting || isImageUploading} 
+          className="admin-btn-submit"
+        >
+          {isSubmitting || isImageUploading ? (
+            <Loader2 size={14} className="admin-btn__spinner" />
           ) : (
             <Save size={16} />
           )}
-          {t('saveToCollection')}
+          {isImageUploading 
+            ? (isVi ? 'Đang tải ảnh...' : 'Uploading image...') 
+            : isSubmitting 
+              ? (isVi ? 'Đang lưu...' : 'Saving...')
+              : t('saveToCollection')}
         </button>
       </div>
 
@@ -459,7 +734,11 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
             </div>
           </div>
 
-          <ImageUpload value={formData.image} onChange={(url) => update({ image: url })} />
+          <ImageUpload 
+            value={formData.image} 
+            onChange={(url) => update({ image: url })} 
+            onUploadStateChange={(uploading) => setIsImageUploading(uploading)}
+          />
 
           <div className="admin-form-fields" style={{ marginTop: 10 }}>
             <div className="admin-field">
@@ -485,17 +764,68 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
             </div>
 
             <div className="admin-field">
-              <label className="admin-label" htmlFor="tag">
+              <label className="admin-label">
                 {t('fields.tag')}
               </label>
-              <input
-                type="text"
-                id="tag"
-                value={formData.tag}
-                onChange={(e) => update({ tag: e.target.value })}
-                className="admin-input"
-                placeholder={isVi ? "Nhập nhãn sản phẩm..." : "Enter tag..."}
-              />
+              <div
+                onClick={() => setIsTagModalOpen(true)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '8px',
+                  background: 'var(--admin-surface-muted)',
+                  border: '1px solid var(--admin-border)',
+                  borderRadius: 'var(--admin-radius)',
+                  padding: '10px 14px',
+                  marginTop: '4px',
+                  cursor: 'pointer',
+                  minHeight: '44px',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(212, 165, 165, 0.4)';
+                  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(212, 165, 165, 0.1)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--admin-border)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  {selectedTags.length > 0 ? (
+                    selectedTags.map((slug) => {
+                      const tagObj = tags?.find(t => t.slug === slug);
+                      const displayName = tagObj ? tagObj.name : slug;
+                      return (
+                        <span
+                          key={slug}
+                          style={{
+                            background: 'rgba(212, 165, 165, 0.12)',
+                            color: '#D4A5A5',
+                            border: '1px solid rgba(212, 165, 165, 0.3)',
+                            borderRadius: '6px',
+                            padding: '2px 8px',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                          }}
+                        >
+                          {displayName}
+                        </span>
+                      );
+                    })
+                  ) : (
+                    <span style={{ color: 'var(--admin-text-muted)', fontSize: '0.8125rem' }}>
+                      {isVi ? '-- Chọn phân loại tag --' : '-- Select tags --'}
+                    </span>
+                  )}
+                </div>
+                <div style={{ color: 'var(--admin-text-muted)', display: 'flex', alignItems: 'center' }}>
+                  <Tag size={16} />
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -517,31 +847,15 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
               <label className="admin-label" htmlFor="name">
                 {t('fields.name')}
               </label>
-              <div className="flex gap-3">
-                <input
-                  id="name"
-                  required
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => update({ name: e.target.value })}
-                  placeholder={t('fields.namePlaceholder')}
-                  className="admin-input admin-input--lg w-full"
-                />
-                <button
-                  type="button"
-                  disabled={!formData.name.trim() || isAiGenerating}
-                  onClick={handleAiGenerateProduct}
-                  className="px-5 rounded-2xl border border-[var(--admin-border-subtle)] hover:bg-[#7A5C5C]/5 text-[#7A5C5C] flex items-center gap-2 transition text-sm font-semibold disabled:opacity-50 active:scale-95 shadow-sm"
-                  style={{ minHeight: '52px' }}
-                >
-                  {isAiGenerating ? (
-                    <Loader2 size={16} className="animate-spin" />
-                  ) : (
-                    <Sparkles size={16} className="text-[#D4A5A5]" />
-                  )}
-                  {isVi ? 'Tự động viết bằng AI' : 'Generate with AI'}
-                </button>
-              </div>
+              <input
+                id="name"
+                required
+                type="text"
+                value={formData.name}
+                onChange={(e) => update({ name: e.target.value })}
+                placeholder={t('fields.namePlaceholder')}
+                className="admin-input admin-input--lg w-full"
+              />
             </div>
 
             <div className="admin-field">
@@ -550,7 +864,7 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
               </label>
               <textarea
                 id="description"
-                rows={2}
+                rows={4}
                 value={formData.description}
                 onChange={(e) => update({ description: e.target.value })}
                 placeholder={t('fields.descriptionPlaceholder')}
@@ -582,11 +896,22 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
                 <label className="admin-label" htmlFor="size">
                   {t('fields.size')}
                 </label>
-                <div className="admin-input-wrap">
-                  <button
+                <div className="admin-input-wrap" style={{ position: 'relative' }}>
+                  <input
                     id="size"
-                    type="button"
+                    readOnly
+                    type="text"
+                    value={aiAnalyzed && formData.size ? formatSizeString(formData.size) : ''}
                     onClick={() => {
+                      if (!formData.name.trim()) {
+                        toast.error(isVi ? 'Vui lòng nhập Tên sản phẩm trước để AI phân tích.' : 'Please enter Product Name first so AI can analyze.');
+                        return;
+                      }
+                      if (!aiAnalyzed) {
+                        toast('🤖 AI đang phân tích sản phẩm, vui lòng đợi...', { duration: 4000 });
+                        return;
+                      }
+
                       setPriceSuggestionData({
                         marketPrice: formData.price || 3000000,
                         markupPercentage: priceMarkupPercentage,
@@ -603,19 +928,12 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
                     }}
                     className="admin-input"
                     style={{
-                      textAlign: 'left',
                       background: 'rgba(201, 169, 154, 0.02)',
                       cursor: 'pointer',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                      display: 'block',
-                      width: '100%',
-                      paddingRight: '12px'
+                      paddingRight: '45px'
                     }}
-                  >
-                    {formData.size ? formatSizeString(formData.size) : (isVi ? '-- Chọn dung tích --' : '-- Choose capacity --')}
-                  </button>
+                  />
+                  <span className="admin-input-suffix" style={{ right: '12px' }}>ML</span>
                 </div>
               </div>
 
@@ -641,13 +959,22 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
                 <label className="admin-label" htmlFor="discount">
                   {t('fields.discount')}
                 </label>
-                <div className="admin-input-wrap">
+                <div className="admin-input-wrap" style={{ position: 'relative' }}>
                   <input
                     id="discount"
                     readOnly
                     type="text"
-                    value={formData.discountPercentage ? `${formData.discountPercentage}%` : (isVi ? '-- Chưa áp dụng --' : '-- No discount --')}
+                    value={aiAnalyzed && formData.discountPercentage ? formData.discountPercentage : ''}
                     onClick={() => {
+                      if (!formData.name.trim()) {
+                        toast.error(isVi ? 'Vui lòng nhập Tên sản phẩm trước để AI phân tích.' : 'Please enter Product Name first so AI can analyze.');
+                        return;
+                      }
+                      if (!aiAnalyzed) {
+                        toast('🤖 AI đang phân tích sản phẩm, vui lòng đợi...', { duration: 4000 });
+                        return;
+                      }
+
                       setPriceSuggestionData({
                         marketPrice: formData.price || 3000000,
                         markupPercentage: priceMarkupPercentage,
@@ -666,9 +993,10 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
                     style={{ 
                       cursor: 'pointer',
                       background: 'rgba(201, 169, 154, 0.02)',
-                      paddingRight: '12px'
+                      paddingRight: '45px'
                     }}
                   />
+                  <span className="admin-input-suffix" style={{ right: '12px' }}>%</span>
                 </div>
                 {formData.discountPercentage > 0 && (formData.discountStartDate || formData.discountEndDate) && (
                   <p style={{ fontSize: '0.6875rem', color: '#D4A5A5', marginTop: '6px', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -680,6 +1008,252 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
                     </span>
                   </p>
                 )}
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginTop: '16px' }}>
+              {/* Giới tính */}
+              <div className="admin-field">
+                <label className="admin-label">
+                  {isVi ? 'Giới tính' : 'Gender'}
+                </label>
+                <div
+                  onClick={() => {
+                    if (!formData.name.trim()) {
+                      toast.error(isVi ? 'Vui lòng nhập Tên sản phẩm trước để AI phân tích.' : 'Please enter Product Name first so AI can analyze.');
+                      return;
+                    }
+                    setIsGenderModalOpen(true);
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '8px',
+                    background: 'var(--admin-surface-muted)',
+                    border: '1px solid var(--admin-border)',
+                    borderRadius: 'var(--admin-radius)',
+                    padding: '10px 14px',
+                    marginTop: '4px',
+                    cursor: 'pointer',
+                    minHeight: '44px',
+                    transition: 'all 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(212, 165, 165, 0.4)';
+                    e.currentTarget.style.boxShadow = '0 0 0 3px rgba(212, 165, 165, 0.1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--admin-border)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                >
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', maxHeight: '82px', overflowY: 'auto', width: '100%' }}>
+                    {selectedGenders.length > 0 && (
+                      selectedGenders.map((g) => (
+                        <span
+                          key={g}
+                          style={{
+                            background: 'rgba(212, 165, 165, 0.12)',
+                            color: '#D4A5A5',
+                            border: '1px solid rgba(212, 165, 165, 0.3)',
+                            borderRadius: '6px',
+                            padding: '2px 8px',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                          }}
+                        >
+                          {g}
+                        </span>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Nhóm hương */}
+              <div className="admin-field">
+                <label className="admin-label">
+                  {isVi ? 'Nhóm hương' : 'Scent Group'}
+                </label>
+                <div
+                  onClick={() => {
+                    if (!formData.name.trim()) {
+                      toast.error(isVi ? 'Vui lòng nhập Tên sản phẩm trước để AI phân tích.' : 'Please enter Product Name first so AI can analyze.');
+                      return;
+                    }
+                    setIsScentGroupModalOpen(true);
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '8px',
+                    background: 'var(--admin-surface-muted)',
+                    border: '1px solid var(--admin-border)',
+                    borderRadius: 'var(--admin-radius)',
+                    padding: '10px 14px',
+                    marginTop: '4px',
+                    cursor: 'pointer',
+                    minHeight: '44px',
+                    transition: 'all 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(212, 165, 165, 0.4)';
+                    e.currentTarget.style.boxShadow = '0 0 0 3px rgba(212, 165, 165, 0.1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--admin-border)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                >
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', maxHeight: '82px', overflowY: 'auto', width: '100%' }}>
+                    {selectedScentGroups.length > 0 && (
+                      selectedScentGroups.map((sg) => (
+                        <span
+                          key={sg}
+                          style={{
+                            background: 'rgba(212, 165, 165, 0.12)',
+                            color: '#D4A5A5',
+                            border: '1px solid rgba(212, 165, 165, 0.3)',
+                            borderRadius: '6px',
+                            padding: '2px 8px',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                          }}
+                        >
+                          {sg}
+                        </span>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Nồng độ */}
+              <div className="admin-field">
+                <label className="admin-label">
+                  {isVi ? 'Nồng độ' : 'Concentration'}
+                </label>
+                <div
+                  onClick={() => {
+                    if (!formData.name.trim()) {
+                      toast.error(isVi ? 'Vui lòng nhập Tên sản phẩm trước để AI phân tích.' : 'Please enter Product Name first so AI can analyze.');
+                      return;
+                    }
+                    setIsConcentrationModalOpen(true);
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '8px',
+                    background: 'var(--admin-surface-muted)',
+                    border: '1px solid var(--admin-border)',
+                    borderRadius: 'var(--admin-radius)',
+                    padding: '10px 14px',
+                    marginTop: '4px',
+                    cursor: 'pointer',
+                    minHeight: '44px',
+                    transition: 'all 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(212, 165, 165, 0.4)';
+                    e.currentTarget.style.boxShadow = '0 0 0 3px rgba(212, 165, 165, 0.1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--admin-border)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                >
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', maxHeight: '82px', overflowY: 'auto', width: '100%' }}>
+                    {selectedConcentrations.length > 0 && (
+                      selectedConcentrations.map((c) => (
+                        <span
+                          key={c}
+                          style={{
+                            background: 'rgba(212, 165, 165, 0.12)',
+                            color: '#D4A5A5',
+                            border: '1px solid rgba(212, 165, 165, 0.3)',
+                            borderRadius: '6px',
+                            padding: '2px 8px',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                          }}
+                        >
+                          {c}
+                        </span>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Phân khúc nhóm */}
+              <div className="admin-field">
+                <label className="admin-label">
+                  {isVi ? 'Phân khúc nhóm' : 'Brand Segment'}
+                </label>
+                <div
+                  onClick={() => {
+                    if (!formData.name.trim()) {
+                      toast.error(isVi ? 'Vui lòng nhập Tên sản phẩm trước để AI phân tích.' : 'Please enter Product Name first so AI can analyze.');
+                      return;
+                    }
+                    setIsSegmentModalOpen(true);
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '8px',
+                    background: 'var(--admin-surface-muted)',
+                    border: '1px solid var(--admin-border)',
+                    borderRadius: 'var(--admin-radius)',
+                    padding: '10px 14px',
+                    marginTop: '4px',
+                    cursor: 'pointer',
+                    minHeight: '44px',
+                    transition: 'all 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(212, 165, 165, 0.4)';
+                    e.currentTarget.style.boxShadow = '0 0 0 3px rgba(212, 165, 165, 0.1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--admin-border)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                >
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', maxHeight: '82px', overflowY: 'auto', width: '100%' }}>
+                    {selectedSegments.length > 0 && (
+                      selectedSegments.map((s) => (
+                        <span
+                          key={s}
+                          style={{
+                            background: 'rgba(212, 165, 165, 0.12)',
+                            color: '#D4A5A5',
+                            border: '1px solid rgba(212, 165, 165, 0.3)',
+                            borderRadius: '6px',
+                            padding: '2px 8px',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                          }}
+                        >
+                          {s}
+                        </span>
+                      ))
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -731,7 +1305,7 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
               </label>
               <textarea
                 id="metaDescription"
-                rows={2}
+                rows={4}
                 value={formData.metaDescription}
                 onChange={(e) => update({ metaDescription: e.target.value })}
                 className="admin-textarea"
@@ -740,17 +1314,1043 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
 
             <div className="admin-status-pill">
               <span className="admin-status-pill__label">
-                <span className="admin-status-pill__dot" />
+                <span 
+                  className="admin-status-pill__dot" 
+                  style={{ 
+                    background: isFormComplete ? 'var(--admin-success)' : 'var(--admin-warning)',
+                    boxShadow: isFormComplete ? '0 0 8px var(--admin-success)' : '0 0 8px var(--admin-warning)'
+                  }} 
+                />
                 {t('fields.status')}
               </span>
-              <span className="admin-status-pill__value">{t('fields.ready')}</span>
+              <span className="admin-status-pill__value">
+                {isFormComplete ? t('fields.ready') : t('fields.draft')}
+              </span>
             </div>
           </div>
         </section>
       </div>
     </form>
 
+      {isTagModalOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(61, 46, 36, 0.35)',
+            backdropFilter: 'blur(8px)',
+            overflowY: 'auto',
+            padding: '20px',
+          }}
+          onClick={() => setIsTagModalOpen(false)}
+        >
+          <div
+            style={{
+              background: 'var(--admin-surface, #ffffff)',
+              border: '1px solid var(--admin-border, #e8e0da)',
+              borderRadius: 'var(--admin-radius-lg, 20px)',
+              padding: '30px',
+              maxWidth: '500px',
+              width: '100%',
+              boxShadow: '0 20px 40px rgba(61, 46, 36, 0.08)',
+              animation: 'fadeIn 0.25s ease-out',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '20px'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--admin-border, #e8e0da)', paddingBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ background: 'rgba(212, 165, 165, 0.1)', padding: '8px', borderRadius: '10px', color: 'var(--admin-accent, #5c4a42)' }}>
+                  <Tag size={18} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 600, color: 'var(--admin-text, #3d2e24)' }}>
+                    {isVi ? 'Phân loại Tag sản phẩm' : 'Product Tag Selection'}
+                  </h3>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '0.75rem', color: 'var(--admin-text-secondary, #6b564c)' }}>
+                    {isVi ? 'Chọn một hoặc nhiều nhãn phù hợp cho sản phẩm' : 'Select one or multiple tags for the product'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsTagModalOpen(false)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--admin-text-muted, #9a857c)',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'color 0.2s, background 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = 'var(--admin-text, #3d2e24)';
+                  e.currentTarget.style.background = 'rgba(61, 46, 36, 0.05)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = 'var(--admin-text-muted, #9a857c)';
+                  e.currentTarget.style.background = 'transparent';
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
 
+            {/* Tags Checkbox Grid */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr',
+                gap: '10px',
+                maxHeight: '300px',
+                overflowY: 'auto',
+                paddingRight: '6px'
+              }}
+              className="admin-scrollbar-luxury"
+            >
+              {tags?.filter(t => t.status === 'active').map((t) => {
+                const isChecked = selectedTags.includes(t.slug);
+                return (
+                  <label
+                    key={t._id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      cursor: 'pointer',
+                      fontSize: '0.875rem',
+                      color: 'var(--admin-text, #3d2e24)',
+                      userSelect: 'none',
+                      padding: '12px 16px',
+                      borderRadius: '12px',
+                      background: isChecked ? 'rgba(212, 165, 165, 0.08)' : 'var(--admin-surface-muted, #faf8f6)',
+                      border: '1px solid',
+                      borderColor: isChecked ? 'rgba(212, 165, 165, 0.25)' : 'var(--admin-border, #e8e0da)',
+                      transition: 'all 0.25s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isChecked) {
+                        e.currentTarget.style.background = 'rgba(61, 46, 36, 0.03)';
+                        e.currentTarget.style.borderColor = 'rgba(212, 165, 165, 0.2)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isChecked) {
+                        e.currentTarget.style.background = 'var(--admin-surface-muted, #faf8f6)';
+                        e.currentTarget.style.borderColor = 'var(--admin-border, #e8e0da)';
+                      }
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <span style={{ fontWeight: 500, color: 'var(--admin-text, #3d2e24)' }}>{t.name}</span>
+                      <span style={{ fontSize: '0.6875rem', color: 'var(--admin-text-secondary, #6b564c)', background: 'rgba(61, 46, 36, 0.05)', padding: '2px 6px', borderRadius: '4px' }}>
+                        {t.slug}
+                      </span>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => handleTagToggle(t.slug)}
+                      style={{
+                        width: '18px',
+                        height: '18px',
+                        accentColor: 'var(--admin-accent, #5c4a42)',
+                        cursor: 'pointer',
+                      }}
+                    />
+                  </label>
+                );
+              })}
+              {(!tags || tags.filter(t => t.status === 'active').length === 0) && (
+                <p style={{ fontSize: '0.8125rem', color: 'var(--admin-text-secondary, #6b564c)', fontStyle: 'italic', textAlign: 'center', margin: 0, padding: '24px 0' }}>
+                  {isVi ? 'Không có nhãn nào đang hoạt động' : 'No active tags found'}
+                </p>
+              )}
+            </div>
+
+            {/* Footer / Confirm */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid var(--admin-border, #e8e0da)', paddingTop: '16px' }}>
+              <button
+                type="button"
+                onClick={() => setIsTagModalOpen(false)}
+                style={{
+                  background: 'var(--admin-accent, #5c4a42)',
+                  color: '#ffffff',
+                  padding: '10px 24px',
+                  borderRadius: '10px',
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  border: 'none',
+                  boxShadow: '0 4px 12px rgba(92, 74, 66, 0.15)',
+                  transition: 'transform 0.2s, opacity 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                  e.currentTarget.style.opacity = '0.95';
+                  e.currentTarget.style.background = 'var(--admin-accent-hover, #4a3728)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.opacity = '1';
+                  e.currentTarget.style.background = 'var(--admin-accent, #5c4a42)';
+                }}
+              >
+                {isVi ? 'Hoàn thành' : 'Done'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Gender Selection Modal */}
+      {isGenderModalOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(61, 46, 36, 0.35)',
+            backdropFilter: 'blur(8px)',
+            overflowY: 'auto',
+            padding: '20px',
+          }}
+          onClick={() => setIsGenderModalOpen(false)}
+        >
+          <div
+            style={{
+              background: 'var(--admin-surface, #ffffff)',
+              border: '1px solid var(--admin-border, #e8e0da)',
+              borderRadius: 'var(--admin-radius-lg, 20px)',
+              padding: '30px',
+              maxWidth: '500px',
+              width: '100%',
+              boxShadow: '0 20px 40px rgba(61, 46, 36, 0.08)',
+              animation: 'fadeIn 0.25s ease-out',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '20px'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--admin-border, #e8e0da)', paddingBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ background: 'rgba(212, 165, 165, 0.1)', padding: '8px', borderRadius: '10px', color: 'var(--admin-accent, #5c4a42)' }}>
+                  <Sparkles size={18} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 600, color: 'var(--admin-text, #3d2e24)' }}>
+                    {isVi ? 'Phân loại Giới tính' : 'Gender Classification'}
+                  </h3>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '0.75rem', color: 'var(--admin-text-secondary, #6b564c)' }}>
+                    {isVi ? 'Chọn một hoặc nhiều giới tính phù hợp' : 'Select one or multiple target genders'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsGenderModalOpen(false)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--admin-text-muted, #9a857c)',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'color 0.2s, background 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = 'var(--admin-text, #3d2e24)';
+                  e.currentTarget.style.background = 'rgba(61, 46, 36, 0.05)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = 'var(--admin-text-muted, #9a857c)';
+                  e.currentTarget.style.background = 'transparent';
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Checkboxes Grid */}
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '10px',
+                maxHeight: '300px',
+                overflowY: 'auto',
+                paddingRight: '6px'
+              }}
+              className="admin-scrollbar-luxury"
+            >
+              {/* Render selected values that aren't in defaults first to ensure they are visible */}
+              {Array.from(new Set([...['Nam', 'Nữ', 'Unisex', 'Men', 'Women'], ...selectedGenders])).map((g) => {
+                const isChecked = selectedGenders.includes(g);
+                return (
+                  <label
+                    key={g}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      cursor: 'pointer',
+                      fontSize: '0.875rem',
+                      color: 'var(--admin-text, #3d2e24)',
+                      userSelect: 'none',
+                      padding: '12px 16px',
+                      borderRadius: '12px',
+                      background: isChecked ? 'rgba(212, 165, 165, 0.08)' : 'var(--admin-surface-muted, #faf8f6)',
+                      border: '1px solid',
+                      borderColor: isChecked ? 'rgba(212, 165, 165, 0.25)' : 'var(--admin-border, #e8e0da)',
+                      transition: 'all 0.25s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isChecked) {
+                        e.currentTarget.style.background = 'rgba(61, 46, 36, 0.03)';
+                        e.currentTarget.style.borderColor = 'rgba(212, 165, 165, 0.2)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isChecked) {
+                        e.currentTarget.style.background = 'var(--admin-surface-muted, #faf8f6)';
+                        e.currentTarget.style.borderColor = 'var(--admin-border, #e8e0da)';
+                      }
+                    }}
+                  >
+                    <span style={{ fontWeight: 500, color: 'var(--admin-text, #3d2e24)' }}>{g}</span>
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => handleGenderToggle(g)}
+                      style={{
+                        width: '18px',
+                        height: '18px',
+                        accentColor: 'var(--admin-accent, #5c4a42)',
+                        cursor: 'pointer',
+                      }}
+                    />
+                  </label>
+                );
+              })}
+
+              {/* Add custom option input */}
+              <div style={{ display: 'flex', gap: '8px', borderTop: '1px solid var(--admin-border-subtle)', paddingTop: '12px', marginTop: '4px' }}>
+                <input
+                  type="text"
+                  placeholder={isVi ? 'Thêm giới tính tùy chỉnh...' : 'Add custom gender...'}
+                  value={customGender}
+                  onChange={(e) => setCustomGender(e.target.value)}
+                  className="admin-input"
+                  style={{ height: '36px', fontSize: '0.8125rem', flexGrow: 1 }}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (customGender.trim()) {
+                      handleGenderToggle(customGender.trim());
+                      setCustomGender('');
+                    }
+                  }}
+                  className="px-4 py-2 bg-[#7A5C5C] hover:bg-[#634747] text-white rounded-xl text-xs font-semibold transition active:scale-95"
+                  style={{ height: '36px', borderRadius: '10px' }}
+                >
+                  {isVi ? 'Thêm' : 'Add'}
+                </button>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid var(--admin-border, #e8e0da)', paddingTop: '16px' }}>
+              <button
+                type="button"
+                onClick={() => setIsGenderModalOpen(false)}
+                style={{
+                  background: 'var(--admin-accent, #5c4a42)',
+                  color: '#ffffff',
+                  padding: '10px 24px',
+                  borderRadius: '10px',
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  border: 'none',
+                  boxShadow: '0 4px 12px rgba(92, 74, 66, 0.15)',
+                  transition: 'transform 0.2s, opacity 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                  e.currentTarget.style.opacity = '0.95';
+                  e.currentTarget.style.background = 'var(--admin-accent-hover, #4a3728)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.opacity = '1';
+                  e.currentTarget.style.background = 'var(--admin-accent, #5c4a42)';
+                }}
+              >
+                {isVi ? 'Hoàn thành' : 'Done'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Scent Group Selection Modal */}
+      {isScentGroupModalOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(61, 46, 36, 0.35)',
+            backdropFilter: 'blur(8px)',
+            overflowY: 'auto',
+            padding: '20px',
+          }}
+          onClick={() => setIsScentGroupModalOpen(false)}
+        >
+          <div
+            style={{
+              background: 'var(--admin-surface, #ffffff)',
+              border: '1px solid var(--admin-border, #e8e0da)',
+              borderRadius: 'var(--admin-radius-lg, 20px)',
+              padding: '30px',
+              maxWidth: '500px',
+              width: '100%',
+              boxShadow: '0 20px 40px rgba(61, 46, 36, 0.08)',
+              animation: 'fadeIn 0.25s ease-out',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '20px'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--admin-border, #e8e0da)', paddingBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ background: 'rgba(212, 165, 165, 0.1)', padding: '8px', borderRadius: '10px', color: 'var(--admin-accent, #5c4a42)' }}>
+                  <Sparkles size={18} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 600, color: 'var(--admin-text, #3d2e24)' }}>
+                    {isVi ? 'Phân loại Nhóm hương' : 'Scent Group Selection'}
+                  </h3>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '0.75rem', color: 'var(--admin-text-secondary, #6b564c)' }}>
+                    {isVi ? 'Chọn các nhóm hương đặc trưng của nước hoa này' : 'Select signature scent groups of this perfume'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsScentGroupModalOpen(false)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--admin-text-muted, #9a857c)',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'color 0.2s, background 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = 'var(--admin-text, #3d2e24)';
+                  e.currentTarget.style.background = 'rgba(61, 46, 36, 0.05)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = 'var(--admin-text-muted, #9a857c)';
+                  e.currentTarget.style.background = 'transparent';
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Checkboxes Grid */}
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '10px',
+                maxHeight: '300px',
+                overflowY: 'auto',
+                paddingRight: '6px'
+              }}
+              className="admin-scrollbar-luxury"
+            >
+              {Array.from(new Set([
+                ...(scentGroups?.map(s => s.name) || [
+                  'Hương Gỗ (Woody)', 
+                  'Hương Hoa Cỏ (Floral)', 
+                  'Hương Phương Đông (Oriental)', 
+                  'Hương Cam Chanh (Citrus)', 
+                  'Hương Gia Vị (Spicy)', 
+                  'Hương Da Thuộc (Leather)', 
+                  'Hương Nước (Aquatic)', 
+                  'Hương Trái Cây (Fruity)', 
+                  'Hương Rêu Sồi (Chypre)', 
+                  'Hương Thảo Mộc (Fougere)'
+                ]), 
+                ...selectedScentGroups
+              ])).map((sg) => {
+                const isChecked = selectedScentGroups.includes(sg);
+                return (
+                  <label
+                    key={sg}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      cursor: 'pointer',
+                      fontSize: '0.875rem',
+                      color: 'var(--admin-text, #3d2e24)',
+                      userSelect: 'none',
+                      padding: '12px 16px',
+                      borderRadius: '12px',
+                      background: isChecked ? 'rgba(212, 165, 165, 0.08)' : 'var(--admin-surface-muted, #faf8f6)',
+                      border: '1px solid',
+                      borderColor: isChecked ? 'rgba(212, 165, 165, 0.25)' : 'var(--admin-border, #e8e0da)',
+                      transition: 'all 0.25s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isChecked) {
+                        e.currentTarget.style.background = 'rgba(61, 46, 36, 0.03)';
+                        e.currentTarget.style.borderColor = 'rgba(212, 165, 165, 0.2)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isChecked) {
+                        e.currentTarget.style.background = 'var(--admin-surface-muted, #faf8f6)';
+                        e.currentTarget.style.borderColor = 'var(--admin-border, #e8e0da)';
+                      }
+                    }}
+                  >
+                    <span style={{ fontWeight: 500, color: 'var(--admin-text, #3d2e24)' }}>{sg}</span>
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => handleScentGroupToggle(sg)}
+                      style={{
+                        width: '18px',
+                        height: '18px',
+                        accentColor: 'var(--admin-accent, #5c4a42)',
+                        cursor: 'pointer',
+                      }}
+                    />
+                  </label>
+                );
+              })}
+
+              {/* Add custom option input */}
+              <div style={{ display: 'flex', gap: '8px', borderTop: '1px solid var(--admin-border-subtle)', paddingTop: '12px', marginTop: '4px' }}>
+                <input
+                  type="text"
+                  placeholder={isVi ? 'Thêm nhóm hương tùy chỉnh...' : 'Add custom scent group...'}
+                  value={customScentGroup}
+                  onChange={(e) => setCustomScentGroup(e.target.value)}
+                  className="admin-input"
+                  style={{ height: '36px', fontSize: '0.8125rem', flexGrow: 1 }}
+                />
+                <button
+                  type="button"
+                  disabled={addScentGroupMutation.isPending}
+                  onClick={() => {
+                    if (customScentGroup.trim()) {
+                      addScentGroupMutation.mutate(customScentGroup.trim());
+                    }
+                  }}
+                  className="px-4 py-2 bg-[#7A5C5C] hover:bg-[#634747] text-white rounded-xl text-xs font-semibold transition active:scale-95 disabled:opacity-50"
+                  style={{ height: '36px', borderRadius: '10px' }}
+                >
+                  {addScentGroupMutation.isPending ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    isVi ? 'Thêm' : 'Add'
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid var(--admin-border, #e8e0da)', paddingTop: '16px' }}>
+              <button
+                type="button"
+                onClick={() => setIsScentGroupModalOpen(false)}
+                style={{
+                  background: 'var(--admin-accent, #5c4a42)',
+                  color: '#ffffff',
+                  padding: '10px 24px',
+                  borderRadius: '10px',
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  border: 'none',
+                  boxShadow: '0 4px 12px rgba(92, 74, 66, 0.15)',
+                  transition: 'transform 0.2s, opacity 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                  e.currentTarget.style.opacity = '0.95';
+                  e.currentTarget.style.background = 'var(--admin-accent-hover, #4a3728)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.opacity = '1';
+                  e.currentTarget.style.background = 'var(--admin-accent, #5c4a42)';
+                }}
+              >
+                {isVi ? 'Hoàn thành' : 'Done'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Concentration Selection Modal */}
+      {isConcentrationModalOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(61, 46, 36, 0.35)',
+            backdropFilter: 'blur(8px)',
+            overflowY: 'auto',
+            padding: '20px',
+          }}
+          onClick={() => setIsConcentrationModalOpen(false)}
+        >
+          <div
+            style={{
+              background: 'var(--admin-surface, #ffffff)',
+              border: '1px solid var(--admin-border, #e8e0da)',
+              borderRadius: 'var(--admin-radius-lg, 20px)',
+              padding: '30px',
+              maxWidth: '500px',
+              width: '100%',
+              boxShadow: '0 20px 40px rgba(61, 46, 36, 0.08)',
+              animation: 'fadeIn 0.25s ease-out',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '20px'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--admin-border, #e8e0da)', paddingBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ background: 'rgba(212, 165, 165, 0.1)', padding: '8px', borderRadius: '10px', color: 'var(--admin-accent, #5c4a42)' }}>
+                  <Sparkles size={18} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 600, color: 'var(--admin-text, #3d2e24)' }}>
+                    {isVi ? 'Phân loại Nồng độ' : 'Concentration Selection'}
+                  </h3>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '0.75rem', color: 'var(--admin-text-secondary, #6b564c)' }}>
+                    {isVi ? 'Chọn nồng độ tinh dầu của nước hoa' : 'Select perfume concentrations'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsConcentrationModalOpen(false)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--admin-text-muted, #9a857c)',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'color 0.2s, background 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = 'var(--admin-text, #3d2e24)';
+                  e.currentTarget.style.background = 'rgba(61, 46, 36, 0.05)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = 'var(--admin-text-muted, #9a857c)';
+                  e.currentTarget.style.background = 'transparent';
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Checkboxes Grid */}
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '10px',
+                maxHeight: '300px',
+                overflowY: 'auto',
+                paddingRight: '6px'
+              }}
+              className="admin-scrollbar-luxury"
+            >
+              {Array.from(new Set([
+                ...(concentrations?.map(c => c.name) || [
+                  'EDP (Eau de Parfum)', 
+                  'EDT (Eau de Toilette)', 
+                  'Parfum / Extrait', 
+                  'EDC (Eau de Cologne)', 
+                  'Eau Fraiche', 
+                  'Body Mist / Deodorant'
+                ]), 
+                ...selectedConcentrations
+              ])).map((c) => {
+                const isChecked = selectedConcentrations.includes(c);
+                return (
+                  <label
+                    key={c}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      cursor: 'pointer',
+                      fontSize: '0.875rem',
+                      color: 'var(--admin-text, #3d2e24)',
+                      userSelect: 'none',
+                      padding: '12px 16px',
+                      borderRadius: '12px',
+                      background: isChecked ? 'rgba(212, 165, 165, 0.08)' : 'var(--admin-surface-muted, #faf8f6)',
+                      border: '1px solid',
+                      borderColor: isChecked ? 'rgba(212, 165, 165, 0.25)' : 'var(--admin-border, #e8e0da)',
+                      transition: 'all 0.25s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isChecked) {
+                        e.currentTarget.style.background = 'rgba(61, 46, 36, 0.03)';
+                        e.currentTarget.style.borderColor = 'rgba(212, 165, 165, 0.2)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isChecked) {
+                        e.currentTarget.style.background = 'var(--admin-surface-muted, #faf8f6)';
+                        e.currentTarget.style.borderColor = 'var(--admin-border, #e8e0da)';
+                      }
+                    }}
+                  >
+                    <span style={{ fontWeight: 500, color: 'var(--admin-text, #3d2e24)' }}>{c}</span>
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => handleConcentrationToggle(c)}
+                      style={{
+                        width: '18px',
+                        height: '18px',
+                        accentColor: 'var(--admin-accent, #5c4a42)',
+                        cursor: 'pointer',
+                      }}
+                    />
+                  </label>
+                );
+              })}
+
+              {/* Add custom option input */}
+              <div style={{ display: 'flex', gap: '8px', borderTop: '1px solid var(--admin-border-subtle)', paddingTop: '12px', marginTop: '4px' }}>
+                <input
+                  type="text"
+                  placeholder={isVi ? 'Thêm nồng độ tùy chỉnh...' : 'Add custom concentration...'}
+                  value={customConcentration}
+                  onChange={(e) => setCustomConcentration(e.target.value)}
+                  className="admin-input"
+                  style={{ height: '36px', fontSize: '0.8125rem', flexGrow: 1 }}
+                />
+                <button
+                  type="button"
+                  disabled={addConcentrationMutation.isPending}
+                  onClick={() => {
+                    if (customConcentration.trim()) {
+                      addConcentrationMutation.mutate(customConcentration.trim());
+                    }
+                  }}
+                  className="px-4 py-2 bg-[#7A5C5C] hover:bg-[#634747] text-white rounded-xl text-xs font-semibold transition active:scale-95 disabled:opacity-50"
+                  style={{ height: '36px', borderRadius: '10px' }}
+                >
+                  {addConcentrationMutation.isPending ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    isVi ? 'Thêm' : 'Add'
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid var(--admin-border, #e8e0da)', paddingTop: '16px' }}>
+              <button
+                type="button"
+                onClick={() => setIsConcentrationModalOpen(false)}
+                style={{
+                  background: 'var(--admin-accent, #5c4a42)',
+                  color: '#ffffff',
+                  padding: '10px 24px',
+                  borderRadius: '10px',
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  border: 'none',
+                  boxShadow: '0 4px 12px rgba(92, 74, 66, 0.15)',
+                  transition: 'transform 0.2s, opacity 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                  e.currentTarget.style.opacity = '0.95';
+                  e.currentTarget.style.background = 'var(--admin-accent-hover, #4a3728)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.opacity = '1';
+                  e.currentTarget.style.background = 'var(--admin-accent, #5c4a42)';
+                }}
+              >
+                {isVi ? 'Hoàn thành' : 'Done'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Segment Selection Modal */}
+      {isSegmentModalOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(61, 46, 36, 0.35)',
+            backdropFilter: 'blur(8px)',
+            overflowY: 'auto',
+            padding: '20px',
+          }}
+          onClick={() => setIsSegmentModalOpen(false)}
+        >
+          <div
+            style={{
+              background: 'var(--admin-surface, #ffffff)',
+              border: '1px solid var(--admin-border, #e8e0da)',
+              borderRadius: 'var(--admin-radius-lg, 20px)',
+              padding: '30px',
+              maxWidth: '500px',
+              width: '100%',
+              boxShadow: '0 20px 40px rgba(61, 46, 36, 0.08)',
+              animation: 'fadeIn 0.25s ease-out',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '20px'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--admin-border, #e8e0da)', paddingBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ background: 'rgba(212, 165, 165, 0.1)', padding: '8px', borderRadius: '10px', color: 'var(--admin-accent, #5c4a42)' }}>
+                  <Sparkles size={18} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 600, color: 'var(--admin-text, #3d2e24)' }}>
+                    {isVi ? 'Phân loại Phân khúc' : 'Segment Selection'}
+                  </h3>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '0.75rem', color: 'var(--admin-text-secondary, #6b564c)' }}>
+                    {isVi ? 'Chọn phân khúc phân cấp của thương hiệu nước hoa' : 'Select brand segment classification'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsSegmentModalOpen(false)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--admin-text-muted, #9a857c)',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'color 0.2s, background 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = 'var(--admin-text, #3d2e24)';
+                  e.currentTarget.style.background = 'rgba(61, 46, 36, 0.05)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = 'var(--admin-text-muted, #9a857c)';
+                  e.currentTarget.style.background = 'transparent';
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Checkboxes Grid */}
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '10px',
+                maxHeight: '300px',
+                overflowY: 'auto',
+                paddingRight: '6px'
+              }}
+              className="admin-scrollbar-luxury"
+            >
+              {Array.from(new Set([
+                ...(segments?.map(s => s.name) || [
+                  'Niche', 
+                  'Designer', 
+                  'Indie / Artisan', 
+                  'Masstige', 
+                  'Classic / Vintage'
+                ]), 
+                ...selectedSegments
+              ])).map((s) => {
+                const isChecked = selectedSegments.includes(s);
+                return (
+                  <label
+                    key={s}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      cursor: 'pointer',
+                      fontSize: '0.875rem',
+                      color: 'var(--admin-text, #3d2e24)',
+                      userSelect: 'none',
+                      padding: '12px 16px',
+                      borderRadius: '12px',
+                      background: isChecked ? 'rgba(212, 165, 165, 0.08)' : 'var(--admin-surface-muted, #faf8f6)',
+                      border: '1px solid',
+                      borderColor: isChecked ? 'rgba(212, 165, 165, 0.25)' : 'var(--admin-border, #e8e0da)',
+                      transition: 'all 0.25s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isChecked) {
+                        e.currentTarget.style.background = 'rgba(61, 46, 36, 0.03)';
+                        e.currentTarget.style.borderColor = 'rgba(212, 165, 165, 0.2)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isChecked) {
+                        e.currentTarget.style.background = 'var(--admin-surface-muted, #faf8f6)';
+                        e.currentTarget.style.borderColor = 'var(--admin-border, #e8e0da)';
+                      }
+                    }}
+                  >
+                    <span style={{ fontWeight: 500, color: 'var(--admin-text, #3d2e24)' }}>{s}</span>
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => handleSegmentToggle(s)}
+                      style={{
+                        width: '18px',
+                        height: '18px',
+                        accentColor: 'var(--admin-accent, #5c4a42)',
+                        cursor: 'pointer',
+                      }}
+                    />
+                  </label>
+                );
+              })}
+
+              {/* Add custom option input */}
+              <div style={{ display: 'flex', gap: '8px', borderTop: '1px solid var(--admin-border-subtle)', paddingTop: '12px', marginTop: '4px' }}>
+                <input
+                  type="text"
+                  placeholder={isVi ? 'Thêm phân khúc tùy chỉnh...' : 'Add custom segment...'}
+                  value={customSegment}
+                  onChange={(e) => setCustomSegment(e.target.value)}
+                  className="admin-input"
+                  style={{ height: '36px', fontSize: '0.8125rem', flexGrow: 1 }}
+                />
+                <button
+                  type="button"
+                  disabled={addSegmentMutation.isPending}
+                  onClick={() => {
+                    if (customSegment.trim()) {
+                      addSegmentMutation.mutate(customSegment.trim());
+                    }
+                  }}
+                  className="px-4 py-2 bg-[#7A5C5C] hover:bg-[#634747] text-white rounded-xl text-xs font-semibold transition active:scale-95 disabled:opacity-50"
+                  style={{ height: '36px', borderRadius: '10px' }}
+                >
+                  {addSegmentMutation.isPending ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    isVi ? 'Thêm' : 'Add'
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid var(--admin-border, #e8e0da)', paddingTop: '16px' }}>
+              <button
+                type="button"
+                onClick={() => setIsSegmentModalOpen(false)}
+                style={{
+                  background: 'var(--admin-accent, #5c4a42)',
+                  color: '#ffffff',
+                  padding: '10px 24px',
+                  borderRadius: '10px',
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  border: 'none',
+                  boxShadow: '0 4px 12px rgba(92, 74, 66, 0.15)',
+                  transition: 'transform 0.2s, opacity 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                  e.currentTarget.style.opacity = '0.95';
+                  e.currentTarget.style.background = 'var(--admin-accent-hover, #4a3728)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.opacity = '1';
+                  e.currentTarget.style.background = 'var(--admin-accent, #5c4a42)';
+                }}
+              >
+                {isVi ? 'Hoàn thành' : 'Done'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {isPriceSuggestModalOpen && (
         <div
@@ -1287,7 +2887,7 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
                 {/* Report Footer */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--admin-border-subtle)', paddingTop: '12px', fontSize: '0.625rem', color: 'var(--admin-text-muted)', marginTop: 'auto' }}>
                   <span>🔒 L'essence Confidential Data</span>
-                  <span>Model: Gemini 3.1 & Gemma 4</span>
+                  <span>Model: Gemini 3.1 Flash Lite</span>
                 </div>
               </div>
             )}

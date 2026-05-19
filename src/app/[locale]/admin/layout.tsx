@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Link } from '@/navigation';
+import { Link, useRouter } from '@/navigation';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
@@ -16,8 +16,10 @@ import {
   Search,
   User,
   Award,
+  Tag as TagIcon,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { useAuthStore } from '@/store/useAuthStore';
 import './admin.css';
 
 export default function AdminLayout({
@@ -28,11 +30,39 @@ export default function AdminLayout({
   const t = useTranslations('Admin');
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = React.useState(false);
+  const router = useRouter();
+  const logout = useAuthStore((state) => state.logout);
+
+  const handleLogout = () => {
+    logout();
+    router.replace('/login');
+  };
+
+  // Auth & Role Protection
+  React.useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (!token) {
+      router.replace('/login');
+      return;
+    }
+    
+    // Fallback manual decode if useAuthStore fails to persist correctly
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      if (payload.role !== 'ADMIN' && payload.role !== 'SUBADMIN') {
+        router.replace('/');
+      }
+    } catch (e) {
+      router.replace('/login');
+    }
+  }, [router]);
 
   const menuItems = [
     { name: t('nav.dashboard'), icon: LayoutDashboard, href: '/admin' },
+    { name: pathname.includes('/vi') ? 'Quản lý Trang chủ' : 'Homepage Content', icon: Sparkles, href: '/admin/homepage' },
     { name: t('nav.products'), icon: Package, href: '/admin/products' },
     { name: t('nav.brands'), icon: Award, href: '/admin/brands' },
+    { name: pathname.includes('/vi') ? 'Quản lý tập trung' : 'Centralized Management', icon: TagIcon, href: '/admin/taxonomy' },
     { name: t('nav.orders'), icon: ShoppingBag, href: '/admin/orders' },
     { name: t('nav.users'), icon: Users, href: '/admin/users' },
     { name: t('nav.settings'), icon: Settings, href: '/admin/settings' },
@@ -116,6 +146,7 @@ export default function AdminLayout({
         <div className="admin-sidebar__footer">
           <button
             type="button"
+            onClick={handleLogout}
             className={`admin-logout-btn ${isCollapsed ? 'admin-logout-btn--icon-only' : ''}`}
           >
             <LogOut size={18} />
@@ -155,7 +186,7 @@ export default function AdminLayout({
               <User size={18} />
             </button>
             <span className="admin-header__divider" />
-            <button type="button" className="admin-header__exit">
+            <button type="button" onClick={handleLogout} className="admin-header__exit">
               <LogOut size={16} />
               <span className="admin-header__exit-label">{t('nav.exit')}</span>
             </button>

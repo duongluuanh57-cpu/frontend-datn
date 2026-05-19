@@ -52,8 +52,8 @@
   "Home": {
     "bannerAria": "Banner trang chủ",
     "bannerAlt": "L'essence — chai nước hoa và hoa hồng, không gian sang trọng",
-    "bannerTitle": "Hương thơm khơi gợi ký ức",
-    "bannerSubtitle": "Khám phá bộ sưu tập cao cấp — tinh tế như chính bạn.",
+    "bannerTitle": "Độc bản hương thơm Niche",
+    "bannerSubtitle": "Khám phá tinh hoa mùi hương quý tộc mang đậm phong vị cá nhân từ những nhà điều chế hàng đầu thế giới.",
     "bannerCta": "Vào cửa hàng",
     "prevSlide": "Slide trước",
     "nextSlide": "Slide sau",
@@ -139,6 +139,7 @@
       "dashboard": "Dashboard",
       "products": "Sản phẩm",
       "brands": "Thương hiệu",
+      "tags": "Quản lý Tag",
       "orders": "Đơn hàng",
       "users": "Người dùng",
       "settings": "Cài đặt",
@@ -191,13 +192,15 @@
       "keywordsPlaceholder": "Ngăn cách bằng dấu phẩy",
       "metaDescription": "Mô tả tìm kiếm",
       "status": "Trạng thái",
-      "ready": "Sẵn sàng xuất bản"
+      "ready": "Sẵn sàng xuất bản",
+      "draft": "Chưa đủ thông tin"
     },
     "table": {
       "product": "Sản phẩm",
       "stock": "Kho",
       "price": "Giá / Giảm giá",
       "rating": "Đánh giá",
+      "tag": "Tag",
       "actions": "Thao tác"
     },
     "loading": "Đang tải kho lưu trữ...",
@@ -207,12 +210,12 @@
     "errorTitle": "Lỗi kết nối dữ liệu",
     "errorText": "Không thể tải danh sách sản phẩm. Vui lòng kiểm tra kết nối server.",
     "upload": {
-      "label": "Hình ảnh sản phẩm (tự động nén)",
+      "label": "Hình ảnh sản phẩm",
       "error": "Không thể tải ảnh lên. Vui lòng thử lại.",
       "preview": "Xem trước sản phẩm",
       "remove": "Xóa ảnh",
       "prompt": "Tải ảnh lên",
-      "hint": "Hỗ trợ JPG, PNG, HEIC... (Tự động nén)"
+      "hint": "Hỗ trợ JPG, PNG, HEIC..."
     }
   }
 }

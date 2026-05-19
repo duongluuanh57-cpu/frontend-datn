@@ -5,7 +5,7 @@ interface User {
   id: string;
   username: string;
   email: string;
-  role: 'USER' | 'ADMIN';
+  role: 'USER' | 'ADMIN' | 'SUBADMIN';
   avatar?: string;
   tenantId: string;
 }
@@ -37,15 +37,15 @@ export const useAuthStore = create<AuthState & AuthActions>()(
         }
         set({ user, accessToken, refreshToken, isAuthenticated: true });
       },
-      
+
       logout: () => {
         if (typeof window !== 'undefined') {
           localStorage.removeItem('token');
         }
         set({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false });
       },
-      
-      updateUser: (updatedUser) => 
+
+      updateUser: (updatedUser) =>
         set((state) => ({
           user: state.user ? { ...state.user, ...updatedUser } : null
         })),

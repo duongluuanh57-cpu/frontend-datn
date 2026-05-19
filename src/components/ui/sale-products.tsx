@@ -1,5 +1,6 @@
 'use client';
 
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -14,10 +15,91 @@ const fetchSaleProducts = async (): Promise<ProductData[]> => {
   return data.data;
 };
 
+// --- Countdown Timer Component ---
+interface CountdownTimerProps {
+  targetDate?: string | null;
+  locale: string;
+}
+
+function CountdownTimer({ targetDate, locale }: CountdownTimerProps) {
+  const [timeLeft, setTimeLeft] = useState<{
+    days: number;
+    hours: number;
+    minutes: number;
+    seconds: number;
+  }>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+
+  useEffect(() => {
+    if (!targetDate) {
+      setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+      return;
+    }
+
+    const calculateTimeLeft = () => {
+      const difference = +new Date(targetDate) - +new Date();
+      if (difference <= 0) {
+        return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+      }
+
+      return {
+        days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+        minutes: Math.floor((difference / 1000 / 60) % 60),
+        seconds: Math.floor((difference / 1000) % 60),
+      };
+    };
+
+    setTimeLeft(calculateTimeLeft());
+
+    const timer = setInterval(() => {
+      setTimeLeft(calculateTimeLeft());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [targetDate]);
+
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const labels = locale === 'vi'
+    ? { days: 'Ngày', hours: 'Giờ', minutes: 'Phút', seconds: 'Giây' }
+    : { days: 'Days', hours: 'Hours', minutes: 'Mins', seconds: 'Secs' };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.15, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+      className="mt-6 lg:mt-0 flex items-center justify-center gap-3 md:gap-4"
+    >
+      {[
+        { label: labels.days, value: pad(timeLeft.days) },
+        { label: labels.hours, value: pad(timeLeft.hours) },
+        { label: labels.minutes, value: pad(timeLeft.minutes) },
+        { label: labels.seconds, value: pad(timeLeft.seconds) }
+      ].map((item, index) => (
+        <React.Fragment key={item.label}>
+          <div className="flex flex-col items-center">
+            <div className="countdown-box flex h-14 w-14 md:h-16 md:w-16 items-center justify-center rounded-xl">
+              <span className="text-xl md:text-2xl font-bold tracking-tight text-[#7A5C5C]">
+                {item.value}
+              </span>
+            </div>
+            <span className="mt-2 text-[9px] font-bold uppercase tracking-wider text-[#7A5C5C]/50">
+              {item.label}
+            </span>
+          </div>
+          {index < 3 && (
+            <span className="text-lg font-medium text-[#D4A5A5] mb-5">:</span>
+          )}
+        </React.Fragment>
+      ))}
+    </motion.div>
+  );
+}
+
 // --- Skeleton Component ---
 const ProductSkeleton = () => (
   <div className="flex flex-col gap-6">
-    <div className="aspect-[3/4] w-full animate-pulse rounded-2xl bg-[#7A5C5C]/5" />
+    <div className="aspect-square w-full animate-pulse rounded-2xl bg-[#7A5C5C]/5" />
     <div className="flex flex-col items-center gap-3">
       <div className="h-3 w-16 animate-pulse rounded bg-[#7A5C5C]/5" />
       <div className="h-4 w-32 animate-pulse rounded bg-[#7A5C5C]/5" />
@@ -36,43 +118,62 @@ export function SaleProducts() {
 
   if (error) return null;
 
+  const targetDate = products?.[0]?.discountEndDate;
+
   return (
-    <section className="new-products-section w-full bg-transparent pt-12 pb-24 lg:pt-20 lg:pb-36 overflow-hidden">
-      <div className="container mx-auto px-6">
-        
+    <section className="new-products-section w-full bg-transparent pt-[56px] pb-10 lg:pt-[96px] lg:pb-14 overflow-hidden">
+      <div className="max-w-[1400px] mx-auto px-6">
+
         {/* Header Section */}
-        <div className="relative mb-16 lg:mb-24 flex flex-col items-center text-center">
-          <motion.span 
-            initial={{ opacity: 0, letterSpacing: '0.2em' }}
-            whileInView={{ opacity: 1, letterSpacing: '0.45em' }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-            className="text-[10px] font-bold uppercase text-[#D4A5A5]"
-          >
-            L'essence Promotions
-          </motion.span>
-          <motion.h2 
-            initial={{ opacity: 0, y: 15 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.1, duration: 0.8 }}
-            className="mt-4 text-3xl font-medium text-[#7A5C5C] md:text-4xl lg:text-5xl"
-          >
-            {t('title')}
-          </motion.h2>
-          <div className="mt-8 h-px w-24 bg-gradient-to-r from-transparent via-[#D4A5A5]/40 to-transparent" />
+        <div className="relative mb-16 lg:mb-20 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 border-b border-[#D4A5A5]/10 pb-8">
+          <div className="flex flex-col items-center lg:items-start text-center lg:text-left">
+            <motion.span
+              initial={{ opacity: 0, letterSpacing: '0.2em' }}
+              whileInView={{ opacity: 1, letterSpacing: '0.45em' }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8 }}
+              className="text-[10px] font-bold uppercase text-[#D4A5A5]"
+            >
+              L'essence Promotions
+            </motion.span>
+            <motion.h2
+              initial={{ opacity: 0, y: 15 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1, duration: 0.8 }}
+              className="mt-4 text-3xl font-medium text-[#7A5C5C] md:text-4xl lg:text-5xl"
+            >
+              {t('title')}
+            </motion.h2>
+            <motion.p
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 0.6 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2, duration: 0.8 }}
+              className="mt-3 text-[11px] md:text-xs text-[#7A5C5C] max-w-[480px] font-medium leading-relaxed"
+            >
+              {locale === 'vi' 
+                ? 'Trải nghiệm những hương thơm Niche tinh tuyển với ưu đãi đặc quyền giới hạn.' 
+                : 'Curated selection of exquisite Niche fragrances with limited luxury offers.'}
+            </motion.p>
+          </div>
+
+          {/* Active Campaign Countdown */}
+          <div className="flex justify-center lg:justify-end">
+            <CountdownTimer targetDate={targetDate} locale={locale} />
+          </div>
         </div>
 
         {/* Product Grid */}
-        <div className="grid grid-cols-1 gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
+        <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4 auto-rows-fr">
           {isLoading ? (
-            Array.from({ length: 5 }).map((_, i) => <ProductSkeleton key={i} />)
+            Array.from({ length: 4 }).map((_, i) => <ProductSkeleton key={i} />)
           ) : (
-            products?.map((product, index) => (
-              <ProductCard 
-                key={product._id} 
-                product={product} 
-                index={index} 
+            products?.slice(0, 4).map((product, index) => (
+              <ProductCard
+                key={product._id}
+                product={product}
+                index={index}
               />
             ))
           )}
@@ -89,7 +190,7 @@ export function SaleProducts() {
             </button>
           </Link>
         </div>
-        
+
       </div>
     </section>
   );

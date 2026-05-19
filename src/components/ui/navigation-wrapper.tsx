@@ -12,6 +12,7 @@ export function NavigationWrapper({ children }: { children: React.ReactNode }) {
   // Các đường dẫn không hiển thị Navigation (Admin, Login, Register)
   const isAuthPage = pathname.includes('/login') || pathname.includes('/register');
   const isAdmin = pathname.includes('/admin');
+  const isProfile = pathname.includes('/profile');
 
   if (isAdmin || isAuthPage) {
     return <>{children}</>;
@@ -19,12 +20,12 @@ export function NavigationWrapper({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Topbar />
+      {!isProfile && <Topbar />}
       <Navbar />
       <main className="flex-1">
         {children}
       </main>
-      <Footer />
+      {!isProfile && <Footer />}
       <ChatWidget />
     </div>
   );

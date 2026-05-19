@@ -15,6 +15,14 @@ const NewProducts = dynamic(() => import('@/components/ui/new-products').then(mo
   ssr: true,
 });
 
+const LuxuryGallery = dynamic(() => import('@/components/ui/luxury-gallery').then(mod => mod.LuxuryGallery), {
+  ssr: true,
+});
+
+const BlogPosts = dynamic(() => import('@/components/ui/blog-posts').then(mod => mod.BlogPosts), {
+  ssr: true,
+});
+
 export default async function Page({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
@@ -23,9 +31,11 @@ export default async function Page({ params }: { params: Promise<{ locale: strin
     <main className="min-h-[80vh] bg-transparent flex flex-col">
       <Banner />
       <BrandsMarquee />
-      <BrandUsp />
       <SaleProducts />
       <NewProducts />
+      <BrandUsp />
+      <LuxuryGallery />
+      <BlogPosts />
     </main>
   );
 }

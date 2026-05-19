@@ -3,37 +3,69 @@
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
+import { useEffect, useState } from 'react';
+import { getBrands } from '@/lib/api';
 
-const BRANDS = [
-  { name: 'Logo0', logo: 'https://i.ibb.co/nMNSCskm/logo0.webp' },
-  { name: 'Logo1', logo: 'https://i.ibb.co/xN5Zq79/logo1.webp' },
-  { name: 'Logo2', logo: 'https://i.ibb.co/1GMTynwf/logo2.webp' },
-  { name: 'Logo3', logo: 'https://i.ibb.co/8nRmnSWg/logo3.webp' },
-  { name: 'Logo4', logo: 'https://i.ibb.co/gMrMkgp5/logo4.webp' },
-  { name: 'Logo5', logo: 'https://i.ibb.co/3mhqNRT9/logo5.webp' },
-  { name: 'Logo6', logo: 'https://i.ibb.co/VYfCMYXR/logo6.webp' },
-  { name: 'logo7', logo: 'https://i.ibb.co/HDNK5KvW/logo7.webp' },
-  { name: 'Logo8', logo: 'https://i.ibb.co/DPgVQRY4/logo8.webp' },
-  { name: 'Logo9', logo: 'https://i.ibb.co/cXpBnYSs/logo9.webp' },
-  { name: 'Logo10', logo: 'https://i.ibb.co/gLGzSq2X/logo10.webp' },
-  { name: 'Logo11', logo: 'https://i.ibb.co/JFBZm06z/logo11.webp' },
-  { name: 'Logo12', logo: 'https://i.ibb.co/1JtGvRWw/logo12.webp' },
-  { name: 'Logo13', logo: 'https://i.ibb.co/W4dBpdJ7/logo13.webp' },
-  { name: 'Logo14', logo: 'https://i.ibb.co/RGv6pnHh/logo14.webp' },
-  { name: 'Logo15', logo: 'https://i.ibb.co/zhyBWvLh/logo15.webp' },
-  { name: 'Logo16', logo: 'https://i.ibb.co/1tK5fNZH/logo16.webp' },
-  { name: 'Logo17', logo: 'https://i.ibb.co/7NX2NMY0/logo17.webp' },
-  { name: 'logo18', logo: 'https://i.ibb.co/SXqwKgxW/logo18.webp' }
+const FALLBACK_BRANDS = [
+  { name: 'Burberry', logo: 'https://pub-51942afe81314369ba1985f0493bce19.r2.dev/uploads/04pq2s34-burberry.webp' },
+  { name: 'Calvin Klein', logo: 'https://pub-51942afe81314369ba1985f0493bce19.r2.dev/uploads/rn8gigov-calvin-klein.webp' },
+  { name: 'Carolina Herrera', logo: 'https://pub-51942afe81314369ba1985f0493bce19.r2.dev/uploads/lsj1bpnd-carolina-herrera.webp' },
+  { name: 'Chloe', logo: 'https://pub-51942afe81314369ba1985f0493bce19.r2.dev/uploads/25a3ltx8-chloe.webp' },
+  { name: 'Creed', logo: 'https://pub-51942afe81314369ba1985f0493bce19.r2.dev/uploads/qhddz730-creed.webp' },
+  { name: 'Dolce & Gabbana', logo: 'https://pub-51942afe81314369ba1985f0493bce19.r2.dev/uploads/7b91ejpw-dolce---gabbana.webp' },
+  { name: 'Giorgio Armani', logo: 'https://pub-51942afe81314369ba1985f0493bce19.r2.dev/uploads/dxhpaihh-giorgio-armani.webp' },
+  { name: 'Gucci', logo: 'https://pub-51942afe81314369ba1985f0493bce19.r2.dev/uploads/gwlvqjeb-gucci.webp' },
+  { name: 'Hugo Boss', logo: 'https://pub-51942afe81314369ba1985f0493bce19.r2.dev/uploads/67s71vd4-hugo-boss.webp' },
+  { name: 'Jean Paul Gaultier', logo: 'https://pub-51942afe81314369ba1985f0493bce19.r2.dev/uploads/6jecenfm-jean-paul-gaultier.webp' },
+  { name: 'Jimmy Choo', logo: 'https://pub-51942afe81314369ba1985f0493bce19.r2.dev/uploads/ct7wcion-jimmy-choo.webp' },
+  { name: 'Lancome', logo: 'https://pub-51942afe81314369ba1985f0493bce19.r2.dev/uploads/58fgfo7u-lancome.webp' },
+  { name: 'Marc Jacobs', logo: 'https://pub-51942afe81314369ba1985f0493bce19.r2.dev/uploads/iwlirekh-marc-jacobs.webp' },
+  { name: 'Narciso Rodriguez', logo: 'https://pub-51942afe81314369ba1985f0493bce19.r2.dev/uploads/5v1eg8vv-narciso-rodriguez.webp' },
+  { name: 'Paco Rabanne', logo: 'https://pub-51942afe81314369ba1985f0493bce19.r2.dev/uploads/0mszo6ip-paco-rabanne.webp' },
+  { name: 'Parfums Parour', logo: 'https://pub-51942afe81314369ba1985f0493bce19.r2.dev/uploads/b3z7ak31-parfums-parour.webp' },
+  { name: 'Versace', logo: 'https://pub-51942afe81314369ba1985f0493bce19.r2.dev/uploads/rohv2d8g-versace.webp' },
+  { name: 'Yves Saint Laurent', logo: 'https://pub-51942afe81314369ba1985f0493bce19.r2.dev/uploads/hp2e26t2-yves-saint-laurent.webp' },
+  { name: 'Birkholz Perfume Manufacture', logo: 'https://pub-51942afe81314369ba1985f0493bce19.r2.dev/uploads/k7l0gkeh-birkholz-perfume-manufacture.webp' }
 ];
-
-// Double the list for seamless loop
-const MARQUEE_BRANDS = [...BRANDS, ...BRANDS];
 
 export function BrandsMarquee() {
   const t = useTranslations('Home');
+  const [brands, setBrands] = useState<Array<{ name: string; logo: string }>>([]);
+
+  useEffect(() => {
+    async function loadBrands() {
+      const dbBrands = await getBrands();
+      // Filter active brands with valid logo
+      const activeBrands = dbBrands
+        .filter(b => b.status === 'active' && b.logo)
+        .map(b => ({ name: b.name, logo: b.logo! }));
+
+      if (activeBrands.length > 0) {
+        setBrands(activeBrands);
+      } else {
+        setBrands(FALLBACK_BRANDS);
+      }
+    }
+    loadBrands();
+  }, []);
+
+  const listToRender = brands.length > 0 ? brands : FALLBACK_BRANDS;
+
+  // Build marquee track array: ensure it has at least 10 elements to look smooth, then double for infinite scroll
+  let repeatedList = [...listToRender];
+  while (repeatedList.length < 10) {
+    repeatedList = [...repeatedList, ...listToRender];
+  }
+  const marqueeBrands = [...repeatedList, ...repeatedList];
 
   return (
-    <section className="w-full bg-transparent pt-10 pb-8 lg:pt-16 lg:pb-10 overflow-hidden border-b border-[#7A5C5C]/5">
+    <section 
+      className="w-full bg-transparent pt-[88px] pb-8 lg:pt-[136px] lg:pb-10 overflow-hidden border-b border-[#7A5C5C]/5"
+      style={{
+        contain: 'content',
+        contentVisibility: 'auto',
+      } as React.CSSProperties}
+    >
       
       {/* Compositor marquee styling */}
       <style dangerouslySetInnerHTML={{ __html: `
@@ -57,12 +89,22 @@ export function BrandsMarquee() {
         }
         .brand-logo-item {
           transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
-          will-change: transform, opacity;
-          opacity: 0.22;
+          opacity: 0.65;
         }
         .brand-logo-item:hover {
           transform: scale(1.1);
-          opacity: 0.95;
+          opacity: 1;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .brands-marquee-gpu {
+            animation: none !important;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+          }
+          .brand-logo-item {
+            opacity: 0.55;
+          }
         }
       `}} />
 
@@ -89,11 +131,11 @@ export function BrandsMarquee() {
 
         {/* Pure CSS GPU Composited marquee track */}
         <div className="brands-marquee-gpu">
-          {MARQUEE_BRANDS.map((brand, index) => (
+          {marqueeBrands.map((brand, index) => (
             <div
               key={`${brand.name}-${index}`}
               className="flex items-center justify-center px-4 md:px-6 lg:px-8"
-              aria-hidden={index >= BRANDS.length}
+              aria-hidden={index >= repeatedList.length}
             >
               <div className="brand-logo-item relative h-12 w-32 md:h-14 md:w-36 lg:h-16 lg:w-40 cursor-pointer">
                 <Image
@@ -102,7 +144,8 @@ export function BrandsMarquee() {
                   fill
                   sizes="(max-width: 768px) 120px, 160px"
                   className="object-contain"
-                  quality={70}
+                  quality={100}
+                  unoptimized
                   priority={index < 6}
                   loading={index < 6 ? undefined : "lazy"}
                 />

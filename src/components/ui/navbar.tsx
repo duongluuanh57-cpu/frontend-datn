@@ -224,7 +224,7 @@ export function Navbar() {
         </button>
 
         <Link 
-          href={isAuthenticated && user?.role === 'ADMIN' ? '/admin' : '/login'} 
+          href={isAuthenticated ? '/profile' : '/login'} 
           className="nav-link" 
           style={{
             background: 'var(--accent)', 

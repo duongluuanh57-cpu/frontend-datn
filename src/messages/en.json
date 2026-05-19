@@ -52,8 +52,8 @@
   "Home": {
     "bannerAria": "Homepage banner",
     "bannerAlt": "L'essence — perfume bottle and roses in an elegant setting",
-    "bannerTitle": "A fragrance that lingers",
-    "bannerSubtitle": "Discover our premium collection — refined, personal, unforgettable.",
+    "bannerTitle": "Bespoke Niche Perfumery",
+    "bannerSubtitle": "Explore the elite essence of royal perfumery, crafted for individual distinction by master scent designers.",
     "bannerCta": "Shop collection",
     "prevSlide": "Previous slide",
     "nextSlide": "Next slide",
@@ -139,6 +139,7 @@
       "dashboard": "Dashboard",
       "products": "Products",
       "brands": "Brands",
+      "tags": "Tag Management",
       "orders": "Orders",
       "users": "Users",
       "settings": "Settings",
@@ -191,13 +192,15 @@
       "keywordsPlaceholder": "Separated by commas",
       "metaDescription": "Search Description",
       "status": "Status",
-      "ready": "Ready to publish"
+      "ready": "Ready to publish",
+      "draft": "Incomplete information"
     },
     "table": {
       "product": "Product",
       "stock": "Stock",
       "price": "Price / Sale",
       "rating": "Rating",
+      "tag": "Tag",
       "actions": "Actions"
     },
     "loading": "Loading archive...",
@@ -207,12 +210,12 @@
     "errorTitle": "Data connection error",
     "errorText": "Unable to load product list. Please check server connection.",
     "upload": {
-      "label": "Product image (auto-compressed)",
+      "label": "Product image",
       "error": "Failed to upload image. Please try again.",
       "preview": "Product preview",
       "remove": "Remove image",
       "prompt": "Upload Image",
-      "hint": "WebP, max 1200px"
+      "hint": "Supports JPG, PNG, HEIC..."
     }
   }
 }

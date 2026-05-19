@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useChatStore } from '@/store/useChatStore';
 import { ChatFeedback } from './chat-feedback';
 import { ProductCard, type ProductData } from './product-card';
+import { resolveImageUrl } from '@/lib/api';
 import { Link } from '@/navigation';
 import { cn } from '@/lib/utils';
 import './chat-widget.css';
@@ -62,7 +63,7 @@ function ChatProductCard({ productId }: { productId: string }) {
         <div className="relative aspect-square overflow-hidden bg-neutral-50 flex items-center justify-center">
           {product.image && product.image.trim() !== "" ? (
             <img 
-              src={product.image} 
+              src={resolveImageUrl(product.image)} 
               alt={product.name} 
               className="object-cover w-full h-full transition-transform duration-500 hover:scale-110"
               onError={(e) => {

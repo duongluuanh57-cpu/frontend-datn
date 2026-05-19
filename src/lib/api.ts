@@ -10,6 +10,20 @@ export function getBackendOrigin(): string {
 }
 
 /**
+ * Trả về URL đầy đủ cho ảnh. Nếu ảnh là relative path (bắt đầu bằng / vd /uploads/...),
+ * sẽ tự động ghép với Origin của backend (e.g., http://localhost:4000/uploads/...).
+ */
+export function resolveImageUrl(url?: string): string {
+  if (!url) return '';
+  const trimmed = url.trim();
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('data:') || trimmed.startsWith('blob:')) {
+    return trimmed;
+  }
+  const origin = getBackendOrigin();
+  return trimmed.startsWith('/') ? `${origin}${trimmed}` : `${origin}/${trimmed}`;
+}
+
+/**
  * Ping backend một lần (GET /ping). Không ném lỗi; trả về true nếu 2xx.
  * Dùng khi frontend khởi động để đánh thức host ngủ (vd. Render).
  */
@@ -79,6 +93,33 @@ export async function uploadImageToImgBB(
     throw new Error(json.message || `Upload failed (${res.status})`);
   }
   return json.data;
+}
+
+export interface BrandData {
+  _id: string;
+  name: string;
+  logo?: string;
+  description?: string;
+  origin?: string;
+  status: 'active' | 'inactive';
+  featured: boolean;
+}
+
+/**
+ * Fetch all brands from the backend.
+ * Public endpoint, returns list of brands.
+ */
+export async function getBrands(): Promise<BrandData[]> {
+  try {
+    const res = await api.get('/brands');
+    if (res.data && res.data.success) {
+      return res.data.data;
+    }
+    return [];
+  } catch (error) {
+    console.error('Failed to fetch brands from database:', error);
+    return [];
+  }
 }
 
 export default api;

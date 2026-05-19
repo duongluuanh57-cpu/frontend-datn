@@ -67,15 +67,14 @@ export default async function LocaleLayout({
   return (
     <html lang={locale}>
       <head>
-        <link rel="preconnect" href="https://i.ibb.co" />
-        <link rel="dns-prefetch" href="https://i.ibb.co" />
+        <link rel="preconnect" href="https://pub-51942afe81314369ba1985f0493bce19.r2.dev" />
+        <link rel="dns-prefetch" href="https://pub-51942afe81314369ba1985f0493bce19.r2.dev" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
       <body className={inter.className}>
-        <BackendWarmup />
         {isProduction && (
           <Script id="fb-pixel" strategy="afterInteractive">
             {`
@@ -107,6 +106,7 @@ export default async function LocaleLayout({
               <VisitTracker />
               <NavigationWrapper>
                 <Toaster position="top-center" richColors />
+                <BackendWarmup />
                 {children}
               </NavigationWrapper>
             </NextIntlClientProvider>
