@@ -418,7 +418,7 @@ export default function ProfilePage() {
 
                   <div className="profile-grid-details">
                     
-                    <div className="profile-details-card" style={{ gridColumn: 'span 2' }}>
+                    <div className="profile-details-card" style={{ gridColumn: 'span 3' }}>
                       <div className="profile-card-label">Tên tài khoản</div>
                       <div className="profile-card-value">
                         {user.username}
@@ -426,7 +426,7 @@ export default function ProfilePage() {
                     </div>
 
 
-                    <div className="profile-details-card" style={{ gridColumn: 'span 2' }}>
+                    <div className="profile-details-card" style={{ gridColumn: 'span 3' }}>
                       <div className="profile-card-label">Địa chỉ email</div>
                       {isEditingEmail ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%', marginTop: '6px' }}>
@@ -492,14 +492,14 @@ export default function ProfilePage() {
                       )}
                     </div>
 
-                    <div className="profile-details-card">
+                    <div className="profile-details-card" style={{ gridColumn: 'span 2' }}>
                       <div className="profile-card-label">Vai trò tài khoản</div>
                       <div className="profile-card-value" style={{ color: 'var(--primary)', fontWeight: 700 }}>
                         {user.role}
                       </div>
                     </div>
 
-                    <div className="profile-details-card">
+                    <div className="profile-details-card" style={{ gridColumn: 'span 2' }}>
                       <div className="profile-card-label">Hạng thành viên</div>
                       <div className="profile-card-value" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         {user.memberTier || 'MEMBER'}
@@ -512,7 +512,7 @@ export default function ProfilePage() {
                       </div>
                     </div>
 
-                    <div className="profile-details-card">
+                    <div className="profile-details-card" style={{ gridColumn: 'span 2' }}>
                       <div className="profile-card-label">Tham gia hệ thống</div>
                       <div className="profile-card-value" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <Calendar size={16} style={{ opacity: 0.7 }} />
@@ -700,24 +700,24 @@ export default function ProfilePage() {
                   ) : (
                     <div className="profile-grid-details" style={{ gap: '1.2rem' }}>
                       
-                      <div className="profile-details-card">
+                      <div className="profile-details-card" style={{ gridColumn: 'span 2' }}>
                         <div className="profile-card-label">Họ và tên</div>
                         <div className="profile-card-value">{(user as any).fullName || 'Chưa cập nhật'}</div>
                       </div>
 
-                      <div className="profile-details-card">
+                      <div className="profile-details-card" style={{ gridColumn: 'span 2' }}>
                         <div className="profile-card-label">Số điện thoại</div>
                         <div className="profile-card-value">{(user as any).phoneNumber || 'Chưa cập nhật'}</div>
                       </div>
 
-                      <div className="profile-details-card">
+                      <div className="profile-details-card" style={{ gridColumn: 'span 2' }}>
                         <div className="profile-card-label">Giới tính</div>
                         <div className="profile-card-value">
                           {(user as any).gender === 'MALE' ? 'Nam' : (user as any).gender === 'FEMALE' ? 'Nữ' : (user as any).gender === 'OTHER' ? 'Khác' : 'Chưa cập nhật'}
                         </div>
                       </div>
 
-                      <div className="profile-details-card" style={{ gridColumn: 'span 2' }}>
+                      <div className="profile-details-card" style={{ gridColumn: 'span 6' }}>
                         <div className="profile-card-label">Địa chỉ đầy đủ</div>
                         <div className="profile-card-value">
                           {(user as any).province ? (
