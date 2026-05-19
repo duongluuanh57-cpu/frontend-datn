@@ -92,14 +92,6 @@ export default async function LocaleLayout({
           </Script>
         )}
 
-        {isProduction && (
-          <Script
-            src="https://cloud.umami.is/script.js"
-            data-website-id="YOUR_UMAMI_ID"
-            strategy="lazyOnload"
-          />
-        )}
-
         <PHProvider>
           <QueryProvider>
             <NextIntlClientProvider messages={messages} locale={locale}>

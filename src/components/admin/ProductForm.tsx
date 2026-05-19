@@ -348,6 +348,9 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
     
     const loadingToastId = toast.loading(isVi ? '🤖 AI đang tự điền nội dung sản phẩm...' : '🤖 AI is generating product content...');
     
+    // Lấy tất cả sizes từ SIZE_CATEGORIES
+    const allAvailableSizes = SIZE_CATEGORIES.flatMap(category => category.sizes);
+    
     try {
       const { data } = await api.post('/ai/generate-product', {
         name: formData.name,
@@ -357,6 +360,7 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
         availableConcentrations: concentrations?.map((c) => c.name) || [],
         availableSegments: segments?.map((s) => s.name) || [],
         availableGenders: ['Nam', 'Nữ', 'Unisex'],
+        availableSizes: allAvailableSizes,
       });
       if (data.success && data.data) {
         const info = data.data;
