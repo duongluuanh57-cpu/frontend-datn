@@ -329,15 +329,25 @@ function ImageEditorModal({
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img 
-                    src={img} 
-                    alt={`Slide ${idx + 1}`} 
-                    className="object-cover h-full w-full"
-                    style={{ transition: 'transform 0.3s' }}
-                    onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.03)'}
-                    onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                  />
+                  {img ? (
+                    <img 
+                      src={img} 
+                      alt={`Slide ${idx + 1}`} 
+                      className="object-cover h-full w-full"
+                      style={{ transition: 'transform 0.3s' }}
+                      onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.03)'}
+                      onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                    />
+                  ) : (
+                    <div className="text-[11px] text-[#A68F81] font-medium flex flex-col items-center gap-2 select-none">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="opacity-40">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                        <circle cx="8.5" cy="8.5" r="1.5" />
+                        <polyline points="21 15 16 10 5 21" />
+                      </svg>
+                      Chưa có hình ảnh
+                    </div>
+                  )}
                 </div>
                 
                 <ImageUpload
