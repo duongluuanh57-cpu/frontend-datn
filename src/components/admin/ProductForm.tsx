@@ -361,6 +361,7 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
         availableSegments: segments?.map((s) => s.name) || [],
         availableGenders: ['Nam', 'Nữ', 'Unisex'],
         availableSizes: allAvailableSizes,
+        availableTags: tags?.map((t) => t.name) || ['New', 'Sale', 'Trending', 'Limited', 'Standard'],
       });
       if (data.success && data.data) {
         const info = data.data;
