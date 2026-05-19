@@ -48,11 +48,31 @@ const api = axios.create({
   },
 });
 
-api.interceptors.request.use((config) => {
+let lastAiRequestTime = 0;
+const AI_COOLDOWN_MS = 2500; // Enforce minimum 2.5 seconds space between any backend AI calls
+
+api.interceptors.request.use(async (config) => {
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
+  // ── GLOBAL AI THROTTLING PROTECTION ──
+  // Checks if the request is routed to an AI endpoint, enforcing a strict sequential spacing
+  // to avoid backend Gemini/OpenAI rate limit overloading or token exhaustion.
+  if (config.url && config.url.includes('/ai/')) {
+    const now = Date.now();
+    const elapsed = now - lastAiRequestTime;
+
+    if (elapsed < AI_COOLDOWN_MS) {
+      const waitTime = AI_COOLDOWN_MS - elapsed;
+      console.warn(`⏳ [AI Global Interceptor] Throttling request to ${config.url} for ${waitTime}ms to prevent rate limiting...`);
+      await new Promise((resolve) => setTimeout(resolve, waitTime));
+    }
+    // Update timestamp right before the call proceeds
+    lastAiRequestTime = Date.now();
+  }
+
   return config;
 });
 
