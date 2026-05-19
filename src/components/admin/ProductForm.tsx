@@ -361,7 +361,6 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
         availableSegments: segments?.map((s) => s.name) || [],
         availableGenders: ['Nam', 'Nữ', 'Unisex'],
         availableSizes: allAvailableSizes,
-        availableTags: tags?.map((t) => t.name) || ['Sản phẩm mới', 'Giảm giá', 'Trending', 'Limited'],
       });
       if (data.success && data.data) {
         const info = data.data;
@@ -371,7 +370,6 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
           price: info.price || prev.price,
           size: info.size || prev.size,
           description: info.description || prev.description,
-          tag: info.tag || prev.tag,
           quantityInStock: prev.quantityInStock, // Preserves the user entered stock value!
           discountPercentage: info.discountPercentage !== undefined ? info.discountPercentage : prev.discountPercentage,
           metaTitle: info.metaTitle || prev.metaTitle,
