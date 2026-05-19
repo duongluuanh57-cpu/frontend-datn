@@ -55,6 +55,23 @@ export default function ProfilePage() {
   const [emailError, setEmailError] = React.useState<string | null>(null);
   const [emailSuccess, setEmailSuccess] = React.useState<string | null>(null);
 
+  // States for editing additional details
+  const [isEditingDetails, setIsEditingDetails] = React.useState(false);
+  const [editedFullName, setEditedFullName] = React.useState('');
+  const [editedPhone, setEditedPhone] = React.useState('');
+  const [editedGender, setEditedGender] = React.useState<'MALE' | 'FEMALE' | 'OTHER' | ''>('');
+  const [editedAddress, setEditedAddress] = React.useState('');
+  const [editedProvince, setEditedProvince] = React.useState('');
+  const [editedDistrict, setEditedDistrict] = React.useState('');
+
+  const [provinces, setProvinces] = React.useState<Array<{ name: string; code: number }>>([]);
+  const [districts, setDistricts] = React.useState<Array<{ name: string; code: number }>>([]);
+  const [loadingProvinces, setLoadingProvinces] = React.useState(false);
+  const [loadingDistricts, setLoadingDistricts] = React.useState(false);
+  const [detailsSubmitting, setDetailsSubmitting] = React.useState(false);
+  const [detailsError, setDetailsError] = React.useState<string | null>(null);
+  const [detailsSuccess, setDetailsSuccess] = React.useState<string | null>(null);
+
   const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
@@ -71,8 +88,15 @@ export default function ProfilePage() {
     if (user) {
       setEditedName(user.username);
       setEditedEmail(user.email);
+      setEditedFullName((user as any).fullName || '');
+      setEditedPhone((user as any).phoneNumber || '');
+      setEditedGender(((user as any).gender as any) || '');
+      setEditedAddress((user as any).address || '');
+      setEditedProvince((user as any).province || '');
+      setEditedDistrict((user as any).district || '');
     }
   }, [user]);
+
 
   React.useEffect(() => {
     const fetchLatestProfile = async () => {
@@ -202,7 +226,84 @@ export default function ProfilePage() {
     }
   };
 
+  // Fetch provinces and districts from open-api.vn
+  React.useEffect(() => {
+    if (isEditingDetails && provinces.length === 0) {
+      setLoadingProvinces(true);
+      fetch('https://provinces.open-api.vn/api/')
+        .then((res) => res.json())
+        .then((data) => {
+          setProvinces(data);
+          setLoadingProvinces(false);
+          
+          if (editedProvince) {
+            const foundProvince = data.find((p: any) => p.name === editedProvince);
+            if (foundProvince) {
+              fetchDistricts(foundProvince.code);
+            }
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to fetch provinces:', err);
+          setLoadingProvinces(false);
+        });
+    }
+  }, [isEditingDetails]);
+
+  const fetchDistricts = (provinceCode: number) => {
+    setLoadingDistricts(true);
+    fetch(`https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`)
+      .then((res) => res.json())
+      .then((data) => {
+        setDistricts(data.districts || []);
+        setLoadingDistricts(false);
+      })
+      .catch((err) => {
+        console.error('Failed to fetch districts:', err);
+        setLoadingDistricts(false);
+      });
+  };
+
+  const handleUpdateDetails = async () => {
+    setDetailsError(null);
+    setDetailsSuccess(null);
+    setDetailsSubmitting(true);
+
+    try {
+      const res = await api.patch('/auth/update-profile', {
+        fullName: editedFullName.trim(),
+        phoneNumber: editedPhone.trim(),
+        gender: editedGender,
+        address: editedAddress.trim(),
+        province: editedProvince,
+        district: editedDistrict
+      });
+
+      if (res.data && res.data.success) {
+        updateUser({
+          fullName: editedFullName.trim(),
+          phoneNumber: editedPhone.trim(),
+          gender: editedGender,
+          address: editedAddress.trim(),
+          province: editedProvince,
+          district: editedDistrict
+        } as any);
+        setDetailsSuccess('Cập nhật thông tin chi tiết thành công!');
+        setIsEditingDetails(false);
+        setTimeout(() => setDetailsSuccess(null), 3000);
+      } else {
+        setDetailsError(res.data?.message || 'Lỗi khi cập nhật thông tin');
+      }
+    } catch (err: any) {
+      const errMsg = err.response?.data?.message || err.message || 'Lỗi kết nối';
+      setDetailsError(errMsg);
+    } finally {
+      setDetailsSubmitting(false);
+    }
+  };
+
   const isAdmin = user.role === 'ADMIN' || user.role === 'SUBADMIN';
+
 
   const formatJoinDate = (dateStr?: string) => {
     if (!dateStr) return 'Tháng 5, 2026';
@@ -475,8 +576,219 @@ export default function ProfilePage() {
                     </div>
 
                   </div>
+
+                  {/* Decorative glass divider */}
+                  <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.1)', margin: '2rem 0' }} />
+
+                  <div className="profile-section-header" style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--foreground)' }}>Thông tin liên hệ & Địa chỉ</h2>
+                      <p style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.6)', marginTop: '2px' }}>Cung cấp thông tin đầy đủ để L&apos;essence phục vụ giao hàng tốt nhất</p>
+                    </div>
+                    {!isEditingDetails && (
+                      <button
+                        onClick={() => {
+                          setIsEditingDetails(true);
+                          setDetailsError(null);
+                          setDetailsSuccess(null);
+                        }}
+                        className="btn-profile-secondary"
+                        style={{ padding: '8px 16px', borderRadius: '12px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+                      >
+                        <Edit2 size={14} />
+                        Cập nhật
+                      </button>
+                    )}
+                  </div>
+
+                  {detailsSuccess && (
+                    <div className="profile-alert success" style={{ marginBottom: '1.5rem', padding: '10px 14px', fontSize: '0.85rem' }}>
+                      {detailsSuccess}
+                    </div>
+                  )}
+
+                  {isEditingDetails ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '16px', padding: '1.5rem' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.2rem' }}>
+                        
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          <label style={{ fontSize: '0.8rem', color: 'rgba(255, 255, 255, 0.6)', fontWeight: 500 }}>Họ và tên</label>
+                          <input
+                            type="text"
+                            value={editedFullName}
+                            onChange={(e) => setEditedFullName(e.target.value)}
+                            placeholder="Nhập họ và tên của bạn..."
+                            className="profile-form-input"
+                            style={{ padding: '10px 14px', fontSize: '0.9rem' }}
+                            disabled={detailsSubmitting}
+                          />
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          <label style={{ fontSize: '0.8rem', color: 'rgba(255, 255, 255, 0.6)', fontWeight: 500 }}>Số điện thoại</label>
+                          <input
+                            type="tel"
+                            value={editedPhone}
+                            onChange={(e) => setEditedPhone(e.target.value)}
+                            placeholder="Nhập số điện thoại..."
+                            className="profile-form-input"
+                            style={{ padding: '10px 14px', fontSize: '0.9rem' }}
+                            disabled={detailsSubmitting}
+                          />
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          <label style={{ fontSize: '0.8rem', color: 'rgba(255, 255, 255, 0.6)', fontWeight: 500 }}>Giới tính</label>
+                          <select
+                            value={editedGender}
+                            onChange={(e) => setEditedGender(e.target.value as any)}
+                            className="profile-form-input"
+                            style={{ padding: '10px 14px', fontSize: '0.9rem', color: 'var(--foreground)', background: '#1c1c1e' }}
+                            disabled={detailsSubmitting}
+                          >
+                            <option value="">Chưa chọn</option>
+                            <option value="MALE">Nam</option>
+                            <option value="FEMALE">Nữ</option>
+                            <option value="OTHER">Khác</option>
+                          </select>
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          <label style={{ fontSize: '0.8rem', color: 'rgba(255, 255, 255, 0.6)', fontWeight: 500 }}>
+                            Tỉnh / Thành phố {loadingProvinces && <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>(Đang tải...)</span>}
+                          </label>
+                          <select
+                            value={editedProvince}
+                            onChange={(e) => {
+                              const provinceName = e.target.value;
+                              setEditedProvince(provinceName);
+                              setEditedDistrict('');
+                              setDistricts([]);
+                              const foundProvince = provinces.find((p) => p.name === provinceName);
+                              if (foundProvince) {
+                                fetchDistricts(foundProvince.code);
+                              }
+                            }}
+                            className="profile-form-input"
+                            style={{ padding: '10px 14px', fontSize: '0.9rem', color: 'var(--foreground)', background: '#1c1c1e' }}
+                            disabled={loadingProvinces || detailsSubmitting}
+                          >
+                            <option value="">-- Chọn Tỉnh / Thành phố --</option>
+                            {provinces.map((prov) => (
+                              <option key={prov.code} value={prov.name}>
+                                {prov.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          <label style={{ fontSize: '0.8rem', color: 'rgba(255, 255, 255, 0.6)', fontWeight: 500 }}>
+                            Quận / Huyện {loadingDistricts && <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>(Đang tải...)</span>}
+                          </label>
+                          <select
+                            value={editedDistrict}
+                            onChange={(e) => setEditedDistrict(e.target.value)}
+                            className="profile-form-input"
+                            style={{ padding: '10px 14px', fontSize: '0.9rem', color: 'var(--foreground)', background: '#1c1c1e' }}
+                            disabled={loadingDistricts || !editedProvince || detailsSubmitting}
+                          >
+                            <option value="">-- Chọn Quận / Huyện --</option>
+                            {districts.map((dist) => (
+                              <option key={dist.code} value={dist.name}>
+                                {dist.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          <label style={{ fontSize: '0.8rem', color: 'rgba(255, 255, 255, 0.6)', fontWeight: 500 }}>Địa chỉ cụ thể</label>
+                          <input
+                            type="text"
+                            value={editedAddress}
+                            onChange={(e) => setEditedAddress(e.target.value)}
+                            placeholder="Số nhà, tên đường, phường/xã..."
+                            className="profile-form-input"
+                            style={{ padding: '10px 14px', fontSize: '0.9rem' }}
+                            disabled={detailsSubmitting}
+                          />
+                        </div>
+
+                      </div>
+
+                      {detailsError && (
+                        <div style={{ fontSize: '0.82rem', color: '#e74c3c', fontWeight: 500 }}>
+                          {detailsError}
+                        </div>
+                      )}
+
+                      <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                        <button
+                          onClick={handleUpdateDetails}
+                          disabled={detailsSubmitting}
+                          className="btn-profile-primary"
+                          style={{ padding: '10px 20px', borderRadius: '12px', fontSize: '0.85rem' }}
+                        >
+                          {detailsSubmitting ? 'Đang lưu...' : 'Lưu thông tin'}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setIsEditingDetails(false);
+                            setDetailsError(null);
+                            setEditedFullName((user as any).fullName || '');
+                            setEditedPhone((user as any).phoneNumber || '');
+                            setEditedGender(((user as any).gender as any) || '');
+                            setEditedAddress((user as any).address || '');
+                            setEditedProvince((user as any).province || '');
+                            setEditedDistrict((user as any).district || '');
+                          }}
+                          disabled={detailsSubmitting}
+                          className="btn-profile-secondary"
+                          style={{ padding: '10px 20px', borderRadius: '12px', fontSize: '0.85rem' }}
+                        >
+                          Hủy
+                        </button>
+                      </div>
+
+                    </div>
+                  ) : (
+                    <div className="profile-grid-details" style={{ gap: '1.2rem' }}>
+                      
+                      <div className="profile-details-card">
+                        <div className="profile-card-label">Họ và tên</div>
+                        <div className="profile-card-value">{(user as any).fullName || 'Chưa cập nhật'}</div>
+                      </div>
+
+                      <div className="profile-details-card">
+                        <div className="profile-card-label">Số điện thoại</div>
+                        <div className="profile-card-value">{(user as any).phoneNumber || 'Chưa cập nhật'}</div>
+                      </div>
+
+                      <div className="profile-details-card">
+                        <div className="profile-card-label">Giới tính</div>
+                        <div className="profile-card-value">
+                          {(user as any).gender === 'MALE' ? 'Nam' : (user as any).gender === 'FEMALE' ? 'Nữ' : (user as any).gender === 'OTHER' ? 'Khác' : 'Chưa cập nhật'}
+                        </div>
+                      </div>
+
+                      <div className="profile-details-card" style={{ gridColumn: 'span 2' }}>
+                        <div className="profile-card-label">Địa chỉ đầy đủ</div>
+                        <div className="profile-card-value">
+                          {(user as any).province ? (
+                            `${(user as any).address ? `${(user as any).address}, ` : ''}${(user as any).district}, ${(user as any).province}`
+                          ) : (
+                            'Chưa cập nhật'
+                          )}
+                        </div>
+                      </div>
+
+                    </div>
+                  )}
+
                 </motion.div>
               )}
+
 
               {/* TAB 2: PURCHASE HISTORY (ORDERS) */}
               {activeTab === 'orders' && (
