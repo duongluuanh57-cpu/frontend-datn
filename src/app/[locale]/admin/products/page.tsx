@@ -35,9 +35,9 @@ interface Brand {
 }
 
 const formatPrice = (price: number, locale: string) =>
-  new Intl.NumberFormat(locale === 'vi' ? 'vi-VN' : 'en-US', { 
-    style: 'currency', 
-    currency: locale === 'vi' ? 'VND' : 'USD' 
+  new Intl.NumberFormat(locale === 'vi' ? 'vi-VN' : 'en-US', {
+    style: 'currency',
+    currency: locale === 'vi' ? 'VND' : 'USD'
   }).format(locale === 'vi' ? price : price / 25000);
 
 export default function AdminProductsPage() {
@@ -104,13 +104,13 @@ export default function AdminProductsPage() {
 
   const brands = allBrands
     ? Array.from(new Set([
-        ...allBrands.map(b => b.name),
-        ...(products ? products.map(p => p.brand) : [])
-      ].filter(Boolean)))
+      ...allBrands.map(b => b.name),
+      ...(products ? products.map(p => p.brand) : [])
+    ].filter(Boolean)))
     : (products ? Array.from(new Set(products.map(p => p.brand).filter(Boolean))) : []);
 
   // Filter brands based on search query
-  const filteredBrands = brands.filter(brand => 
+  const filteredBrands = brands.filter(brand =>
     brand.toLowerCase().includes(brandSearchQuery.toLowerCase())
   );
 
@@ -128,61 +128,61 @@ export default function AdminProductsPage() {
 
   const filteredProducts = products
     ? products
-        .filter((product) => {
-          const query = searchQuery.toLowerCase().trim();
-          if (query) {
-            const matchName = product.name.toLowerCase().includes(query);
-            const matchBrand = product.brand.toLowerCase().includes(query);
-            const matchTag = product.tag?.toLowerCase().includes(query) || false;
-            const matchKeywords = Array.isArray(product.keywords)
-              ? product.keywords.some((k: string) => k.toLowerCase().includes(query))
-              : typeof product.keywords === 'string' && (product.keywords as string).toLowerCase().includes(query);
-            if (!matchName && !matchBrand && !matchTag && !matchKeywords) {
-              return false;
-            }
+      .filter((product) => {
+        const query = searchQuery.toLowerCase().trim();
+        if (query) {
+          const matchName = product.name.toLowerCase().includes(query);
+          const matchBrand = product.brand.toLowerCase().includes(query);
+          const matchTag = product.tag?.toLowerCase().includes(query) || false;
+          const matchKeywords = Array.isArray(product.keywords)
+            ? product.keywords.some((k: string) => k.toLowerCase().includes(query))
+            : typeof product.keywords === 'string' && (product.keywords as string).toLowerCase().includes(query);
+          if (!matchName && !matchBrand && !matchTag && !matchKeywords) {
+            return false;
           }
+        }
 
-          if (selectedBrand.trim()) {
-            const brandQuery = selectedBrand.toLowerCase().trim();
-            if (!product.brand.toLowerCase().includes(brandQuery)) {
-              return false;
-            }
+        if (selectedBrand.trim()) {
+          const brandQuery = selectedBrand.toLowerCase().trim();
+          if (!product.brand.toLowerCase().includes(brandQuery)) {
+            return false;
           }
+        }
 
-          if (stockFilter === 'inStock' && product.quantityInStock <= 0) return false;
-          if (stockFilter === 'lowStock' && (product.quantityInStock <= 0 || product.quantityInStock >= 10)) return false;
-          if (selectedTag !== 'all' && (!product.tag || !product.tag.split(',').map(s => s.trim().toLowerCase()).includes(selectedTag.toLowerCase()))) return false;
+        if (stockFilter === 'inStock' && product.quantityInStock <= 0) return false;
+        if (stockFilter === 'lowStock' && (product.quantityInStock <= 0 || product.quantityInStock >= 10)) return false;
+        if (selectedTag !== 'all' && (!product.tag || !product.tag.split(',').map(s => s.trim().toLowerCase()).includes(selectedTag.toLowerCase()))) return false;
 
-          return true;
-        })
-        .sort((a, b) => {
-          if (sortBy === 'bestSeller') {
-            return (b.soldCount || 0) - (a.soldCount || 0);
-          }
-          if (sortBy === 'priceAsc') {
-            return a.price - b.price;
-          }
-          if (sortBy === 'priceDesc') {
-            return b.price - a.price;
-          }
-          if (sortBy === 'stockAsc') {
-            return a.quantityInStock - b.quantityInStock;
-          }
-          if (sortBy === 'stockDesc') {
-            return b.quantityInStock - a.quantityInStock;
-          }
-          if (sortBy === 'rating') {
-            return b.rating - a.rating;
-          }
-          if (sortBy === 'newest') {
-            return b._id.localeCompare(a._id);
-          }
-          return 0;
-        })
+        return true;
+      })
+      .sort((a, b) => {
+        if (sortBy === 'bestSeller') {
+          return (b.soldCount || 0) - (a.soldCount || 0);
+        }
+        if (sortBy === 'priceAsc') {
+          return a.price - b.price;
+        }
+        if (sortBy === 'priceDesc') {
+          return b.price - a.price;
+        }
+        if (sortBy === 'stockAsc') {
+          return a.quantityInStock - b.quantityInStock;
+        }
+        if (sortBy === 'stockDesc') {
+          return b.quantityInStock - a.quantityInStock;
+        }
+        if (sortBy === 'rating') {
+          return b.rating - a.rating;
+        }
+        if (sortBy === 'newest') {
+          return b._id.localeCompare(a._id);
+        }
+        return 0;
+      })
     : [];
 
   const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 15;
+  const ITEMS_PER_PAGE = 20;
 
   // Reset page when filter changes
   useEffect(() => {
@@ -384,23 +384,23 @@ export default function AdminProductsPage() {
                     e.currentTarget.style.borderColor = 'var(--admin-border-subtle)';
                   }}
                 >
-                  <span style={{ 
-                    overflow: 'hidden', 
-                    textOverflow: 'ellipsis', 
+                  <span style={{
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap',
                     flex: 1,
                     textAlign: 'left'
                   }}>
                     {selectedBrand || (isVi ? 'Thương hiệu...' : 'Brand...')}
                   </span>
-                  <ChevronDown 
-                    size={14} 
-                    style={{ 
+                  <ChevronDown
+                    size={14}
+                    style={{
                       transition: 'transform 0.2s',
                       transform: isBrandDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
                       flexShrink: 0,
                       marginLeft: '4px'
-                    }} 
+                    }}
                   />
                 </button>
 
@@ -483,9 +483,9 @@ export default function AdminProductsPage() {
                       </button>
 
                       {filteredBrands.length === 0 ? (
-                        <div style={{ 
-                          padding: '16px', 
-                          textAlign: 'center', 
+                        <div style={{
+                          padding: '16px',
+                          textAlign: 'center',
                           color: 'var(--admin-text-muted)',
                           fontSize: '0.75rem'
                         }}>
@@ -530,7 +530,7 @@ export default function AdminProductsPage() {
                 )}
               </div>
 
-              </div>
+            </div>
 
             {/* Stock Select */}
             <select
@@ -667,99 +667,99 @@ export default function AdminProductsPage() {
                         />
                       </td>
                       <td>
-                      <div className="admin-table-product">
-                        <div className="admin-table-product__thumb">
-                          {product.image && (
-                            <Image
-                              src={resolveImageUrl(product.image)}
-                              alt={product.name}
-                              fill
-                              sizes="52px"
-                              className="object-cover"
-                            />
-                          )}
-                        </div>
-                        <div>
-                          <Link href={`/admin/products/${product._id}`}>
-                            <p className="admin-table-product__name hover:underline hover:text-[var(--admin-accent)] transition-colors">{product.name}</p>
-                          </Link>
-                          <p className="admin-table-product__meta" title={`${product.brand} • ${formatSizeString(product.size)}`}>
-                            {product.brand} • {formatSizeString(product.size)}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      {product.tag ? (
-                        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                          {product.tag.split(',').map((singleTag, idx) => {
-                            const cleaned = singleTag.trim();
-                            if (!cleaned) return null;
-                            return (
-                              <span key={idx} className="admin-badge" style={{ border: '1px solid var(--admin-border-subtle)', background: 'var(--admin-surface-muted)', color: 'var(--admin-text-secondary)', padding: '2px 8px', borderRadius: '4px', fontSize: '0.6875rem', fontWeight: 600 }}>
-                                {cleaned}
-                              </span>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <span style={{ opacity: 0.5 }}>—</span>
-                      )}
-                    </td>
-                    <td>
-                      <span
-                        className={`admin-badge ${product.quantityInStock < 10 ? 'admin-badge--low' : 'admin-badge--ok'}`}
-                      >
-                        {product.quantityInStock} SP
-                      </span>
-                    </td>
-                    <td>
-                      <p className="admin-table-price">{formatPrice(product.price, locale)}</p>
-                      {(() => {
-                        if (!product.discountPercentage || product.discountPercentage <= 0) return null;
-                        
-                        const now = new Date();
-                        let active = true;
-                        if (product.discountStartDate && now < new Date(product.discountStartDate)) active = false;
-                        if (product.discountEndDate && now > new Date(product.discountEndDate)) active = false;
-
-                        return (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '4px' }}>
-                            <span 
-                              className="admin-badge--sale" 
-                              style={!active ? { background: 'rgba(255, 255, 255, 0.05)', color: 'rgba(255, 255, 255, 0.3)', border: '1px dashed rgba(255, 255, 255, 0.15)' } : undefined}
-                            >
-                              -{product.discountPercentage}% {active ? '' : (locale === 'vi' ? '(Chưa chạy)' : '(Scheduled)')}
-                            </span>
-                            {(product.discountStartDate || product.discountEndDate) && (
-                              <span style={{ fontSize: '8px', opacity: 0.5, color: '#D4A5A5', whiteSpace: 'nowrap', marginTop: '1px' }}>
-                                📅 {product.discountStartDate ? new Date(product.discountStartDate).toLocaleDateString(locale === 'vi' ? 'vi-VN' : 'en-US', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '∞'}
-                                {' - '}
-                                {product.discountEndDate ? new Date(product.discountEndDate).toLocaleDateString(locale === 'vi' ? 'vi-VN' : 'en-US', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '∞'}
-                              </span>
+                        <div className="admin-table-product">
+                          <div className="admin-table-product__thumb">
+                            {product.image && (
+                              <Image
+                                src={resolveImageUrl(product.image)}
+                                alt={product.name}
+                                fill
+                                sizes="52px"
+                                className="object-cover"
+                              />
                             )}
                           </div>
-                        );
-                      })()}
-                    </td>
-                    <td>
-                      <p className="admin-table-rating">
-                        {product.rating} <span>({product.reviewsCount})</span>
-                      </p>
-                    </td>
-                    <td>
-                      <div className="admin-table-actions">
-                        <button
-                          type="button"
-                          className="admin-icon-btn admin-icon-btn--danger"
-                          aria-label={`Xóa ${product.name}`}
-                          onClick={() => setProductToDelete(product)}
+                          <div>
+                            <Link href={`/admin/products/${product._id}`}>
+                              <p className="admin-table-product__name hover:underline hover:text-[var(--admin-accent)] transition-colors">{product.name}</p>
+                            </Link>
+                            <p className="admin-table-product__meta" title={`${product.brand} • ${formatSizeString(product.size)}`}>
+                              {product.brand} • {formatSizeString(product.size)}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        {product.tag ? (
+                          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                            {product.tag.split(',').map((singleTag, idx) => {
+                              const cleaned = singleTag.trim();
+                              if (!cleaned) return null;
+                              return (
+                                <span key={idx} className="admin-badge" style={{ border: '1px solid var(--admin-border-subtle)', background: 'var(--admin-surface-muted)', color: 'var(--admin-text-secondary)', padding: '2px 8px', borderRadius: '4px', fontSize: '0.6875rem', fontWeight: 600 }}>
+                                  {cleaned}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <span style={{ opacity: 0.5 }}>—</span>
+                        )}
+                      </td>
+                      <td>
+                        <span
+                          className={`admin-badge ${product.quantityInStock < 10 ? 'admin-badge--low' : 'admin-badge--ok'}`}
                         >
-                          <Trash2 size={17} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
+                          {product.quantityInStock} SP
+                        </span>
+                      </td>
+                      <td>
+                        <p className="admin-table-price">{formatPrice(product.price, locale)}</p>
+                        {(() => {
+                          if (!product.discountPercentage || product.discountPercentage <= 0) return null;
+
+                          const now = new Date();
+                          let active = true;
+                          if (product.discountStartDate && now < new Date(product.discountStartDate)) active = false;
+                          if (product.discountEndDate && now > new Date(product.discountEndDate)) active = false;
+
+                          return (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '4px' }}>
+                              <span
+                                className="admin-badge--sale"
+                                style={!active ? { background: 'rgba(255, 255, 255, 0.05)', color: 'rgba(255, 255, 255, 0.3)', border: '1px dashed rgba(255, 255, 255, 0.15)' } : undefined}
+                              >
+                                -{product.discountPercentage}% {active ? '' : (locale === 'vi' ? '(Chưa chạy)' : '(Scheduled)')}
+                              </span>
+                              {(product.discountStartDate || product.discountEndDate) && (
+                                <span style={{ fontSize: '8px', opacity: 0.5, color: '#D4A5A5', whiteSpace: 'nowrap', marginTop: '1px' }}>
+                                  📅 {product.discountStartDate ? new Date(product.discountStartDate).toLocaleDateString(locale === 'vi' ? 'vi-VN' : 'en-US', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '∞'}
+                                  {' - '}
+                                  {product.discountEndDate ? new Date(product.discountEndDate).toLocaleDateString(locale === 'vi' ? 'vi-VN' : 'en-US', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '∞'}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </td>
+                      <td>
+                        <p className="admin-table-rating">
+                          {product.rating} <span>({product.reviewsCount})</span>
+                        </p>
+                      </td>
+                      <td>
+                        <div className="admin-table-actions">
+                          <button
+                            type="button"
+                            className="admin-icon-btn admin-icon-btn--danger"
+                            aria-label={`Xóa ${product.name}`}
+                            onClick={() => setProductToDelete(product)}
+                          >
+                            <Trash2 size={17} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
                   );
                 })
               )}
@@ -784,7 +784,7 @@ export default function AdminProductsPage() {
           marginTop: '-1px', // Seamlessly connect with the table border
         }}>
           <p style={{ margin: 0, fontSize: '0.8125rem', color: '#7A5C5C', fontWeight: 500 }}>
-            {isVi 
+            {isVi
               ? `Hiển thị từ ${(currentPage - 1) * ITEMS_PER_PAGE + 1} đến ${Math.min(currentPage * ITEMS_PER_PAGE, filteredProducts.length)} trong tổng số ${filteredProducts.length} sản phẩm`
               : `Showing ${(currentPage - 1) * ITEMS_PER_PAGE + 1} to ${Math.min(currentPage * ITEMS_PER_PAGE, filteredProducts.length)} of ${filteredProducts.length} products`}
           </p>
@@ -921,12 +921,12 @@ export default function AdminProductsPage() {
                   {isVi ? 'Xóa sản phẩm' : 'Delete Product'}
                 </h3>
                 <p style={{ margin: '8px 0 0 0', fontSize: '0.875rem', color: 'var(--admin-text-secondary, #6b564c)', lineHeight: 1.5 }}>
-                  {isVi 
-                    ? 'Bạn có chắc chắn muốn xóa sản phẩm ' 
+                  {isVi
+                    ? 'Bạn có chắc chắn muốn xóa sản phẩm '
                     : 'Are you sure you want to delete product '}
                   <strong style={{ color: 'var(--admin-accent, #5c4a42)' }}>{productToDelete.name}</strong>
-                  {isVi 
-                    ? '? Thao tác này không thể hoàn tác và sẽ gỡ bỏ sản phẩm vĩnh viễn.' 
+                  {isVi
+                    ? '? Thao tác này không thể hoàn tác và sẽ gỡ bỏ sản phẩm vĩnh viễn.'
                     : '? This action is permanent and cannot be undone.'}
                 </p>
               </div>
@@ -1146,7 +1146,7 @@ export default function AdminProductsPage() {
                   {isVi ? 'Xác nhận xóa hàng loạt' : 'Confirm Bulk Deletion'}
                 </h3>
                 <p style={{ margin: '6px 0 0 0', fontSize: '0.875rem', lineHeight: '1.4', color: 'var(--admin-text-secondary, #6b564c)' }}>
-                  {isVi 
+                  {isVi
                     ? `Bạn có chắc chắn muốn xóa vĩnh viễn ${selectedIds.length} sản phẩm đã chọn? Thao tác này sẽ dọn dẹp sạch toàn bộ dữ liệu ảnh trên Cloud và không thể hoàn tác.`
                     : `Are you sure you want to permanently delete the ${selectedIds.length} selected products? This will clean up all associated cloud images and cannot be undone.`}
                 </p>

@@ -62,7 +62,7 @@ export default function AdminBrandsPage() {
   }, [brands, searchTerm, selectedOrigin]);
 
   const [currentPage, setCurrentPage] = React.useState(1);
-  const ITEMS_PER_PAGE = 10;
+  const ITEMS_PER_PAGE = 15;
 
   // Reset page when filter changes
   React.useEffect(() => {
@@ -78,7 +78,7 @@ export default function AdminBrandsPage() {
 
   // Mutation: Cập nhật thương hiệu (dành cho nút toggle featured)
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<Brand> }) => 
+    mutationFn: async ({ id, data }: { id: string; data: Partial<Brand> }) =>
       api.patch(`/brands/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-brands'] });
@@ -312,7 +312,7 @@ export default function AdminBrandsPage() {
             alignItems: 'center',
           }}>
             <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
         </div>
@@ -430,8 +430,8 @@ export default function AdminBrandsPage() {
                         <span
                           className={`admin-badge ${brand.status === 'active' ? 'admin-badge--ok' : 'admin-badge--low'}`}
                         >
-                          {brand.status === 'active' 
-                            ? (isVi ? 'Đang hoạt động' : 'Active') 
+                          {brand.status === 'active'
+                            ? (isVi ? 'Đang hoạt động' : 'Active')
                             : (isVi ? 'Tạm ngừng' : 'Inactive')
                           }
                         </span>
@@ -439,11 +439,10 @@ export default function AdminBrandsPage() {
                       <td>
                         <button
                           onClick={() => handleToggleFeatured(brand)}
-                          className={`px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition ${
-                            brand.featured 
-                              ? 'bg-[#7A5C5C]/10 text-[#7A5C5C] border border-[#7A5C5C]/20'
-                              : 'bg-gray-100 text-gray-400 border border-gray-200 hover:bg-gray-200'
-                          }`}
+                          className={`px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition ${brand.featured
+                            ? 'bg-[#7A5C5C]/10 text-[#7A5C5C] border border-[#7A5C5C]/20'
+                            : 'bg-gray-100 text-gray-400 border border-gray-200 hover:bg-gray-200'
+                            }`}
                         >
                           {brand.featured ? <Check size={12} /> : <X size={12} />}
                           {brand.featured ? (isVi ? 'Nổi bật' : 'Featured') : (isVi ? 'Thường' : 'Standard')}
@@ -486,7 +485,7 @@ export default function AdminBrandsPage() {
           marginTop: '-1px', // Seamlessly connect with the table border
         }}>
           <p style={{ margin: 0, fontSize: '0.8125rem', color: '#7A5C5C', fontWeight: 500 }}>
-            {isVi 
+            {isVi
               ? `Hiển thị từ ${(currentPage - 1) * ITEMS_PER_PAGE + 1} đến ${Math.min(currentPage * ITEMS_PER_PAGE, filteredBrands.length)} trong tổng số ${filteredBrands.length} thương hiệu`
               : `Showing ${(currentPage - 1) * ITEMS_PER_PAGE + 1} to ${Math.min(currentPage * ITEMS_PER_PAGE, filteredBrands.length)} of ${filteredBrands.length} brands`}
           </p>
@@ -606,7 +605,7 @@ export default function AdminBrandsPage() {
                   {isVi ? 'Xác nhận xóa thương hiệu' : 'Confirm Delete Brand'}
                 </h3>
                 <p style={{ margin: '6px 0 0 0', fontSize: '0.875rem', lineHeight: '1.4', color: 'var(--admin-text-secondary, #6b564c)' }}>
-                  {isVi 
+                  {isVi
                     ? `Bạn có chắc chắn muốn xóa vĩnh viễn thương hiệu này? Việc này sẽ xóa logo và các dữ liệu liên quan và không thể hoàn tác.`
                     : `Are you sure you want to permanently delete this brand? This will erase the logo and all associated brand data and cannot be undone.`}
                 </p>
@@ -832,7 +831,7 @@ export default function AdminBrandsPage() {
                   {isVi ? 'Xác nhận xóa hàng loạt' : 'Confirm Bulk Deletion'}
                 </h3>
                 <p style={{ margin: '6px 0 0 0', fontSize: '0.875rem', lineHeight: '1.4', color: 'var(--admin-text-secondary, #6b564c)' }}>
-                  {isVi 
+                  {isVi
                     ? `Bạn có chắc chắn muốn xóa vĩnh viễn ${selectedIds.length} thương hiệu đã chọn? Thao tác này sẽ dọn dẹp sạch logo của chúng trên Cloud và không thể hoàn tác.`
                     : `Are you sure you want to permanently delete the ${selectedIds.length} selected brands? This will clean up all associated cloud logos and cannot be undone.`}
                 </p>
