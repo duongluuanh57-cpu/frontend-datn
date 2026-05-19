@@ -49,6 +49,18 @@ const parseExplanation = (text: string) => {
     });
 };
 
+const slugify = (text: string) => {
+  return text
+    .toString()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // remove accents
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-') // replace spaces with -
+    .replace(/[^\w-]+/g, '') // remove all non-word chars
+    .replace(/--+/g, '-'); // replace multiple - with single -
+};
+
 const formatBullets = (content: string) => {
   if (!content) return null;
   return content
@@ -745,7 +757,7 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
               onChange={(url) => update({ image: url })} 
               onUploadStateChange={(uploading) => setIsImageUploading(uploading)}
               hideUrlInput={true}
-              folder="products"
+              folder={formData.name.trim() ? `products/${slugify(formData.name)}` : 'products'}
             />
           </div>
 
@@ -788,13 +800,16 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
                       try {
                         for (let i = 0; i < files.length; i++) {
                           const file = files[i];
-                          const formData = new FormData();
-                          formData.append('image', file);
-                          formData.append('maxWidth', '1920');
-                          formData.append('quality', '90');
-                          formData.append('folder', 'products');
+                          const uploadFormData = new FormData();
+                          uploadFormData.append('image', file);
+                          uploadFormData.append('maxWidth', '1920');
+                          uploadFormData.append('quality', '90');
+                          const uploadFolder = formData.name.trim() 
+                            ? `products/${slugify(formData.name)}` 
+                            : 'products';
+                          uploadFormData.append('folder', uploadFolder);
 
-                          const { data } = await api.post('/media/upload-imgbb', formData, {
+                          const { data } = await api.post('/media/upload-imgbb', uploadFormData, {
                             headers: { 'Content-Type': 'multipart/form-data' },
                           });
 
