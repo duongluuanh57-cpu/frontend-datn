@@ -422,30 +422,6 @@ export default function ProfilePage() {
                     </div>
 
                     <div className="profile-details-card">
-                      <div className="profile-card-label">ID Người dùng (Hệ thống)</div>
-                      <div 
-                        className="profile-card-value profile-card-value code"
-                        onClick={() => handleCopy(user.id, 'id')}
-                        title="Click để sao chép"
-                      >
-                        {user.id} 
-                        {copiedId ? <Check size={13} color="#27ae60" style={{ marginLeft: '4px' }} /> : <Copy size={13} style={{ marginLeft: '4px' }} />}
-                      </div>
-                    </div>
-
-                    <div className="profile-details-card">
-                      <div className="profile-card-label">Mã Tenant ID</div>
-                      <div 
-                        className="profile-card-value profile-card-value code"
-                        onClick={() => handleCopy(user.tenantId, 'tenant')}
-                        title="Click để sao chép"
-                      >
-                        {user.tenantId} 
-                        {copiedTenant ? <Check size={13} color="#27ae60" style={{ marginLeft: '4px' }} /> : <Copy size={13} style={{ marginLeft: '4px' }} />}
-                      </div>
-                    </div>
-
-                    <div className="profile-details-card">
                       <div className="profile-card-label">Vai trò tài khoản</div>
                       <div className="profile-card-value" style={{ color: 'var(--primary)', fontWeight: 700 }}>
                         {user.role}
