@@ -13,7 +13,7 @@ import { Sparkles, CheckCircle2, RefreshCw } from 'lucide-react';
  * 3. Simulates load progress (0% -> 100%) in real-time syncing with backend API wake-up status.
  * 4. Pings backend (GET /ping) every 2 seconds to check if active.
  * 5. Speeds up progress to 100% and smoothly fades out when backend is active.
- * 6. Graceful escape fallback button after 3 seconds if backend has issues waking up.
+ * 6. Graceful escape fallback button after 15 seconds if backend has issues waking up.
  */
 export function BackendWarmup() {
   const params = useParams();
@@ -108,10 +108,10 @@ export function BackendWarmup() {
     void pollBackend();
     pollInterval = setInterval(pollBackend, 2000);
 
-    // 2. Fallback grace button after 3s in case backend fails or takes too long to wake up
+    // 2. Fallback grace button after 15s in case backend fails or takes too long to wake up
     fallbackTimeout = setTimeout(() => {
       setErrorGrace(true);
-    }, 3000);
+    }, 15000);
 
     // 3. Smooth percentage increment loop
     const updateProgress = () => {
