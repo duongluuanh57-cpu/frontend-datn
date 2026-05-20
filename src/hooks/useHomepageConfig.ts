@@ -16,6 +16,42 @@ export interface GalleryImage {
   quote: string;
 }
 
+export interface ProductCardConfig {
+  imageAspect: 'square' | 'portrait' | 'landscape';
+  imagePadding: number;
+  cardRadius: number;
+  tagBgColor: string;
+  tagTextColor: string;
+  discountBadgeBg: string;
+  discountBadgeText: string;
+  brandFontSize: number;
+  nameFontSize: number;
+  priceFontSize: number;
+  textAlign: 'center' | 'left';
+  elementOrder: string[];
+  showKeywords: boolean;
+  showSizes: boolean;
+  showRating: boolean;
+}
+
+export const DEFAULT_PRODUCT_CARD_CONFIG: ProductCardConfig = {
+  imageAspect: 'square',
+  imagePadding: 40,
+  cardRadius: 16,
+  tagBgColor: '#FFFFFF',
+  tagTextColor: '#7A5C5C',
+  discountBadgeBg: '#D4A5A5',
+  discountBadgeText: '#FFFFFF',
+  brandFontSize: 11,
+  nameFontSize: 14,
+  priceFontSize: 16,
+  textAlign: 'center',
+  elementOrder: ['keywords', 'brand', 'name', 'sizes', 'rating', 'price'],
+  showKeywords: true,
+  showSizes: true,
+  showRating: true
+};
+
 export interface HomepageConfigData {
   _id?: string;
   tenantId?: string;
@@ -29,6 +65,7 @@ export interface HomepageConfigData {
   bannerLabelEn: string;
   galleryVi: GalleryImage[];
   galleryEn: GalleryImage[];
+  productCardConfig: ProductCardConfig;
 }
 
 const DEFAULT_SECTIONS: SectionConfig[] = [
@@ -63,7 +100,8 @@ const fetchHomepageConfig = async (): Promise<HomepageConfigData> => {
           bannerSubtitleEn: parsed.banner_subtitle_en || '',
           bannerLabelEn: parsed.banner_label_en || '',
           galleryVi: parsed.gallery || [],
-          galleryEn: parsed.gallery_en || []
+          galleryEn: parsed.gallery_en || [],
+          productCardConfig: DEFAULT_PRODUCT_CARD_CONFIG
         };
       }
     }
@@ -80,7 +118,8 @@ const fetchHomepageConfig = async (): Promise<HomepageConfigData> => {
     bannerSubtitleEn: '',
     bannerLabelEn: '',
     galleryVi: [],
-    galleryEn: []
+    galleryEn: [],
+    productCardConfig: DEFAULT_PRODUCT_CARD_CONFIG
   };
 };
 

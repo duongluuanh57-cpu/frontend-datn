@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { useLocale } from 'next-intl';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useHomepageConfig } from '@/hooks/useHomepageConfig';
 
 interface IGalleryImage {
   url: string;
@@ -13,43 +14,40 @@ interface IGalleryImage {
   quote: string;
 }
 
-const GALLERY_IMAGES: { vi: IGalleryImage[]; en: IGalleryImage[] } = {
-  vi: [],
-  en: []
-};
-
 export function LuxuryGallery() {
   const locale = useLocale();
-  const defaultImages = useMemo(() => {
-    return (locale === 'vi' ? GALLERY_IMAGES.vi : GALLERY_IMAGES.en).filter(img => img && img.url);
-  }, [locale]);
-  const [currentImages, setCurrentImages] = useState<IGalleryImage[]>(defaultImages);
+  const { data: config } = useHomepageConfig();
+  const [mounted, setMounted] = useState(false);
 
-  // Load custom gallery images from LocalStorage if available
+  // Prevent hydration mismatch
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('lessence_custom_homepage_data');
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          const customGallery = locale === 'vi' ? parsed.gallery : parsed.gallery_en;
-          if (customGallery && Array.isArray(customGallery) && customGallery.length > 0) {
-            const cleanGallery = customGallery.filter((img: any) => img && img.url);
-            setCurrentImages(cleanGallery.length > 0 ? cleanGallery : defaultImages);
-          } else {
-            setCurrentImages(defaultImages);
-          }
-        } catch (e) {
-          console.error('Error loading custom gallery data:', e);
-          setCurrentImages(defaultImages);
-        }
-      } else {
-        setCurrentImages(defaultImages);
-      }
-    } else {
-      setCurrentImages(defaultImages);
+    setMounted(true);
+  }, []);
+
+  // Ưu tiên dữ liệu từ DB config, fallback về localStorage
+  const currentImages = useMemo(() => {
+    // 1. Kiểm tra DB config có ảnh hợp lệ không
+    const dbGallery = locale === 'vi' ? config?.galleryVi : config?.galleryEn;
+    const dbImages = (dbGallery ?? []).filter((img: any) => img && img.url && img.url.trim() !== '');
+    if (dbImages.length > 0) {
+      return dbImages;
     }
-  }, [locale, defaultImages]);
+
+    // 2. Nếu DB rỗng hoặc chưa có data, fallback về localStorage (chỉ sau khi mount)
+    if (mounted) {
+      try {
+        const saved = localStorage.getItem('lessence_custom_homepage_data');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          const localGallery = locale === 'vi' ? parsed.gallery : parsed.gallery_en;
+          if (localGallery && Array.isArray(localGallery)) {
+            return localGallery.filter((img: any) => img && img.url && img.url.trim() !== '');
+          }
+        }
+      } catch {}
+    }
+    return [];
+  }, [locale, config?.galleryVi, config?.galleryEn, mounted]);
   
   // Lightbox Modal states
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
