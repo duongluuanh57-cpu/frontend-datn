@@ -59,16 +59,17 @@ export function BrandsMarquee() {
   const marqueeBrands = [...repeatedList, ...repeatedList];
 
   return (
-    <section 
+    <section
       className="w-full bg-transparent pt-[88px] pb-8 lg:pt-[136px] lg:pb-10 overflow-hidden border-b border-[#7A5C5C]/5"
       style={{
         contain: 'content',
         contentVisibility: 'auto',
       } as React.CSSProperties}
     >
-      
+
       {/* Compositor marquee styling */}
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         @keyframes marqueeScroll {
           0% {
             transform: translate3d(0, 0, 0);

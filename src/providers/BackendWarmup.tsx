@@ -99,8 +99,12 @@ export function BackendWarmup() {
     const pollBackend = async () => {
       const ok = await pingBackend();
       if (ok) {
-        backendReadyRef.current = true;
         clearInterval(pollInterval);
+        // Đợi thêm 800ms buffer sau khi /ping ok để đảm bảo
+        // DB queries đầu tiên không bị race với cold-start MongoDB init
+        setTimeout(() => {
+          backendReadyRef.current = true;
+        }, 800);
       }
     };
 
