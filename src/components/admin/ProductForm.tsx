@@ -997,14 +997,10 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
                     id="size"
                     readOnly
                     type="text"
-                    value={aiAnalyzed && formData.size ? formatSizeString(formData.size) : ''}
+                    value={formData.size ? formatSizeString(formData.size) : ''}
                     onClick={() => {
                       if (!formData.name.trim()) {
                         toast.error(isVi ? 'Vui lòng nhập Tên sản phẩm trước để AI phân tích.' : 'Please enter Product Name first so AI can analyze.');
-                        return;
-                      }
-                      if (!aiAnalyzed) {
-                        toast('🤖 AI đang phân tích sản phẩm, vui lòng đợi...', { duration: 4000 });
                         return;
                       }
 
@@ -1060,14 +1056,10 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
                     id="discount"
                     readOnly
                     type="text"
-                    value={aiAnalyzed && formData.discountPercentage ? formData.discountPercentage : ''}
+                    value={formData.discountPercentage || ''}
                     onClick={() => {
                       if (!formData.name.trim()) {
                         toast.error(isVi ? 'Vui lòng nhập Tên sản phẩm trước để AI phân tích.' : 'Please enter Product Name first so AI can analyze.');
-                        return;
-                      }
-                      if (!aiAnalyzed) {
-                        toast('🤖 AI đang phân tích sản phẩm, vui lòng đợi...', { duration: 4000 });
                         return;
                       }
 

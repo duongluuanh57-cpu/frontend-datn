@@ -125,7 +125,7 @@ export function ProductCard({ product, index = 0, priority = false }: ProductCar
       <div className="product-image-frame aspect-square w-full flex-shrink-0 relative overflow-hidden bg-[#7A5C5C]/3 rounded-2xl">
         {product.tag && (
           <div className="absolute left-4 top-4 z-20 flex flex-col gap-1.5">
-            {product.tag.split(',').map((singleTag, idx) => {
+            {product.tag.split(',').slice(0, 1).map((singleTag, idx) => {
               const cleaned = singleTag.trim();
               if (!cleaned) return null;
               return (

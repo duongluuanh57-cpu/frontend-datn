@@ -116,7 +116,7 @@ export function SaleProducts() {
     queryFn: fetchSaleProducts,
   });
 
-  if (error) return null;
+  if (error || !products || products.length === 0) return null;
 
   const targetDate = products?.[0]?.discountEndDate;
 
