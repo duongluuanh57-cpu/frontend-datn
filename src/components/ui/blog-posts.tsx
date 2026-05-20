@@ -74,7 +74,7 @@ export function BlogPosts() {
   const locale = useLocale();
 
   return (
-    <section className="blog-posts-section w-full bg-transparent pt-12 pb-24 lg:pt-20 lg:pb-36 overflow-hidden">
+    <section className="blog-posts-section w-full bg-transparent pt-12 pb-12 lg:pt-20 lg:pb-20 overflow-hidden">
       <div className="container mx-auto px-6">
         
         {/* Header Section aligned exactly like products */}
@@ -190,7 +190,7 @@ export function BlogPosts() {
         </div>
 
         {/* View All Button matched exactly with e-commerce look */}
-        <div className="max-w-[1400px] mx-auto mt-24 flex flex-col items-center">
+        <div className="max-w-[1400px] mx-auto mt-12 flex flex-col items-center">
           <Link href="/blog">
             <button 
               className="explore-all-btn-luxury flex items-center gap-4 focus:outline-none clickable"

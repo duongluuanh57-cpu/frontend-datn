@@ -185,18 +185,19 @@ export type ImgBBUploadResponseData = {
   compressedBytes: number;
 };
 
-/** Multipart POST — không dùng axios JSON default để tránh sai Content-Type. */
-export async function uploadImageToImgBB(
+/** Multipart POST — không dùng axios JSON default để tránh sai Content-Type. Upload lên Cloudflare R2 qua backend. */
+export async function uploadImageToR2(
   file: File,
-  options?: { maxWidth?: number; quality?: number }
+  options?: { maxWidth?: number; quality?: number; folder?: string }
 ): Promise<ImgBBUploadResponseData> {
   const base = apiBase.replace(/\/+$/, '');
-  const endpoint = `${base}/media/upload-imgbb`;
+  const endpoint = `${base}/media/upload-r2`;
 
   const form = new FormData();
   form.append('image', file);
   if (options?.maxWidth != null) form.append('maxWidth', String(options.maxWidth));
   if (options?.quality != null) form.append('quality', String(options.quality));
+  if (options?.folder) form.append('folder', options.folder);
 
   const headers = new Headers();
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
@@ -214,6 +215,9 @@ export async function uploadImageToImgBB(
   }
   return json.data;
 }
+
+/** @deprecated — use uploadImageToR2 instead */
+export const uploadImageToImgBB = uploadImageToR2;
 
 export interface BrandData {
   _id: string;

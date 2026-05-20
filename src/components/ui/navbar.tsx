@@ -4,6 +4,7 @@ import { Link, usePathname } from '@/navigation';
 import { useTranslations } from 'next-intl';
 import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import { 
   Search, 
   ShoppingBag, 
@@ -17,6 +18,7 @@ import {
   X 
 } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
+import { resolveImageUrl } from '@/lib/api';
 
 export function Navbar() {
   const t = useTranslations('Navbar');
@@ -227,7 +229,7 @@ export function Navbar() {
           href={isAuthenticated ? '/profile' : '/login'} 
           className="nav-link" 
           style={{
-            background: 'var(--accent)', 
+            background: user?.avatar ? 'transparent' : 'var(--accent)', 
             color: 'white',
             textDecoration: 'none',
             width: '42px',
@@ -237,10 +239,23 @@ export function Navbar() {
             alignItems: 'center',
             justifyContent: 'center',
             cursor: 'pointer',
-            boxShadow: '0 4px 12px rgba(231, 184, 184, 0.4)'
+            boxShadow: '0 4px 12px rgba(231, 184, 184, 0.4)',
+            overflow: 'hidden',
+            padding: 0,
+            position: 'relative'
           }}
         >
-          <User size={24} strokeWidth={2.5} />
+          {user?.avatar ? (
+            <Image
+              src={resolveImageUrl(user.avatar)}
+              alt={user.username || 'Avatar'}
+              fill
+              unoptimized
+              style={{ objectFit: 'cover', borderRadius: '12px' }}
+            />
+          ) : (
+            <User size={24} strokeWidth={2.5} />
+          )}
           <span className="nav-tooltip">{t('account')}</span>
         </Link>
       </div>

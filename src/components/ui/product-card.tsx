@@ -127,7 +127,7 @@ export function ProductCard({ product, index = 0, priority = false, configOverri
     sizes: cardConfig.showSizes ? (
       <div key="sizes" className={`mt-1.5 flex flex-wrap gap-1 min-h-[18px] ${cardConfig.textAlign === 'left' ? 'justify-start' : 'justify-center'}`}>
         {parsedSizes.map((sz, i) => (
-          <span key={i} className="text-[10px] font-semibold tracking-wider text-[#7A5C5C]/70 bg-white/40 border border-[#7A5C5C]/10 px-1.5 py-0.5 rounded-md backdrop-blur-sm group-hover:border-[#D4A5A5]/30 transition-all duration-300">
+          <span key={i} className="text-[10px] font-semibold tracking-wider text-[#7A5C5C]/70 bg-white/80 border border-[#7A5C5C]/10 px-1.5 py-0.5 rounded-md group-hover:border-[#D4A5A5]/30 transition-all duration-300">
             {sz}
           </span>
         ))}
@@ -192,7 +192,7 @@ export function ProductCard({ product, index = 0, priority = false, configOverri
               const cleaned = singleTag.trim();
               if (!cleaned) return null;
               return (
-                <div key={idx} className="px-3.5 py-1 text-[9px] font-bold uppercase tracking-wider backdrop-blur-md border border-white/30 shadow-sm rounded-lg" style={tagStyle}>
+                <div key={idx} className="px-3.5 py-1 text-[9px] font-bold uppercase tracking-wider border border-white/30 shadow-sm rounded-lg" style={tagStyle}>
                   {getTagDisplayName(cleaned)}
                 </div>
               );

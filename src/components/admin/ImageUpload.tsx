@@ -42,7 +42,7 @@ export function ImageUpload({ value, onChange, onUploadStateChange, hideUrlInput
       else formData.append('quality', '90');
       if (folder) formData.append('folder', folder);
 
-      const { data } = await api.post('/media/upload-imgbb', formData, {
+      const { data } = await api.post('/media/upload-r2', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 

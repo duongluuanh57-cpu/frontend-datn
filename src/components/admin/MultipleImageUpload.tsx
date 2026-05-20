@@ -57,7 +57,7 @@ export function MultipleImageUpload({
         formData.append('quality', String(quality));
         if (folder) formData.append('folder', folder);
 
-        const { data } = await api.post('/media/upload-imgbb', formData, {
+        const { data } = await api.post('/media/upload-r2', formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
 

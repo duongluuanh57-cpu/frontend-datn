@@ -27,6 +27,9 @@ const BlogPosts = dynamic(
   { ssr: false }
 );
 
+import { CustomerReviews } from '@/components/ui/customer-reviews';
+import { NewsletterSubscription } from '@/components/ui/newsletter-subscription';
+
 const DEFAULT_ORDER = [
   'banner',
   'brandsMarquee',
@@ -81,5 +84,13 @@ export function HomepageDynamicRenderer() {
     }
   };
 
-  return <>{sectionsToRender.map((s) => renderSection(s.id))}</>;
+  return (
+    <>
+      {sectionsToRender.map((s) => renderSection(s.id))}
+      {/* Hardcoded Customer Reviews Section at the bottom */}
+      <CustomerReviews />
+      {/* Newsletter Subscription Section */}
+      <NewsletterSubscription />
+    </>
+  );
 }

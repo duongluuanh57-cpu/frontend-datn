@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { usePathname } from '@/navigation';
 import { pingBackend } from '@/lib/api';
 import { Sparkles, CheckCircle2, RefreshCw } from 'lucide-react';
+import './backend-warmup.css';
 
 /**
  * Preloader and Warmup provider:
@@ -187,111 +188,16 @@ export function BackendWarmup() {
   if (!showPreloader) return null;
 
   return (
-    <div
-      className={`fixed inset-0 w-screen h-screen flex flex-col items-center justify-center z-[99999] overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${isFadingOut ? 'opacity-0 scale-[1.05] blur-[15px] pointer-events-none' : 'opacity-100 scale-100 blur-0'
-        }`}
-      style={{
-        background: 'radial-gradient(circle at center, var(--color-background) 40%, var(--color-border) 100%)'
-      }}
-    >
-      <style>{`
-        /* Keep only complex core keyframe animations */
-        .animate-drift1 {
-          background: radial-gradient(circle, var(--color-primary) 0%, transparent 70%);
-          animation: drift1 25s infinite alternate ease-in-out;
-        }
-        .animate-drift2 {
-          background: radial-gradient(circle, var(--color-secondary) 0%, transparent 70%);
-          animation: drift2 30s infinite alternate ease-in-out;
-        }
-        .animate-drift3 {
-          background: radial-gradient(circle, var(--color-accent) 0%, transparent 70%);
-          animation: drift3 20s infinite alternate ease-in-out;
-        }
-
-        @keyframes drift1 {
-          0% { transform: translate(0, 0) scale(1); }
-          100% { transform: translate(8vw, 6vh) scale(1.15); }
-        }
-        @keyframes drift2 {
-          0% { transform: translate(0, 0) scale(1); }
-          100% { transform: translate(-6vw, -8vh) scale(1.1); }
-        }
-        @keyframes drift3 {
-          0% { transform: translate(0, 0) scale(1); opacity: 0.12; }
-          100% { transform: translate(4vw, -4vh) scale(0.95); opacity: 0.22; }
-        }
-
-        .animate-float-bottle {
-          filter: drop-shadow(0 0 15px rgba(236, 72, 153, 0.12));
-          animation: floatBottle 4s infinite ease-in-out;
-        }
-
-        @keyframes floatBottle {
-          0%, 100% { transform: translateY(0px) rotate(0deg); }
-          50% { transform: translateY(-8px) rotate(1deg); }
-        }
-
-        @keyframes floatUp1 {
-          0% { transform: translateY(0) scale(0.8); opacity: 0; }
-          20% { opacity: 0.7; }
-          100% { transform: translateY(-65px) scale(1.1); opacity: 0; }
-        }
-        @keyframes floatUp2 {
-          0% { transform: translateY(0) scale(0.7); opacity: 0; }
-          20% { opacity: 0.8; }
-          100% { transform: translateY(-55px) scale(1.2); opacity: 0; }
-        }
-        @keyframes floatUp3 {
-          0% { transform: translateY(0) scale(0.8); opacity: 0; }
-          20% { opacity: 0.6; }
-          100% { transform: translateY(-45px) scale(1); opacity: 0; }
-        }
-
-        .bubble-1 { animation: floatUp1 3.2s infinite linear; animation-delay: 0.2s; }
-        .bubble-2 { animation: floatUp2 2.6s infinite linear; animation-delay: 1.0s; }
-        .bubble-3 { animation: floatUp3 3.8s infinite linear; animation-delay: 0.5s; }
-        .bubble-4 { animation: floatUp1 2.9s infinite linear; animation-delay: 1.7s; }
-        .bubble-5 { animation: floatUp2 3.4s infinite linear; animation-delay: 0.8s; }
-
-        .shimmer-sweep {
-          animation: shimmer 3s infinite linear;
-        }
-
-        @keyframes shimmer {
-          0% { transform: skewX(-20deg) translate(-100px, 0); }
-          100% { transform: skewX(-20deg) translate(150px, 0); }
-        }
-
-        .animate-title-glow {
-          animation: titleGlow 4s infinite alternate ease-in-out;
-        }
-
-        @keyframes titleGlow {
-          0% { filter: drop-shadow(0 2px 8px rgba(236, 72, 153, 0.12)); }
-          100% { filter: drop-shadow(0 2px 22px rgba(236, 72, 153, 0.3)); }
-        }
-
-        .animate-button-fade-in {
-          animation: buttonFadeIn 0.5s ease forwards;
-        }
-
-        @keyframes buttonFadeIn {
-          from { opacity: 0; transform: translateY(12px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
-
-      {/* Luxury Ambient Orbs using Tailwind and Custom Animations */}
-      <div className="absolute rounded-full pointer-events-none opacity-15 blur-[130px] top-[-10%] left-[-10%] w-[50vw] h-[50vw] animate-drift1"></div>
-      <div className="absolute rounded-full pointer-events-none opacity-15 blur-[130px] bottom-[-15%] right-[-10%] w-[60vw] h-[60vw] animate-drift2"></div>
-      <div className="absolute rounded-full pointer-events-none opacity-15 blur-[130px] top-[30%] left-[20%] w-[45vw] h-[45vw] animate-drift3"></div>
+    <div className={`warmup-overlay ${isFadingOut ? 'is-fading-out' : 'is-visible'}`}>
+      {/* Luxury Ambient Orbs */}
+      <div className="warmup-orb warmup-orb-1"></div>
+      <div className="warmup-orb warmup-orb-2"></div>
+      <div className="warmup-orb warmup-orb-3"></div>
 
       {/* Immersive Full-Page Content Wrapper */}
-      <div className="flex flex-col items-center justify-center z-10 w-full max-w-[600px] text-center relative px-6">
-
+      <div className="warmup-content">
         {/* Luxury animated perfume bottle SVG */}
-        <svg width="100" height="150" viewBox="0 0 100 150" className="animate-float-bottle">
+        <svg width="100" height="150" viewBox="0 0 100 150" className="warmup-bottle">
           <defs>
             <linearGradient id="liquidGrad" x1="0%" y1="100%" x2="0%" y2="0%">
               <stop offset="0%" stopColor="var(--color-secondary)" stopOpacity="0.85" />
@@ -360,33 +266,33 @@ export function BackendWarmup() {
         </svg>
 
         {/* Title & Brand */}
-        <h1 className="font-heading font-light text-[2.6rem] tracking-[0.16em] uppercase mt-6 mb-1 bg-clip-text text-transparent bg-gradient-to-br from-[var(--color-foreground)] via-[var(--color-primary)] to-[var(--color-accent)] drop-shadow-[0_2px_8px_rgba(236,72,153,0.12)] animate-title-glow">
+        <h1 className="warmup-title">
           L'essence
         </h1>
-        <div className="text-[0.85rem] text-[var(--color-primary)] tracking-[0.25em] uppercase mb-6 font-normal opacity-85">
+        <div className="warmup-subtitle">
           haute parfumerie
         </div>
 
         {/* Percentage Counter */}
-        <div className="text-[2.2rem] font-extralight font-sans text-[var(--color-foreground)] tracking-[-0.02em] mb-3 flex items-center justify-center gap-1 drop-shadow-[0_0_10px_rgba(236,72,153,0.12)]">
+        <div className="warmup-percentage-display">
           {percentage}
-          <span className="text-[1.1rem] text-[var(--color-primary)] self-start mt-1 opacity-85">%</span>
+          <span className="warmup-percentage-symbol">%</span>
         </div>
 
         {/* Loading track & progress fill */}
-        <div className="w-[280px] h-[4px] bg-[var(--color-primary)]/10 rounded-full overflow-hidden relative shadow-[inset_0_1px_2px_rgba(131,24,67,0.05)] mb-5">
+        <div className="warmup-progress-track">
           <div
-            className="h-full bg-gradient-to-r from-[var(--color-secondary)] via-[var(--color-primary)] to-[var(--color-accent)] shadow-[0_0_12px_rgba(236,72,153,0.45)] rounded-full transition-all duration-100 ease-linear"
+            className="warmup-progress-fill"
             style={{ width: `${percentage}%` }}
           ></div>
         </div>
 
         {/* Smooth descriptive message */}
-        <div className="text-[0.9rem] text-[var(--color-foreground)] h-6 flex items-center justify-center gap-2 font-light transition-all duration-300 opacity-85">
+        <div className="warmup-status-text">
           {percentage === 100 ? (
-            <CheckCircle2 size={16} className="text-primary animate-pulse" style={{ color: 'var(--color-primary)' }} />
+            <CheckCircle2 size={16} className="animate-pulse" style={{ color: 'var(--primary)' }} />
           ) : (
-            <Sparkles size={14} className="text-accent animate-spin" style={{ color: 'var(--color-primary)', animationDuration: '3s' }} />
+            <Sparkles size={14} className="animate-spin" style={{ color: 'var(--primary)', animationDuration: '3s' }} />
           )}
           <span>{statusText}</span>
         </div>
@@ -395,7 +301,7 @@ export function BackendWarmup() {
         {errorGrace && (
           <button
             onClick={handleSkip}
-            className="mt-6 px-6 py-2.5 rounded-full border border-[var(--color-border)] bg-white/60 text-[var(--color-foreground)] text-[0.82rem] font-medium tracking-[0.06em] cursor-pointer transition-all duration-300 hover:bg-[var(--color-primary)]/5 hover:border-[var(--color-primary)] hover:shadow-[0_0_18px_rgba(236,72,153,0.2)] hover:-translate-y-0.5 active:translate-y-0 flex items-center gap-2 z-[100] animate-button-fade-in"
+            className="warmup-fallback-btn"
           >
             <RefreshCw size={12} className="animate-spin" style={{ animationDuration: '6s' }} />
             {locale === 'en' ? 'Skip & Explore' : 'Bỏ qua & Khám phá'}
