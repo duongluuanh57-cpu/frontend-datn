@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Link, useRouter } from '@/navigation';
 import { usePathname, useSearchParams } from 'next/navigation';
 import {
@@ -30,42 +30,15 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { toast } from 'sonner';
 import './admin.css';
 
-export default function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const t = useTranslations('Admin');
-  const pathname = usePathname();
+interface AdminSidebarNavProps {
+  isCollapsed: boolean;
+  pathname: string;
+  t: any;
+}
+
+function AdminSidebarNav({ isCollapsed, pathname, t }: AdminSidebarNavProps) {
   const searchParams = useSearchParams();
   const currentTab = searchParams.get('tab');
-  const [isCollapsed, setIsCollapsed] = React.useState(false);
-  const router = useRouter();
-  const logout = useAuthStore((state) => state.logout);
-
-  const handleLogout = () => {
-    logout();
-    router.replace('/login');
-  };
-
-  // Auth & Role Protection
-  React.useEffect(() => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    if (!token) {
-      router.replace('/login');
-      return;
-    }
-    
-    // Fallback manual decode if useAuthStore fails to persist correctly
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      if (payload.role !== 'ADMIN' && payload.role !== 'SUBADMIN') {
-        router.replace('/');
-      }
-    } catch (e) {
-      router.replace('/login');
-    }
-  }, [router]);
 
   const sections = [
     {
@@ -163,6 +136,127 @@ export default function AdminLayout({
   };
 
   return (
+    <nav className="admin-sidebar__nav" style={{ gap: '16px' }}>
+      {sections.map((section, idx) => (
+        <div key={section.title} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          {/* Divider between sections when collapsed */}
+          {idx > 0 && isCollapsed && (
+            <div 
+              style={{
+                height: '1px',
+                background: 'var(--admin-border-subtle)',
+                margin: '8px 14px',
+              }}
+            />
+          )}
+
+          {/* Section title when expanded */}
+          {!isCollapsed && (
+            <div
+              style={{
+                fontSize: '0.625rem',
+                fontWeight: 700,
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+                color: 'var(--admin-text-muted)',
+                padding: '12px 14px 6px',
+                opacity: 0.8,
+              }}
+            >
+              {section.title}
+            </div>
+          )}
+
+          {section.items.map((item) => {
+            const active = !item.isPlaceholder && isActive(item.href);
+
+            const handlePlaceholderClick = (e: React.MouseEvent) => {
+              e.preventDefault();
+              toast.info(
+                pathname.includes('/vi') 
+                  ? 'Tính năng hiện đang được phát triển' 
+                  : 'Feature is currently under development'
+              );
+            };
+
+            if (item.isPlaceholder) {
+              return (
+                <button
+                  key={item.name}
+                  type="button"
+                  onClick={handlePlaceholderClick}
+                  className="contents"
+                  style={{ border: 'none', background: 'transparent', width: '100%', padding: 0, textAlign: 'left' }}
+                >
+                  <span
+                    className={`admin-nav-item ${isCollapsed ? 'admin-nav-item--collapsed' : ''}`}
+                  >
+                    <item.icon className="admin-nav-item__icon" strokeWidth={1.75} />
+                    {!isCollapsed && <span>{item.name}</span>}
+                    {isCollapsed && (
+                      <span className="admin-nav-item__tooltip">{item.name}</span>
+                    )}
+                  </span>
+                </button>
+              );
+            }
+
+            return (
+              <Link key={item.name} href={item.href} className="contents">
+                <span
+                  className={`admin-nav-item ${active ? 'admin-nav-item--active' : ''} ${isCollapsed ? 'admin-nav-item--collapsed' : ''}`}
+                >
+                  <item.icon className="admin-nav-item__icon" strokeWidth={1.75} />
+                  {!isCollapsed && <span>{item.name}</span>}
+                  {isCollapsed && (
+                    <span className="admin-nav-item__tooltip">{item.name}</span>
+                  )}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+      ))}
+    </nav>
+  );
+}
+
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const t = useTranslations('Admin');
+  const pathname = usePathname();
+  const [isCollapsed, setIsCollapsed] = React.useState(false);
+  const router = useRouter();
+  const logout = useAuthStore((state) => state.logout);
+
+  const handleLogout = () => {
+    logout();
+    router.replace('/login');
+  };
+
+  // Auth & Role Protection
+  React.useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (!token) {
+      router.replace('/login');
+      return;
+    }
+    
+    // Fallback manual decode if useAuthStore fails to persist correctly
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      if (payload.role !== 'ADMIN' && payload.role !== 'SUBADMIN') {
+        router.replace('/');
+      }
+    } catch (e) {
+      router.replace('/login');
+    }
+  }, [router]);
+
+  return (
     <div className="admin-shell">
       <aside
         className={`admin-sidebar ${isCollapsed ? 'admin-sidebar--collapsed' : ''}`}
@@ -211,88 +305,16 @@ export default function AdminLayout({
           </div>
         )}
 
-        <nav className="admin-sidebar__nav" style={{ gap: '16px' }}>
-          {sections.map((section, idx) => (
-            <div key={section.title} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              {/* Divider between sections when collapsed */}
-              {idx > 0 && isCollapsed && (
-                <div 
-                  style={{
-                    height: '1px',
-                    background: 'var(--admin-border-subtle)',
-                    margin: '8px 14px',
-                  }}
-                />
-              )}
+        <Suspense fallback={
+          <div className="admin-sidebar__nav-fallback" style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '12px 14px' }}>
+            <div className="animate-pulse bg-gray-200/20 h-6 w-3/4 rounded" />
+            <div className="animate-pulse bg-gray-200/20 h-10 w-full rounded" />
+            <div className="animate-pulse bg-gray-200/20 h-10 w-full rounded" />
+          </div>
+        }>
+          <AdminSidebarNav isCollapsed={isCollapsed} pathname={pathname} t={t} />
+        </Suspense>
 
-              {/* Section title when expanded */}
-              {!isCollapsed && (
-                <div
-                  style={{
-                    fontSize: '0.625rem',
-                    fontWeight: 700,
-                    letterSpacing: '0.12em',
-                    textTransform: 'uppercase',
-                    color: 'var(--admin-text-muted)',
-                    padding: '12px 14px 6px',
-                    opacity: 0.8,
-                  }}
-                >
-                  {section.title}
-                </div>
-              )}
-
-              {section.items.map((item) => {
-                const active = !item.isPlaceholder && isActive(item.href);
-
-                const handlePlaceholderClick = (e: React.MouseEvent) => {
-                  e.preventDefault();
-                  toast.info(
-                    pathname.includes('/vi') 
-                      ? 'Tính năng hiện đang được phát triển' 
-                      : 'Feature is currently under development'
-                  );
-                };
-
-                if (item.isPlaceholder) {
-                  return (
-                    <button
-                      key={item.name}
-                      type="button"
-                      onClick={handlePlaceholderClick}
-                      className="contents"
-                      style={{ border: 'none', background: 'transparent', width: '100%', padding: 0, textAlign: 'left' }}
-                    >
-                      <span
-                        className={`admin-nav-item ${isCollapsed ? 'admin-nav-item--collapsed' : ''}`}
-                      >
-                        <item.icon className="admin-nav-item__icon" strokeWidth={1.75} />
-                        {!isCollapsed && <span>{item.name}</span>}
-                        {isCollapsed && (
-                          <span className="admin-nav-item__tooltip">{item.name}</span>
-                        )}
-                      </span>
-                    </button>
-                  );
-                }
-
-                return (
-                  <Link key={item.name} href={item.href} className="contents">
-                    <span
-                      className={`admin-nav-item ${active ? 'admin-nav-item--active' : ''} ${isCollapsed ? 'admin-nav-item--collapsed' : ''}`}
-                    >
-                      <item.icon className="admin-nav-item__icon" strokeWidth={1.75} />
-                      {!isCollapsed && <span>{item.name}</span>}
-                      {isCollapsed && (
-                        <span className="admin-nav-item__tooltip">{item.name}</span>
-                      )}
-                    </span>
-                  </Link>
-                );
-              })}
-            </div>
-          ))}
-        </nav>
 
         <div className="admin-sidebar__footer">
           <button

@@ -10,7 +10,7 @@ import { HomepageCardTab } from './components/HomepageCardTab';
 import { LayoutTemplate, Images, Package } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 
-export default function AdminHomepageConfig() {
+function HomepageConfigContent() {
   const adminHomepage = useAdminHomepage();
   const { activeTab, setActiveTab, isBannersMode } = adminHomepage;
 
@@ -48,5 +48,17 @@ export default function AdminHomepageConfig() {
         {activeTab === 'cardCustomizer' && <HomepageCardTab adminHomepage={adminHomepage} />}
       </AnimatePresence>
     </div>
+  );
+}
+
+export default function AdminHomepageConfig() {
+  return (
+    <React.Suspense fallback={
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#7A5C5C]" />
+      </div>
+    }>
+      <HomepageConfigContent />
+    </React.Suspense>
   );
 }
