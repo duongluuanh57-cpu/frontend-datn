@@ -946,11 +946,12 @@ export default function ProfilePage() {
                           order.status === 'shipped' ? 'Đang giao' : 'Đã hủy';
 
                         // Format total amount to VND
-                        const formattedTotal = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(order.totalAmount);
+                        const formattedTotal = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(order.totalAmount || 0);
 
-                        // Primary item or multiple items text
-                        const firstItemName = order.items?.[0]?.name || 'Sản phẩm nước hoa';
-                        const itemsCount = order.items?.length || 0;
+                        // Primary item or multiple items text - safe access
+                        const items = Array.isArray(order.items) ? order.items : [];
+                        const firstItemName = items[0]?.name || items[0]?.productName || 'Sản phẩm nước hoa';
+                        const itemsCount = items.length;
                         const displayTitle = itemsCount > 1 ? `${firstItemName} và ${itemsCount - 1} sản phẩm khác` : firstItemName;
 
                         return (
@@ -1195,28 +1196,37 @@ export default function ProfilePage() {
                 <div className="profile-modal-section">
                   <h3>Sản phẩm đã mua</h3>
                   <div className="profile-modal-items">
-                    {selectedOrder.items?.map((item: any, idx: number) => {
-                      const itemTotal = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price * item.quantity);
-                      const formattedPrice = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price);
-                      return (
-                        <div key={idx} className="profile-modal-item-row">
-                          <img 
-                            src={item.image || 'https://i.ibb.co/qFf0N0kH/perfume1.webp'} 
-                            alt={item.name} 
-                            className="profile-modal-item-img"
-                          />
-                          <div className="profile-modal-item-details">
-                            <div className="profile-modal-item-name">{item.name}</div>
-                            <div className="profile-modal-item-meta">
-                              Số lượng: {item.quantity} &times; {formattedPrice}
+                    {(Array.isArray(selectedOrder.items) && selectedOrder.items.length > 0) ? (
+                      selectedOrder.items.map((item: any, idx: number) => {
+                        const itemTotal = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format((item.price || 0) * (item.quantity || 1));
+                        const formattedPrice = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price || 0);
+                        const itemName = item.name || item.productName || 'Sản phẩm';
+                        const itemImage = item.image || item.imageUrl || 'https://i.ibb.co/qFf0N0kH/perfume1.webp';
+                        
+                        return (
+                          <div key={idx} className="profile-modal-item-row">
+                            <img 
+                              src={itemImage} 
+                              alt={itemName} 
+                              className="profile-modal-item-img"
+                            />
+                            <div className="profile-modal-item-details">
+                              <div className="profile-modal-item-name">{itemName}</div>
+                              <div className="profile-modal-item-meta">
+                                Số lượng: {item.quantity || 1} &times; {formattedPrice}
+                              </div>
+                            </div>
+                            <div className="profile-modal-item-price">
+                              {itemTotal}
                             </div>
                           </div>
-                          <div className="profile-modal-item-price">
-                            {itemTotal}
-                          </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })
+                    ) : (
+                      <div style={{ padding: '2rem', textAlign: 'center', color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem' }}>
+                        Không có thông tin chi tiết sản phẩm
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -1224,15 +1234,25 @@ export default function ProfilePage() {
                 <div className="profile-modal-summary">
                   <div className="profile-summary-row">
                     <span>Tạm tính</span>
-                    <span>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(selectedOrder.totalAmount)}</span>
+                    <span>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(selectedOrder.totalAmount || 0)}</span>
                   </div>
                   <div className="profile-summary-row">
                     <span>Phí vận chuyển</span>
-                    <span style={{ color: '#27ae60', fontWeight: 600 }}>Miễn phí</span>
+                    <span style={{ color: '#27ae60', fontWeight: 600 }}>
+                      {selectedOrder.shippingFee ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(selectedOrder.shippingFee) : 'Miễn phí'}
+                    </span>
                   </div>
+                  {selectedOrder.discount > 0 && (
+                    <div className="profile-summary-row">
+                      <span>Giảm giá</span>
+                      <span style={{ color: '#e74c3c', fontWeight: 600 }}>
+                        -{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(selectedOrder.discount)}
+                      </span>
+                    </div>
+                  )}
                   <div className="profile-summary-row total">
                     <span>Tổng tiền thanh toán</span>
-                    <span>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(selectedOrder.totalAmount)}</span>
+                    <span>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(selectedOrder.totalAmount || 0)}</span>
                   </div>
                 </div>
 

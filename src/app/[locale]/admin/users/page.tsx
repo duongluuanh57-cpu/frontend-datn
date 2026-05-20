@@ -31,6 +31,7 @@ import {
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useMemo } from 'react';
+import React from 'react';
 import { toast } from 'sonner';
 
 interface User {
@@ -517,7 +518,7 @@ function UserFormModal({ isOpen, onClose, user, onSubmit, isLoading }: UserFormM
   });
 
   // Reset form when modal opens/closes or user changes
-  useState(() => {
+  React.useEffect(() => {
     if (isOpen) {
       if (user) {
         setFormData({
@@ -535,7 +536,7 @@ function UserFormModal({ isOpen, onClose, user, onSubmit, isLoading }: UserFormM
         });
       }
     }
-  });
+  }, [isOpen, user]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

@@ -1,4 +1,5 @@
 import '../globals.css';
+import './homepage-responsive.css';
 import { NextIntlClientProvider } from 'next-intl';
 import { setRequestLocale, getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
