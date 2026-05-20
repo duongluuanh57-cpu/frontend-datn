@@ -675,11 +675,17 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
           .map((k) => k.trim())
           .filter(Boolean),
       };
-      if (productId) await api.patch(`/products/${productId}`, payload);
-      else await api.post('/products', payload);
+      if (productId) {
+        await api.patch(`/products/${productId}`, payload);
+        queryClient.invalidateQueries({ queryKey: ['admin-product', productId] });
+      } else {
+        await api.post('/products', payload);
+      }
       
       // Invalidate the react-query cache so the list page automatically reloads the new data!
       queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+      queryClient.invalidateQueries({ queryKey: ['new-products'] });
+      queryClient.invalidateQueries({ queryKey: ['sale-products'] });
       
       router.push('/admin/products');
       router.refresh();

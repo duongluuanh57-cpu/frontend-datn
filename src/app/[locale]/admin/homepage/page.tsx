@@ -1,244 +1,338 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import {
   Sparkles,
   Save,
   RotateCcw,
   Image as ImageIcon,
-  Type,
   Layout,
-  Plus,
-  Trash2,
-  Check,
+  GripVertical,
+  Eye,
+  EyeOff,
   Globe,
-  Loader2
+  Loader2,
+  Check,
+  LayoutTemplate,
+  ShoppingBag,
+  Star,
+  BookOpen,
+  Award,
+  Images,
+  Newspaper
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLocale } from 'next-intl';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ImageUpload } from '@/components/admin/ImageUpload';
 import api from '@/lib/api';
 import '@/components/ui/banner.css';
 import { Banner } from '@/components/ui/banner';
+import type { SectionConfig, HomepageConfigData } from '@/hooks/useHomepageConfig';
 
-// --- Default Configuration (fallback / reset states) ---
-const DEFAULT_BANNERS = [
-  "/images/banner-1.webp",
-  "/images/banner-2.webp",
-  "/images/banner-3.webp",
-  "/images/banner-4.webp"
-];
-
-const DEFAULT_BANNER_TEXTS = {
-  vi: {
-    title: 'Độc bản hương thơm Niche',
-    subtitle: 'Khám phá tinh hoa mùi hương quý tộc mang đậm phong vị cá nhân từ những nhà điều chế hàng đầu thế giới.'
+// --- Metadata mô tả từng Section ---
+const SECTION_META: Record<
+  string,
+  { label: string; description: string; icon: React.ElementType; color: string }
+> = {
+  banner: {
+    label: 'Hero Banner',
+    description: 'Slideshow ảnh toàn màn hình đầu trang',
+    icon: ImageIcon,
+    color: '#D4A5A5'
   },
-  en: {
-    title: 'Bespoke Niche Perfumery',
-    subtitle: 'Explore the elite essence of royal perfumery, crafted for individual distinction by master scent designers.'
+  brandsMarquee: {
+    label: 'Băng chuyền Thương hiệu',
+    description: 'Dải logo các hãng nước hoa chạy ngang',
+    icon: Award,
+    color: '#B8A5C8'
+  },
+  saleProducts: {
+    label: 'Ưu đãi Đặc biệt',
+    description: 'Sản phẩm đang có chương trình giảm giá',
+    icon: Star,
+    color: '#E8A87C'
+  },
+  newProducts: {
+    label: 'Sản phẩm Mới',
+    description: 'Các sản phẩm mới nhất vừa cập bến',
+    icon: ShoppingBag,
+    color: '#7A9CC5'
+  },
+  brandUsp: {
+    label: 'Điểm mạnh Thương hiệu',
+    description: '4 cam kết chất lượng của L\'essence',
+    icon: LayoutTemplate,
+    color: '#82B39A'
+  },
+  luxuryGallery: {
+    label: 'Album Khoảnh Khắc',
+    description: 'Bộ sưu tập ảnh nghệ thuật Pinterest',
+    icon: Images,
+    color: '#C5956A'
+  },
+  blogPosts: {
+    label: 'Bài viết & Câu chuyện',
+    description: 'Nội dung blog và hành trình hương thơm',
+    icon: Newspaper,
+    color: '#8FB5C8'
   }
 };
 
-const DEFAULT_BANNER_LABELS = {
-  vi: 'BST NƯỚC HOA CAO CẤP',
-  en: 'PREMIUM FRAGRANCE HOUSE'
+// --- Default data ---
+const DEFAULT_BANNERS = [
+  '/images/banner-1.webp',
+  '/images/banner-2.webp',
+  '/images/banner-3.webp',
+  '/images/banner-4.webp'
+];
+const DEFAULT_SECTIONS: SectionConfig[] = [
+  { id: 'banner', enabled: true, order: 0 },
+  { id: 'brandsMarquee', enabled: true, order: 1 },
+  { id: 'saleProducts', enabled: true, order: 2 },
+  { id: 'newProducts', enabled: true, order: 3 },
+  { id: 'brandUsp', enabled: true, order: 4 },
+  { id: 'luxuryGallery', enabled: true, order: 5 },
+  { id: 'blogPosts', enabled: true, order: 6 }
+];
+const DEFAULT_GALLERY = Array.from({ length: 6 }, () => ({
+  url: '',
+  aspect: 'aspect-[3/4]',
+  title: '',
+  quote: ''
+}));
+
+// --- Fetch + Save API ---
+const fetchConfig = async (): Promise<HomepageConfigData> => {
+  const { data } = await api.get('/homepage-config');
+  return data.data;
+};
+const saveConfig = async (payload: Partial<HomepageConfigData>): Promise<HomepageConfigData> => {
+  const { data } = await api.put('/homepage-config', payload);
+  return data.data;
 };
 
-const DEFAULT_GALLERY = {
-  vi: [
-    {
-      url: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=1200&auto=format&fit=crop',
-      aspect: 'aspect-[3/4]',
-      title: 'Giọt Nắng Pha Lê',
-      quote: 'Hương thơm là tiếng thì thầm của tâm hồn.'
-    },
-    {
-      url: 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?q=80&w=1200&auto=format&fit=crop',
-      aspect: 'aspect-[1/1]',
-      title: 'Cánh Hồng Sương Sớm',
-      quote: 'Sự lãng mạn ẩn mình trong từng nốt hương.'
-    },
-    {
-      url: 'https://images.unsplash.com/photo-1547887537-6158d64c35b3?q=80&w=1200&auto=format&fit=crop',
-      aspect: 'aspect-[2/3]',
-      title: 'Tinh Hoa Cổ Điển',
-      quote: 'Định nghĩa lại vẻ đẹp vĩnh cửu của hoàng gia.'
-    },
-    {
-      url: 'https://images.unsplash.com/photo-1513201099705-a9746e1e201f?q=80&w=1200&auto=format&fit=crop',
-      aspect: 'aspect-[3/2]',
-      title: 'Lụa Mềm Tinh Khôi',
-      quote: 'Mịn màng và thanh tao tựa như làn da thứ hai.'
-    },
-    {
-      url: 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?q=80&w=1200&auto=format&fit=crop',
-      aspect: 'aspect-[3/4]',
-      title: 'Hương Thảo Mộc Niche',
-      quote: 'Sự giao thoa đầy say đắm giữa thiên nhiên và nghệ thuật.'
-    },
-    {
-      url: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=1200&auto=format&fit=crop',
-      aspect: 'aspect-[1/1]',
-      title: 'Khay Ngọc Kiêu Kỳ',
-      quote: 'Nơi lưu giữ những bí mật quyến rũ nhất.'
-    }
-  ],
-  en: [
-    {
-      url: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=1200&auto=format&fit=crop',
-      aspect: 'aspect-[3/4]',
-      title: 'Crystal Sunlight',
-      quote: 'Scent is the whisper of the soul.'
-    },
-    {
-      url: 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?q=80&w=1200&auto=format&fit=crop',
-      aspect: 'aspect-[1/1]',
-      title: 'Morning Dew Rose',
-      quote: 'Romance hidden in every single note.'
-    },
-    {
-      url: 'https://images.unsplash.com/photo-1547887537-6158d64c35b3?q=80&w=1200&auto=format&fit=crop',
-      aspect: 'aspect-[2/3]',
-      title: 'Classic Heritage',
-      quote: 'Redefining the eternal beauty of royalty.'
-    },
-    {
-      url: 'https://images.unsplash.com/photo-1513201099705-a9746e1e201f?q=80&w=1200&auto=format&fit=crop',
-      aspect: 'aspect-[3/2]',
-      title: 'Pristine Pure Silk',
-      quote: 'Smooth and sublime like a luxurious second skin.'
-    },
-    {
-      url: 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?q=80&w=1200&auto=format&fit=crop',
-      aspect: 'aspect-[3/4]',
-      title: 'Artisanal Niche',
-      quote: 'A captivating fusion of nature and fine art.'
-    },
-    {
-      url: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=1200&auto=format&fit=crop',
-      aspect: 'aspect-[1/1]',
-      title: 'Vanity Secrets',
-      quote: 'Where the most seductive mysteries reside.'
-    }
-  ]
-};
+// ============================================================
+// Sortable Section Card Component
+// ============================================================
+interface SectionCardProps {
+  section: SectionConfig;
+  onToggle: (id: string) => void;
+}
 
+function SortableSectionCard({ section, onToggle }: SectionCardProps) {
+  const meta = SECTION_META[section.id];
+  const Icon = meta?.icon ?? Layout;
+
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: section.id
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : undefined,
+    opacity: isDragging ? 0.85 : 1
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`group flex items-center gap-4 p-4 rounded-2xl border transition-all duration-300 select-none ${
+        section.enabled
+          ? 'bg-white border-gray-100 shadow-sm hover:border-[#D4A5A5]/30 hover:shadow-md'
+          : 'bg-gray-50/60 border-gray-100/80 opacity-60'
+      } ${isDragging ? 'shadow-2xl ring-2 ring-[#D4A5A5]/30 scale-[1.02]' : ''}`}
+    >
+      {/* Drag Handle */}
+      <button
+        {...attributes}
+        {...listeners}
+        className="flex-shrink-0 p-1.5 rounded-lg text-gray-300 hover:text-[#7A5C5C]/50 hover:bg-[#7A5C5C]/5 transition-all duration-200 cursor-grab active:cursor-grabbing focus:outline-none"
+        title="Kéo để sắp xếp"
+      >
+        <GripVertical size={18} />
+      </button>
+
+      {/* Order Badge */}
+      <span className="flex-shrink-0 h-7 w-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-sm"
+        style={{ backgroundColor: meta?.color ?? '#7A5C5C' }}>
+        {section.order + 1}
+      </span>
+
+      {/* Icon */}
+      <div
+        className="flex-shrink-0 h-9 w-9 rounded-xl flex items-center justify-center"
+        style={{ backgroundColor: `${meta?.color ?? '#D4A5A5'}18` }}
+      >
+        <Icon size={16} style={{ color: meta?.color ?? '#7A5C5C' }} />
+      </div>
+
+      {/* Info */}
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-[#7A5C5C] truncate">{meta?.label ?? section.id}</p>
+        <p className="text-[10px] text-[#7A5C5C]/50 mt-0.5 truncate">{meta?.description ?? ''}</p>
+      </div>
+
+      {/* Toggle Switch */}
+      <button
+        onClick={() => onToggle(section.id)}
+        className={`flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all duration-300 ${
+          section.enabled
+            ? 'bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-100'
+            : 'bg-gray-100 text-gray-400 border border-gray-200 hover:bg-gray-200'
+        }`}
+        title={section.enabled ? 'Bấm để ẩn section này' : 'Bấm để hiện section này'}
+      >
+        {section.enabled ? (
+          <><Eye size={11} /> Hiện</>
+        ) : (
+          <><EyeOff size={11} /> Ẩn</>
+        )}
+      </button>
+    </div>
+  );
+}
+
+// ============================================================
+// Main Page Component
+// ============================================================
 export default function AdminHomepageConfig() {
   const locale = useLocale();
-  const [activeTab, setActiveTab] = useState<'banners' | 'gallery'>('banners');
+  const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState<'banners' | 'gallery' | 'layout'>('layout');
 
-  // Stateful configurations for editing
-  const [banners, setBanners] = useState<string[]>(DEFAULT_BANNERS);
-  const [bannerTitleVi, setBannerTitleVi] = useState(DEFAULT_BANNER_TEXTS.vi.title);
-  const [bannerSubtitleVi, setBannerSubtitleVi] = useState(DEFAULT_BANNER_TEXTS.vi.subtitle);
-  const [bannerTitleEn, setBannerTitleEn] = useState(DEFAULT_BANNER_TEXTS.en.title);
-  const [bannerSubtitleEn, setBannerSubtitleEn] = useState(DEFAULT_BANNER_TEXTS.en.subtitle);
-  const [bannerLabelVi, setBannerLabelVi] = useState(DEFAULT_BANNER_LABELS.vi);
-  const [bannerLabelEn, setBannerLabelEn] = useState(DEFAULT_BANNER_LABELS.en);
+  // ── Fetch config từ DB ──
+  const { data: dbConfig, isLoading: isLoadingConfig } = useQuery({
+    queryKey: ['homepage-config'],
+    queryFn: fetchConfig
+  });
 
-  const [galleryVi, setGalleryVi] = useState(DEFAULT_GALLERY.vi);
-  const [galleryEn, setGalleryEn] = useState(DEFAULT_GALLERY.en);
-  const [galleryAiLoading, setGalleryAiLoading] = useState<Record<number, boolean>>({});
-
-  // Load custom data from LocalStorage on mount
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('lessence_custom_homepage_data');
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (parsed.banners && Array.isArray(parsed.banners)) setBanners(parsed.banners);
-          if (parsed.banner_title_vi) setBannerTitleVi(parsed.banner_title_vi);
-          if (parsed.banner_subtitle_vi) setBannerSubtitleVi(parsed.banner_subtitle_vi);
-              if (parsed.banner_label_vi) setBannerLabelVi(parsed.banner_label_vi);
-          if (parsed.banner_title_en) setBannerTitleEn(parsed.banner_title_en);
-          if (parsed.banner_subtitle_en) setBannerSubtitleEn(parsed.banner_subtitle_en);
-              if (parsed.banner_label_en) setBannerLabelEn(parsed.banner_label_en);
-          if (parsed.gallery && Array.isArray(parsed.gallery)) setGalleryVi(parsed.gallery);
-          if (parsed.gallery_en && Array.isArray(parsed.gallery_en)) setGalleryEn(parsed.gallery_en);
-        } catch (e) {
-          console.error('Error loading localStorage data:', e);
-        }
-      }
-    }
-  }, []);
-
-  // Save Config function
-  const handleSave = () => {
-    const dataToSave = {
-      banners,
-      banner_title_vi: bannerTitleVi,
-      banner_subtitle_vi: bannerSubtitleVi,
-      banner_label_vi: bannerLabelVi,
-      banner_title_en: bannerTitleEn,
-      banner_subtitle_en: bannerSubtitleEn,
-      banner_label_en: bannerLabelEn,
-      gallery: galleryVi,
-      gallery_en: galleryEn
-    };
-    localStorage.setItem('lessence_custom_homepage_data', JSON.stringify(dataToSave));
-    toast.success('Cập nhật giao diện trang chủ thành công!', {
-      description: 'Nội dung mới đã được cập nhật trực tiếp trên trang chủ.',
-      duration: 3000
-    });
-  };
-
-  // Auto-save (debounced) for quick inline edits in preview — writes to localStorage without toast
-  useEffect(() => {
-    const dataToSave = {
-      banners,
-      banner_title_vi: bannerTitleVi,
-      banner_subtitle_vi: bannerSubtitleVi,
-      banner_label_vi: bannerLabelVi,
-      banner_title_en: bannerTitleEn,
-      banner_subtitle_en: bannerSubtitleEn,
-      banner_label_en: bannerLabelEn,
-      gallery: galleryVi,
-      gallery_en: galleryEn
-    };
-
-    const timer = setTimeout(() => {
-      try {
-        localStorage.setItem('lessence_custom_homepage_data', JSON.stringify(dataToSave));
-      } catch (e) {
-        console.error('Auto-save failed:', e);
-      }
-    }, 900);
-
-    return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [banners, bannerTitleVi, bannerSubtitleVi, bannerLabelVi, bannerTitleEn, bannerSubtitleEn, bannerLabelEn, galleryVi, galleryEn]);
-
-  // Restore Defaults
-  const handleRestoreDefaults = () => {
-    if (confirm('Bạn có chắc muốn khôi phục lại thiết kế trang chủ mặc định của L\'essence?')) {
-      setBanners(DEFAULT_BANNERS);
-      setBannerTitleVi(DEFAULT_BANNER_TEXTS.vi.title);
-      setBannerSubtitleVi(DEFAULT_BANNER_TEXTS.vi.subtitle);
-      setBannerLabelVi(DEFAULT_BANNER_LABELS.vi);
-      setBannerTitleEn(DEFAULT_BANNER_TEXTS.en.title);
-      setBannerSubtitleEn(DEFAULT_BANNER_TEXTS.en.subtitle);
-      setBannerLabelEn(DEFAULT_BANNER_LABELS.en);
-      setGalleryVi(DEFAULT_GALLERY.vi);
-      setGalleryEn(DEFAULT_GALLERY.en);
-      localStorage.removeItem('lessence_custom_homepage_data');
-      toast.success('Đã khôi phục cài đặt mặc định!', {
-        description: 'Tất cả các tệp hình ảnh và câu trích dẫn nguyên bản đã được khôi phục.',
+  // ── Save mutation ──
+  const saveMutation = useMutation({
+    mutationFn: saveConfig,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['homepage-config'] });
+      toast.success('Đã lưu cấu hình trang chủ thành công!', {
+        description: 'Thay đổi sẽ có hiệu lực ngay trên trang chủ.',
         duration: 3000
       });
+    },
+    onError: (err: any) => {
+      toast.error('Lưu thất bại', {
+        description: err?.response?.data?.message || err.message,
+        duration: 4000
+      });
     }
+  });
+
+  // ── Local state (init từ DB) ──
+  const [sections, setSections] = useState<SectionConfig[]>(DEFAULT_SECTIONS);
+  const [banners, setBanners] = useState<string[]>(DEFAULT_BANNERS);
+  const [bannerTitleVi, setBannerTitleVi] = useState('Độc bản hương thơm Niche');
+  const [bannerSubtitleVi, setBannerSubtitleVi] = useState('Khám phá tinh hoa mùi hương quý tộc mang đậm phong vị cá nhân từ những nhà điều chế hàng đầu thế giới.');
+  const [bannerLabelVi, setBannerLabelVi] = useState('BST NƯỚC HOA CAO CẤP');
+  const [bannerTitleEn, setBannerTitleEn] = useState('Bespoke Niche Perfumery');
+  const [bannerSubtitleEn, setBannerSubtitleEn] = useState('Explore the elite essence of royal perfumery, crafted for individual distinction by master scent designers.');
+  const [bannerLabelEn, setBannerLabelEn] = useState('PREMIUM FRAGRANCE HOUSE');
+  const [galleryVi, setGalleryVi] = useState(DEFAULT_GALLERY);
+  const [galleryEn, setGalleryEn] = useState(DEFAULT_GALLERY);
+  const [galleryAiLoading, setGalleryAiLoading] = useState<Record<number, boolean>>({});
+
+  // Populate state từ DB khi load xong
+  useEffect(() => {
+    if (!dbConfig) return;
+    if (dbConfig.sections?.length > 0) {
+      const sorted = [...dbConfig.sections].sort((a, b) => a.order - b.order);
+      setSections(sorted);
+    }
+    if (dbConfig.bannerImages?.length > 0) setBanners(dbConfig.bannerImages);
+    if (dbConfig.bannerTitleVi) setBannerTitleVi(dbConfig.bannerTitleVi);
+    if (dbConfig.bannerSubtitleVi) setBannerSubtitleVi(dbConfig.bannerSubtitleVi);
+    if (dbConfig.bannerLabelVi) setBannerLabelVi(dbConfig.bannerLabelVi);
+    if (dbConfig.bannerTitleEn) setBannerTitleEn(dbConfig.bannerTitleEn);
+    if (dbConfig.bannerSubtitleEn) setBannerSubtitleEn(dbConfig.bannerSubtitleEn);
+    if (dbConfig.bannerLabelEn) setBannerLabelEn(dbConfig.bannerLabelEn);
+    if (dbConfig.galleryVi?.length > 0) setGalleryVi(dbConfig.galleryVi);
+    if (dbConfig.galleryEn?.length > 0) setGalleryEn(dbConfig.galleryEn);
+  }, [dbConfig]);
+
+  // ── Drag & Drop sensors ──
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    setSections((prev) => {
+      const oldIndex = prev.findIndex((s) => s.id === active.id);
+      const newIndex = prev.findIndex((s) => s.id === over.id);
+      const reordered = arrayMove(prev, oldIndex, newIndex);
+      return reordered.map((s, idx) => ({ ...s, order: idx }));
+    });
+  }, []);
+
+  const handleToggleSection = useCallback((id: string) => {
+    setSections((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, enabled: !s.enabled } : s))
+    );
+  }, []);
+
+  // ── Save all ──
+  const handleSave = useCallback(() => {
+    saveMutation.mutate({
+      sections,
+      bannerImages: banners,
+      bannerTitleVi,
+      bannerSubtitleVi,
+      bannerLabelVi,
+      bannerTitleEn,
+      bannerSubtitleEn,
+      bannerLabelEn,
+      galleryVi,
+      galleryEn
+    });
+  }, [sections, banners, bannerTitleVi, bannerSubtitleVi, bannerLabelVi, bannerTitleEn, bannerSubtitleEn, bannerLabelEn, galleryVi, galleryEn, saveMutation]);
+
+  // ── Restore defaults ──
+  const handleRestoreDefaults = () => {
+    if (!confirm("Bạn có chắc muốn khôi phục lại thiết kế trang chủ mặc định của L'essence?")) return;
+    setSections(DEFAULT_SECTIONS);
+    setBanners(DEFAULT_BANNERS);
+    setBannerTitleVi('Độc bản hương thơm Niche');
+    setBannerSubtitleVi('Khám phá tinh hoa mùi hương quý tộc mang đậm phong vị cá nhân từ những nhà điều chế hàng đầu thế giới.');
+    setBannerLabelVi('BST NƯỚC HOA CAO CẤP');
+    setBannerTitleEn('Bespoke Niche Perfumery');
+    setBannerSubtitleEn('Explore the elite essence of royal perfumery, crafted for individual distinction by master scent designers.');
+    setBannerLabelEn('PREMIUM FRAGRANCE HOUSE');
+    setGalleryVi(DEFAULT_GALLERY);
+    setGalleryEn(DEFAULT_GALLERY);
+    toast.info('Đã khôi phục cài đặt mặc định. Bấm Lưu để áp dụng.');
   };
 
-  // Banners helper edits
-  const handleBannerUrlChange = (index: number, value: string) => {
-    const next = [...banners];
-    next[index] = value;
-    setBanners(next);
-  };
-
-  // Gallery edits
+  // ── Gallery helpers ──
   const handleGalleryFieldChange = (
     lang: 'vi' | 'en',
     index: number,
@@ -246,13 +340,13 @@ export default function AdminHomepageConfig() {
     value: string
   ) => {
     if (lang === 'vi') {
-      setGalleryVi(prev => {
+      setGalleryVi((prev) => {
         const next = [...prev];
         next[index] = { ...next[index], [field]: value };
         return next;
       });
     } else {
-      setGalleryEn(prev => {
+      setGalleryEn((prev) => {
         const next = [...prev];
         next[index] = { ...next[index], [field]: value };
         return next;
@@ -260,67 +354,45 @@ export default function AdminHomepageConfig() {
     }
   };
 
-  // AI Automatic Image scanning for luxury quotes & titles
   const handleGalleryImageUpload = async (idx: number, newUrl: string) => {
-    // 1. Update image url fields in both states
     handleGalleryFieldChange('vi', idx, 'url', newUrl);
     handleGalleryFieldChange('en', idx, 'url', newUrl);
-
     if (!newUrl) return;
 
-    // 2. Start AI Vision analysis loading
-    setGalleryAiLoading(prev => ({ ...prev, [idx]: true }));
+    setGalleryAiLoading((prev) => ({ ...prev, [idx]: true }));
     const loadingToast = toast.loading('AI đang quét và phân tích hình ảnh nghệ thuật...');
-
     try {
       const response = await api.post('/ai/scan-gallery-image', { imageUrl: newUrl });
-      if (response.data && response.data.success && response.data.data) {
+      if (response.data?.success && response.data?.data) {
         const { titleVi, quoteVi, titleEn, quoteEn } = response.data.data;
-        
-        // Populate Vietnamese fields atomically
-        setGalleryVi(prev => {
+        setGalleryVi((prev) => {
           const next = [...prev];
-          next[idx] = {
-            ...next[idx],
-            title: titleVi || next[idx].title,
-            quote: quoteVi || next[idx].quote
-          };
+          next[idx] = { ...next[idx], title: titleVi || next[idx].title, quote: quoteVi || next[idx].quote };
           return next;
         });
-
-        // Populate English fields atomically
-        setGalleryEn(prev => {
+        setGalleryEn((prev) => {
           const next = [...prev];
-          next[idx] = {
-            ...next[idx],
-            title: titleEn || next[idx].title,
-            quote: quoteEn || next[idx].quote
-          };
+          next[idx] = { ...next[idx], title: titleEn || next[idx].title, quote: quoteEn || next[idx].quote };
           return next;
         });
-
-        toast.success('AI đã phân tích ảnh và hoàn thành nội dung song ngữ thành công!', {
-          id: loadingToast,
-          duration: 3000
-        });
-      } else {
-        throw new Error(response.data?.error || 'Không nhận được dữ liệu hợp lệ từ AI');
+        toast.success('AI phân tích ảnh thành công!', { id: loadingToast, duration: 3000 });
       }
-    } catch (err: any) {
-      console.error('Artistic AI Scan failed:', err);
-      toast.error('Không thể quét ảnh bằng AI. Vui lòng tự nhập thủ công.', {
-        id: loadingToast,
-        description: err.response?.data?.error || err.message || 'Lỗi kết nối AI.',
-        duration: 4000
-      });
+    } catch {
+      toast.error('Không thể quét ảnh bằng AI.', { id: loadingToast, duration: 4000 });
     } finally {
-      setGalleryAiLoading(prev => ({ ...prev, [idx]: false }));
+      setGalleryAiLoading((prev) => ({ ...prev, [idx]: false }));
     }
   };
 
+  // ── Derived display values for banner preview ──
+  const displayTitle = locale === 'vi' ? bannerTitleVi : bannerTitleEn;
+  const displaySubtitle = locale === 'vi' ? bannerSubtitleVi : bannerSubtitleEn;
+  const displayLabel = locale === 'vi' ? bannerLabelVi : bannerLabelEn;
+  const isSaving = saveMutation.isPending;
+
   return (
     <div className="admin-dashboard p-6 max-w-[1400px] mx-auto">
-      {/* Title Header */}
+      {/* ── Header ── */}
       <header className="admin-page-header flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-[#D4A5A5]/15 pb-6 mb-8">
         <div>
           <h1 className="text-2xl font-semibold text-[#7A5C5C] flex items-center gap-2.5">
@@ -328,11 +400,9 @@ export default function AdminHomepageConfig() {
             Quản lý Nội dung Trang chủ
           </h1>
           <p className="text-xs text-[#7A5C5C]/60 mt-1">
-            Chỉnh sửa trực tiếp các tệp hình ảnh, tiêu đề trượt của Hero Banner và các câu trích dẫn trong Album nghệ thuật.
+            Sắp xếp, bật/tắt các section và chỉnh sửa nội dung Hero Banner, Album nghệ thuật.
           </p>
         </div>
-
-        {/* Global Action controls */}
         <div className="flex items-center gap-4">
           <button
             onClick={handleRestoreDefaults}
@@ -343,135 +413,187 @@ export default function AdminHomepageConfig() {
           </button>
           <button
             onClick={handleSave}
-            className="flex items-center gap-2 px-5 py-2.5 text-xs font-bold uppercase tracking-wider rounded-lg bg-[#7A5C5C] hover:bg-[#604444] text-white shadow-md hover:shadow-lg transition-all duration-300"
+            disabled={isSaving}
+            className="flex items-center gap-2 px-5 py-2.5 text-xs font-bold uppercase tracking-wider rounded-lg bg-[#7A5C5C] hover:bg-[#604444] text-white shadow-md hover:shadow-lg transition-all duration-300 disabled:opacity-60"
           >
-            <Save size={14} />
-            Lưu thay đổi
+            {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+            {isSaving ? 'Đang lưu...' : 'Lưu thay đổi'}
           </button>
         </div>
       </header>
 
-      {/* Tabs Controller */}
-      <div className="flex border-b border-gray-200 mb-8 select-none">
-        <button
-          onClick={() => setActiveTab('banners')}
-          className={`flex items-center gap-2.5 px-6 py-3 border-b-2 text-sm font-semibold tracking-wide transition-all duration-300 ${activeTab === 'banners'
-            ? 'border-[#7A5C5C] text-[#7A5C5C]'
-            : 'border-transparent text-gray-400 hover:text-[#7A5C5C]/60'
+      {/* ── Tabs ── */}
+      <div className="flex border-b border-gray-200 mb-8 select-none gap-1">
+        {[
+          { key: 'layout', label: 'Bố cục Trang chủ', icon: LayoutTemplate },
+          { key: 'banners', label: `Hero Banner (${banners.length} slides)`, icon: ImageIcon },
+          { key: 'gallery', label: 'Album Nghệ Thuật (6 ảnh)', icon: Images }
+        ].map(({ key, label, icon: Icon }) => (
+          <button
+            key={key}
+            onClick={() => setActiveTab(key as typeof activeTab)}
+            className={`flex items-center gap-2 px-5 py-3 border-b-2 text-sm font-semibold tracking-wide transition-all duration-300 ${
+              activeTab === key
+                ? 'border-[#7A5C5C] text-[#7A5C5C]'
+                : 'border-transparent text-gray-400 hover:text-[#7A5C5C]/60'
             }`}
-        >
-          <ImageIcon size={16} />
-          Trình chiếu Hero Banner ({banners.length} slides)
-        </button>
-        <button
-          onClick={() => setActiveTab('gallery')}
-          className={`flex items-center gap-2.5 px-6 py-3 border-b-2 text-sm font-semibold tracking-wide transition-all duration-300 ${activeTab === 'gallery'
-            ? 'border-[#7A5C5C] text-[#7A5C5C]'
-            : 'border-transparent text-gray-400 hover:text-[#7A5C5C]/60'
-            }`}
-        >
-          <Layout size={16} />
-          Album Khoảnh Khắc Nghệ Thuật (6 ảnh Pinterest)
-        </button>
+          >
+            <Icon size={15} />
+            {label}
+          </button>
+        ))}
       </div>
 
-      {/* Content Panels */}
+      {/* ── Tab Panels ── */}
       <AnimatePresence mode="wait">
-        {activeTab === 'banners' ? (
-          (() => {
-            const displayTitlePreview = locale === 'vi'
-              ? (bannerTitleVi || DEFAULT_BANNER_TEXTS.vi.title)
-              : (bannerTitleEn || DEFAULT_BANNER_TEXTS.en.title);
-            const displaySubtitlePreview = locale === 'vi'
-              ? (bannerSubtitleVi || DEFAULT_BANNER_TEXTS.vi.subtitle)
-              : (bannerSubtitleEn || DEFAULT_BANNER_TEXTS.en.subtitle);
-            const displayLabelPreview = locale === 'vi'
-              ? (bannerLabelVi || DEFAULT_BANNER_LABELS.vi)
-              : (bannerLabelEn || DEFAULT_BANNER_LABELS.en);
-            const displayCtaPreview = locale === 'vi' ? 'VÀO CỬA HÀNG' : 'SHOP COLLECTION';
-            const displayAboutPreview = locale === 'vi' ? 'VỀ CHÚNG TÔI' : 'ABOUT US';
 
-            return (
-              <motion.div
-                key="banners-panel"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -15 }}
-                transition={{ duration: 0.3 }}
-                className="space-y-8"
-              >
-                {/* Top Widescreen Simulator Preview */}
-                <div className="admin-panel bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-                  <div className="border-b border-gray-100 pb-4 mb-5 flex items-center gap-2">
-                    <Check size={18} className="text-emerald-500" />
-                    <h2 className="text-sm font-semibold text-[#7A5C5C]">Mô phỏng Giao diện Banner (Bản xem trước trực tiếp)</h2>
-                  </div>
-
-                  <div className="relative w-full rounded-2xl overflow-hidden shadow-lg border border-gray-200">
-                    <Banner
-                      isPreview={true}
-                      previewData={{
-                        images: banners,
-                        title: displayTitlePreview,
-                        subtitle: displaySubtitlePreview,
-                        label: displayLabelPreview
-                      }}
-                      onTitleChange={(newTitle) => {
-                        if (locale === 'vi') {
-                          setBannerTitleVi(newTitle);
-                        } else {
-                          setBannerTitleEn(newTitle);
-                        }
-                      }}
-                      onSubtitleChange={(newSubtitle) => {
-                        if (locale === 'vi') {
-                          setBannerSubtitleVi(newSubtitle);
-                        } else {
-                          setBannerSubtitleEn(newSubtitle);
-                        }
-                      }}
-                      onLabelChange={(newLabel) => {
-                        if (locale === 'vi') setBannerLabelVi(newLabel);
-                        else setBannerLabelEn(newLabel);
-                      }}
-                      onImagesChange={(index, url) => {
-                        setBanners((prev) => {
-                          const next = [...prev];
-                          next[index] = url;
-                          return next;
-                        });
-                      }}
-                    />
-                  </div>
-                  <p className="text-[10px] text-gray-400 mt-3 text-center italic">
-                    * Bản xem trước có thể sẽ khác với bản ở bên ngoài trang chủ.
-                  </p>
-                </div>
-
-                {/* Inputs Layout in two-column grid underneath the widescreen preview */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  {/* Banner image URL editor removed per request */}
-                </div>
-              </motion.div>
-            );
-          })()
-        ) : (
+        {/* ════ TAB: Bố cục ════ */}
+        {activeTab === 'layout' && (
           <motion.div
-            key="gallery-panel"
-            initial={{ opacity: 0, y: 15 }}
+            key="layout-panel"
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -15 }}
-            transition={{ duration: 0.3 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.25 }}
             className="space-y-6"
           >
-            {/* Grid selector of 6 items */}
+            {/* Instruction card */}
+            <div className="bg-gradient-to-r from-[#FFF5F5] to-[#FDF8F8] border border-[#D4A5A5]/15 rounded-2xl p-5 flex items-start gap-4">
+              <div className="flex-shrink-0 h-9 w-9 rounded-xl bg-[#D4A5A5]/10 flex items-center justify-center">
+                <GripVertical size={16} className="text-[#D4A5A5]" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-[#7A5C5C]">Kéo thả để sắp xếp thứ tự hiển thị</p>
+                <p className="text-xs text-[#7A5C5C]/60 mt-1 leading-relaxed">
+                  Kéo từng section bằng biểu tượng <span className="font-mono text-[10px] bg-gray-100 px-1 rounded">⠿</span> để thay đổi thứ tự. Toggle <span className="font-semibold text-emerald-600">Hiện/Ẩn</span> để bật hoặc tắt section. Bấm <span className="font-semibold text-[#7A5C5C]">Lưu thay đổi</span> để áp dụng lên trang chủ.
+                </p>
+              </div>
+            </div>
+
+            {/* Stats row */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              <div className="bg-white rounded-2xl border border-gray-100 p-4 flex items-center gap-3 shadow-sm">
+                <div className="h-9 w-9 rounded-xl bg-emerald-50 flex items-center justify-center">
+                  <Eye size={15} className="text-emerald-500" />
+                </div>
+                <div>
+                  <p className="text-xl font-bold text-[#7A5C5C]">{sections.filter(s => s.enabled).length}</p>
+                  <p className="text-[10px] text-gray-400 uppercase tracking-wider">Section đang hiển thị</p>
+                </div>
+              </div>
+              <div className="bg-white rounded-2xl border border-gray-100 p-4 flex items-center gap-3 shadow-sm">
+                <div className="h-9 w-9 rounded-xl bg-gray-100 flex items-center justify-center">
+                  <EyeOff size={15} className="text-gray-400" />
+                </div>
+                <div>
+                  <p className="text-xl font-bold text-[#7A5C5C]">{sections.filter(s => !s.enabled).length}</p>
+                  <p className="text-[10px] text-gray-400 uppercase tracking-wider">Section đang ẩn</p>
+                </div>
+              </div>
+              <div className="bg-white rounded-2xl border border-gray-100 p-4 flex items-center gap-3 shadow-sm col-span-2 sm:col-span-1">
+                <div className="h-9 w-9 rounded-xl bg-[#D4A5A5]/10 flex items-center justify-center">
+                  <LayoutTemplate size={15} className="text-[#D4A5A5]" />
+                </div>
+                <div>
+                  <p className="text-xl font-bold text-[#7A5C5C]">{sections.length}</p>
+                  <p className="text-[10px] text-gray-400 uppercase tracking-wider">Tổng số section</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Drag & Drop list */}
+            {isLoadingConfig ? (
+              <div className="space-y-3">
+                {Array.from({ length: 7 }).map((_, i) => (
+                  <div key={i} className="h-20 rounded-2xl bg-gray-50 animate-pulse" />
+                ))}
+              </div>
+            ) : (
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={sections.map(s => s.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-3">
+                    {sections.map((section) => (
+                      <SortableSectionCard
+                        key={section.id}
+                        section={section}
+                        onToggle={handleToggleSection}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
+            )}
+          </motion.div>
+        )}
+
+        {/* ════ TAB: Banner ════ */}
+        {activeTab === 'banners' && (
+          <motion.div
+            key="banners-panel"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.25 }}
+            className="space-y-8"
+          >
+            {/* Live Preview */}
+            <div className="admin-panel bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+              <div className="border-b border-gray-100 pb-4 mb-5 flex items-center gap-2">
+                <Check size={18} className="text-emerald-500" />
+                <h2 className="text-sm font-semibold text-[#7A5C5C]">Mô phỏng Giao diện Banner (Bản xem trước trực tiếp)</h2>
+              </div>
+              <div className="relative w-full rounded-2xl overflow-hidden shadow-lg border border-gray-200">
+                <Banner
+                  isPreview={true}
+                  previewData={{
+                    images: banners,
+                    title: displayTitle,
+                    subtitle: displaySubtitle,
+                    label: displayLabel
+                  }}
+                  onTitleChange={(v) => locale === 'vi' ? setBannerTitleVi(v) : setBannerTitleEn(v)}
+                  onSubtitleChange={(v) => locale === 'vi' ? setBannerSubtitleVi(v) : setBannerSubtitleEn(v)}
+                  onLabelChange={(v) => locale === 'vi' ? setBannerLabelVi(v) : setBannerLabelEn(v)}
+                  onImagesChange={(index, url) => {
+                    setBanners((prev) => {
+                      const next = [...prev];
+                      next[index] = url;
+                      return next;
+                    });
+                  }}
+                />
+              </div>
+              <p className="text-[10px] text-gray-400 mt-3 text-center italic">
+                * Bản xem trước có thể sẽ khác với bản ở bên ngoài trang chủ.
+              </p>
+            </div>
+          </motion.div>
+        )}
+
+        {/* ════ TAB: Gallery ════ */}
+        {activeTab === 'gallery' && (
+          <motion.div
+            key="gallery-panel"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.25 }}
+            className="space-y-6"
+          >
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {Array.from({ length: 6 }).map((_, idx) => (
                 <div
                   key={idx}
                   className="admin-panel bg-white rounded-2xl border border-gray-100 p-5 shadow-sm space-y-4 hover:border-[#D4A5A5]/35 transition-all duration-300"
                 >
-                  {/* Grid header index & Aspect Selector */}
+                  {/* Card Header */}
                   <div className="flex items-center justify-between border-b border-gray-100 pb-3">
                     <span className="h-6 w-6 rounded-full bg-[#FFF5F5] text-[#7A5C5C] font-bold text-xs flex items-center justify-center">
                       #{idx + 1}
@@ -479,7 +601,7 @@ export default function AdminHomepageConfig() {
                     <div className="flex items-center gap-2">
                       <span className="text-[10px] font-bold text-gray-400 uppercase">Tỷ lệ lưới:</span>
                       <select
-                        value={galleryVi[idx].aspect}
+                        value={galleryVi[idx]?.aspect ?? 'aspect-[3/4]'}
                         onChange={(e) => {
                           handleGalleryFieldChange('vi', idx, 'aspect', e.target.value);
                           handleGalleryFieldChange('en', idx, 'aspect', e.target.value);
@@ -494,67 +616,64 @@ export default function AdminHomepageConfig() {
                     </div>
                   </div>
 
-                  {/* Thumbnail & Image URL via ImageUpload */}
+                  {/* Image Upload */}
                   <div className="space-y-1.5">
                     <span className="text-[9px] font-bold text-[#7A5C5C] uppercase tracking-wider block">
                       Hình ảnh Khoảnh Khắc #{idx + 1}
                     </span>
                     <ImageUpload
-                      value={galleryVi[idx].url}
+                      value={galleryVi[idx]?.url ?? ''}
                       onChange={(newUrl) => handleGalleryImageUpload(idx, newUrl)}
                       hideUrlInput={true}
                     />
                   </div>
 
-                  {/* Bilingual Wording Fields */}
+                  {/* Bilingual fields */}
                   <div className="relative space-y-3 bg-gray-50/50 p-3.5 rounded-xl border border-gray-100 overflow-hidden">
-                    {/* Glassmorphic AI Scanning Indicator Overlay */}
                     {galleryAiLoading[idx] && (
-                      <div className="absolute inset-0 bg-white/75 backdrop-blur-sm z-10 flex flex-col items-center justify-center gap-2 shadow-inner">
+                      <div className="absolute inset-0 bg-white/75 backdrop-blur-sm z-10 flex flex-col items-center justify-center gap-2">
                         <Loader2 className="animate-spin text-[#7A5C5C]" size={20} />
-                        <span className="text-[10px] text-[#7A5C5C] font-bold uppercase tracking-wider animate-pulse select-none">AI đang quét ảnh...</span>
+                        <span className="text-[10px] text-[#7A5C5C] font-bold uppercase tracking-wider animate-pulse">
+                          AI đang quét ảnh...
+                        </span>
                       </div>
                     )}
                     {/* Vietnamese */}
                     <div className="space-y-2">
                       <span className="text-[9px] font-bold uppercase text-[#D4A5A5] flex items-center gap-1">
-                        <Globe size={9} />
-                        Tiếng Việt
+                        <Globe size={9} /> Tiếng Việt
                       </span>
                       <input
                         type="text"
-                        value={galleryVi[idx].title}
+                        value={galleryVi[idx]?.title ?? ''}
                         onChange={(e) => handleGalleryFieldChange('vi', idx, 'title', e.target.value)}
                         className="w-full px-3 py-1 rounded-md border border-gray-200 focus:outline-none focus:border-[#7A5C5C] text-xs text-[#7A5C5C] font-semibold"
                         placeholder="Tên dòng nước hoa..."
                       />
                       <input
                         type="text"
-                        value={galleryVi[idx].quote}
+                        value={galleryVi[idx]?.quote ?? ''}
                         onChange={(e) => handleGalleryFieldChange('vi', idx, 'quote', e.target.value)}
                         className="w-full px-3 py-1 rounded-md border border-gray-200 focus:outline-none focus:border-[#7A5C5C] text-xs text-[#7A5C5C] italic"
                         placeholder="Câu châm ngôn tình yêu..."
                       />
                     </div>
-
                     <div className="border-t border-gray-200/50 my-2" />
-
                     {/* English */}
                     <div className="space-y-2">
                       <span className="text-[9px] font-bold uppercase text-[#D4A5A5] flex items-center gap-1">
-                        <Globe size={9} />
-                        English Translation
+                        <Globe size={9} /> English
                       </span>
                       <input
                         type="text"
-                        value={galleryEn[idx].title}
+                        value={galleryEn[idx]?.title ?? ''}
                         onChange={(e) => handleGalleryFieldChange('en', idx, 'title', e.target.value)}
                         className="w-full px-3 py-1 rounded-md border border-gray-200 focus:outline-none focus:border-[#7A5C5C] text-xs text-[#7A5C5C] font-semibold"
                         placeholder="Perfume title..."
                       />
                       <input
                         type="text"
-                        value={galleryEn[idx].quote}
+                        value={galleryEn[idx]?.quote ?? ''}
                         onChange={(e) => handleGalleryFieldChange('en', idx, 'quote', e.target.value)}
                         className="w-full px-3 py-1 rounded-md border border-gray-200 focus:outline-none focus:border-[#7A5C5C] text-xs text-[#7A5C5C] italic"
                         placeholder="Scent story quote..."
@@ -566,6 +685,7 @@ export default function AdminHomepageConfig() {
             </div>
           </motion.div>
         )}
+
       </AnimatePresence>
     </div>
   );
