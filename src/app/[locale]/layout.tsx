@@ -71,6 +71,23 @@ export default async function LocaleLayout({
         <link rel="preconnect" href="https://pub-51942afe81314369ba1985f0493bce19.r2.dev" />
         <link rel="dns-prefetch" href="https://pub-51942afe81314369ba1985f0493bce19.r2.dev" />
         <script
+          id="preloader-check"
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var path = window.location.pathname;
+                  var isHomepage = path === '/' || path === '/vi' || path === '/vi/' || path === '/en' || path === '/en/';
+                  var hasShown = sessionStorage.getItem('preloader_shown');
+                  if (isHomepage && !hasShown) {
+                    document.documentElement.classList.add('preloader-loading');
+                  }
+                } catch (e) {}
+              })();
+            `
+          }}
+        />
+        <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />

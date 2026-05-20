@@ -43,7 +43,7 @@ export function BannerBackground({
                 alt={`${altText} - Slide ${index + 1}`}
                 fill
                 priority={index === 0 && !!image}
-                unoptimized
+                sizes="100vw"
                 className="object-cover"
               />
             )}

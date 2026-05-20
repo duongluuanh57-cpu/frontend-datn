@@ -4,9 +4,12 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Hide body initially to prevent flash before preloader */
-body {
+/* Hide body initially to prevent flash before preloader ONLY on first session visit to Homepage */
+html.preloader-loading body {
   opacity: 0;
+}
+
+body {
   transition: opacity 0.3s ease;
 }
 
