@@ -2,13 +2,13 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { useNewProducts } from './useNewProducts';
+import { useTrendingProducts } from './useTrendingProducts';
 
-interface NewProductsFilterBarProps {
-  formHelpers: ReturnType<typeof useNewProducts>;
+interface TrendingProductsFilterBarProps {
+  formHelpers: ReturnType<typeof useTrendingProducts>;
 }
 
-export function NewProductsFilterBar({ formHelpers }: NewProductsFilterBarProps) {
+export function TrendingProductsFilterBar({ formHelpers }: TrendingProductsFilterBarProps) {
   const {
     locale,
     brands,

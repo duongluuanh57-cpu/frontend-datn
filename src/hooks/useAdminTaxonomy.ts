@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { useLocale } from 'next-intl';
 import React, { useState } from 'react';
-import { 
+import {
   Hash, Layers, Sliders, Sparkles,
   LucideIcon
 } from 'lucide-react';
@@ -14,9 +14,8 @@ export interface TabConfig {
   id: TabType;
   labelVi: string;
   labelEn: string;
-  apiPath: string;
+  taxonomySlug: string | null; // null = Tags (dùng /tags endpoint riêng)
   queryKey: string;
-  taxonomyType: string | null;
   icon: LucideIcon;
 }
 
@@ -59,7 +58,6 @@ export function useAdminTaxonomy(): UseAdminTaxonomyReturn {
   const isVi = locale === 'vi';
   const [activeTab, setActiveTab] = useState<TabType>('tags');
 
-  // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<TaxonomyItem | null>(null);
   const [formData, setFormData] = useState({
@@ -70,31 +68,62 @@ export function useAdminTaxonomy(): UseAdminTaxonomyReturn {
   });
   const [isSaving, setIsSaving] = useState(false);
 
-  // Define tab configuration
   const tabs: TabConfig[] = [
-    { id: 'tags', labelVi: 'Quản lý Tag', labelEn: 'Tag Management', apiPath: '/tags', queryKey: 'admin-tags', taxonomyType: null, icon: Hash },
-    { id: 'notes', labelVi: 'Quản lý Nhóm hương', labelEn: 'Scent Groups', apiPath: '/taxonomies', queryKey: 'admin-scent-groups', taxonomyType: 'scent_group', icon: Layers },
-    { id: 'concentrations', labelVi: 'Quản lý Nồng độ', labelEn: 'Concentration Levels', apiPath: '/taxonomies', queryKey: 'admin-concentrations', taxonomyType: 'concentration', icon: Sliders },
-    { id: 'segments', labelVi: 'Quản lý Phân khúc nhóm', labelEn: 'Brand Segments', apiPath: '/taxonomies', queryKey: 'admin-segments', taxonomyType: 'segment', icon: Sparkles },
+    { id: 'tags',          labelVi: 'Quản lý Tag',            labelEn: 'Tag Management',       taxonomySlug: null,           queryKey: 'admin-tags',           icon: Hash },
+    { id: 'notes',         labelVi: 'Quản lý Nhóm hương',     labelEn: 'Scent Groups',          taxonomySlug: 'scent_group',  queryKey: 'admin-scent-groups',   icon: Layers },
+    { id: 'concentrations',labelVi: 'Quản lý Nồng độ',        labelEn: 'Concentration Levels',  taxonomySlug: 'concentration',queryKey: 'admin-concentrations', icon: Sliders },
+    { id: 'segments',      labelVi: 'Quản lý Phân khúc nhóm', labelEn: 'Brand Segments',        taxonomySlug: 'segment',      queryKey: 'admin-segments',       icon: Sparkles },
   ];
 
   const currentTabConfig = tabs.find(t => t.id === activeTab)!;
 
-  // Generic query to fetch data for the active tab
+  // ── Fetch danh sách Taxonomy (cha) một lần, cache lại ──────────────────────
+  // Dùng để lấy taxonomyId khi cần POST/PATCH/DELETE terms
+  const { data: taxonomyList } = useQuery({
+    queryKey: ['v2-taxonomies'],
+    queryFn: async () => {
+      const { data } = await api.get('/v2/taxonomies');
+      return data.data as { _id: string; slug: string; name: string }[];
+    },
+    staleTime: 1000 * 60 * 10, // cache 10 phút
+  });
+
+  // Helper: lấy taxonomyId theo slug
+  const getTaxonomyId = (slug: string): string | null =>
+    taxonomyList?.find(t => t.slug === slug)?._id ?? null;
+
+  // ── Fetch items theo tab đang active ──────────────────────────────────────
   const { data: items, isLoading, error } = useQuery({
     queryKey: [currentTabConfig.queryKey],
     queryFn: async () => {
-      const url = currentTabConfig.taxonomyType 
-        ? `${currentTabConfig.apiPath}?type=${currentTabConfig.taxonomyType}` 
-        : currentTabConfig.apiPath;
-      const { data } = await api.get(url);
+      // Tab Tags → dùng endpoint /tags cũ (không đổi)
+      if (!currentTabConfig.taxonomySlug) {
+        const { data } = await api.get('/tags');
+        return data.data as TaxonomyItem[];
+      }
+
+      // Tab taxonomy → lấy taxonomyId rồi fetch terms
+      const taxonomyId = getTaxonomyId(currentTabConfig.taxonomySlug);
+      if (!taxonomyId) {
+        // Taxonomy cha chưa có → trả về rỗng
+        return [] as TaxonomyItem[];
+      }
+      const { data } = await api.get(`/v2/taxonomies/${taxonomyId}/terms`);
       return data.data as TaxonomyItem[];
     },
+    enabled: currentTabConfig.taxonomySlug === null || !!taxonomyList, // chờ taxonomyList load xong
   });
 
-  // Generic mutation to delete an item
+  // ── Delete mutation ────────────────────────────────────────────────────────
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => api.delete(`${currentTabConfig.apiPath}/${id}`),
+    mutationFn: async (id: string) => {
+      if (!currentTabConfig.taxonomySlug) {
+        return api.delete(`/tags/${id}`);
+      }
+      const taxonomyId = getTaxonomyId(currentTabConfig.taxonomySlug);
+      if (!taxonomyId) throw new Error('Taxonomy không tồn tại');
+      return api.delete(`/v2/taxonomies/${taxonomyId}/terms/${id}`);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [currentTabConfig.queryKey] });
     },
@@ -110,19 +139,12 @@ export function useAdminTaxonomy(): UseAdminTaxonomyReturn {
     }
   });
 
-  // Open modal for adding a new item
   const handleAddNewClick = () => {
     setEditingItem(null);
-    setFormData({
-      name: '',
-      slug: '',
-      status: 'active',
-      description: ''
-    });
+    setFormData({ name: '', slug: '', status: 'active', description: '' });
     setIsModalOpen(true);
   };
 
-  // Open modal for editing an item
   const handleEditClick = (item: TaxonomyItem) => {
     setEditingItem(item);
     setFormData({
@@ -134,7 +156,7 @@ export function useAdminTaxonomy(): UseAdminTaxonomyReturn {
     setIsModalOpen(true);
   };
 
-  // Form submit handler (both create and update)
+  // ── Form submit (create / update) ─────────────────────────────────────────
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim()) return;
@@ -148,23 +170,30 @@ export function useAdminTaxonomy(): UseAdminTaxonomyReturn {
         description: formData.description.trim() || undefined
       };
 
-      if (currentTabConfig.taxonomyType) {
-        payload.type = currentTabConfig.taxonomyType;
-      }
-
-      if (editingItem) {
-        // Update
-        await api.patch(`${currentTabConfig.apiPath}/${editingItem._id}`, payload);
+      if (!currentTabConfig.taxonomySlug) {
+        // ── Tags: dùng endpoint cũ ──
+        if (editingItem) {
+          await api.patch(`/tags/${editingItem._id}`, payload);
+        } else {
+          await api.post('/tags', payload);
+        }
       } else {
-        // Create
-        await api.post(currentTabConfig.apiPath, payload);
+        // ── Taxonomy terms: dùng API v2 ──
+        const taxonomyId = getTaxonomyId(currentTabConfig.taxonomySlug);
+        if (!taxonomyId) throw new Error('Taxonomy cha chưa được tạo. Vui lòng chạy migration trước.');
+
+        if (editingItem) {
+          await api.patch(`/v2/taxonomies/${taxonomyId}/terms/${editingItem._id}`, payload);
+        } else {
+          await api.post(`/v2/taxonomies/${taxonomyId}/terms`, payload);
+        }
       }
 
       queryClient.invalidateQueries({ queryKey: [currentTabConfig.queryKey] });
       setIsModalOpen(false);
     } catch (err: any) {
       console.error(err);
-      alert(isVi ? 'Có lỗi xảy ra khi lưu thông tin.' : 'Error occurred while saving.');
+      alert(isVi ? `Có lỗi xảy ra: ${err.message}` : `Error: ${err.message}`);
     } finally {
       setIsSaving(false);
     }

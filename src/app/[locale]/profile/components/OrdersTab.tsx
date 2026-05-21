@@ -123,19 +123,152 @@ export function OrdersTab({ userProfile }: OrdersTabProps) {
               <div 
                 key={order._id} 
                 className="profile-order-item"
-                style={{ cursor: 'pointer' }}
+                style={{ 
+                  cursor: 'pointer', 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  alignItems: 'stretch', 
+                  gap: '14px',
+                  padding: '20px 24px',
+                  background: 'rgba(255, 255, 255, 0.45)',
+                  border: '1px solid rgba(255, 255, 255, 0.65)',
+                  borderRadius: '20px',
+                  boxShadow: '0 8px 32px 0 rgba(122, 92, 92, 0.02)',
+                  backdropFilter: 'blur(10px)',
+                  transition: 'all 0.3s ease',
+                }}
                 onClick={() => setSelectedOrder(order)}
               >
-                <div className="profile-order-info">
-                  <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span>{displayTitle}</span>
-                  </h4>
-                  <p>
-                    Mã đơn: <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{order._id.substring(order._id.length - 8).toUpperCase()}</span> | Ngày mua: {formattedDate} | Tổng tiền: <span style={{ fontWeight: 700, color: 'var(--primary)' }}>{formattedTotal}</span>
-                  </p>
+                {/* Header: Order ID, Date & Status */}
+                <div style={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center',
+                  paddingBottom: '12px',
+                  borderBottom: '1px dashed rgba(122, 92, 92, 0.15)'
+                }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                    <span style={{ 
+                      fontFamily: 'monospace', 
+                      fontSize: '0.82rem', 
+                      fontWeight: 700, 
+                      color: 'var(--primary)',
+                      letterSpacing: '0.03em'
+                    }}>
+                      MÃ ĐƠN: #{order._id.substring(order._id.length - 8).toUpperCase()}
+                    </span>
+                    <span style={{ fontSize: '0.78rem', color: 'rgba(122, 92, 92, 0.55)' }}>
+                      Ngày mua: {formattedDate}
+                    </span>
+                  </div>
+                  <div className={`profile-order-status ${order.status}`} style={{ margin: 0, padding: '5px 12px', borderRadius: '10px' }}>
+                    {displayStatus}
+                  </div>
                 </div>
-                <div className={`profile-order-status ${order.status}`}>
-                  {displayStatus}
+
+                {/* Items List */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  {items.map((item: any, idx: number) => {
+                    const itemName = item.name || item.productName || 'Sản phẩm nước hoa';
+                    const itemImage = item.image || item.imageUrl || 'https://i.ibb.co/qFf0N0kH/perfume1.webp';
+                    const itemBrand = item.brand || 'L\'essence';
+                    const itemPriceFormatted = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price || 0);
+
+                    return (
+                      <div 
+                        key={idx} 
+                        style={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: '16px',
+                        }}
+                      >
+                        <img 
+                          src={itemImage} 
+                          alt={itemName} 
+                          style={{ 
+                            width: '60px', 
+                            height: '60px', 
+                            objectFit: 'cover', 
+                            borderRadius: '12px',
+                            background: 'rgba(255, 255, 255, 0.3)',
+                            border: '1px solid rgba(255, 255, 255, 0.5)'
+                          }} 
+                        />
+                        <div style={{ flexGrow: 1, minWidth: 0 }}>
+                          <h5 style={{ 
+                            fontSize: '0.9rem', 
+                            fontWeight: 700, 
+                            color: 'var(--content)', 
+                            margin: '0 0 4px 0',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
+                          }}>
+                            {itemName}
+                          </h5>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: '0.78rem', color: 'rgba(122, 92, 92, 0.5)' }}>
+                              Thương hiệu: {itemBrand}
+                            </span>
+                            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--content)' }}>
+                              {itemPriceFormatted} <span style={{ fontWeight: 400, color: 'rgba(122, 92, 92, 0.55)', marginLeft: '4px' }}>x{item.quantity || 1}</span>
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {items.length === 0 && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                      <div style={{ 
+                        width: '60px', 
+                        height: '60px', 
+                        borderRadius: '12px',
+                        background: 'rgba(255, 255, 255, 0.2)',
+                        border: '1px dashed rgba(122, 92, 92, 0.3)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '1.2rem'
+                      }}>
+                        📦
+                      </div>
+                      <div style={{ flexGrow: 1 }}>
+                        <h5 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--content)', margin: 0 }}>
+                          Sản phẩm nước hoa
+                        </h5>
+                        <span style={{ fontSize: '0.78rem', color: 'rgba(122, 92, 92, 0.5)' }}>
+                          Chi tiết sản phẩm đang được cập nhật
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Footer: Total payment & Detail link hint */}
+                <div style={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center',
+                  paddingTop: '12px',
+                  borderTop: '1px solid rgba(122, 92, 92, 0.08)'
+                }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: 600, opacity: 0.8 }}>
+                    ➔ Nhấn để xem chi tiết đơn hàng
+                  </span>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+                    <span style={{ fontSize: '0.78rem', color: 'rgba(122, 92, 92, 0.55)' }}>
+                      Tổng thanh toán:
+                    </span>
+                    <span style={{ 
+                      fontSize: '1.1rem', 
+                      fontWeight: 700, 
+                      color: 'var(--primary)',
+                    }}>
+                      {formattedTotal}
+                    </span>
+                  </div>
                 </div>
               </div>
             );

@@ -49,6 +49,12 @@ const SECTION_META: Record<
     icon: ShoppingBag,
     color: '#7A9CC5'
   },
+  trendingProducts: {
+    label: 'Sản phẩm Thịnh Hành',
+    description: 'Nhóm sản phẩm được quan tâm nhiều nhất hiện tại',
+    icon: Star,
+    color: '#9D7BC1'
+  },
   brandUsp: {
     label: 'Điểm mạnh Thương hiệu',
     description: '4 cam kết chất lượng của L\'essence',
@@ -77,6 +83,9 @@ interface SortableSectionCardProps {
 function SortableSectionCard({ section, onToggle }: SortableSectionCardProps) {
   const meta = SECTION_META[section.id];
   const Icon = meta?.icon ?? Layout;
+  const label = meta?.label ?? (section.id === 'limitedProducts' ? 'Sản phẩm Giới Hạn' : section.id);
+  const description =
+    meta?.description ?? (section.id === 'limitedProducts' ? 'Bộ sản phẩm được giới hạn số lượng trên trang chủ' : '');
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: section.id
@@ -125,8 +134,8 @@ function SortableSectionCard({ section, onToggle }: SortableSectionCardProps) {
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-[#7A5C5C] truncate">{meta?.label ?? section.id}</p>
-        <p className="text-[10px] text-[#7A5C5C]/50 mt-0.5 truncate">{meta?.description ?? ''}</p>
+        <p className="text-sm font-semibold text-[#7A5C5C] truncate">{label}</p>
+        <p className="text-[10px] text-[#7A5C5C]/50 mt-0.5 truncate">{description}</p>
       </div>
 
       {/* Toggle Switch */}

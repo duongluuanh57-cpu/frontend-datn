@@ -42,6 +42,13 @@
     "inStock": "{count} in stock",
     "outOfStock": "Out of stock"
   },
+  "TrendingProducts": {
+    "title": "TRENDING NOW",
+    "addToCart": "Add to Cart",
+    "viewAll": "Explore All Collections",
+    "inStock": "{count} in stock",
+    "outOfStock": "Out of stock"
+  },
   "SaleProducts": {
     "title": "SPECIAL OFFERS",
     "addToCart": "Add to Cart",
@@ -97,7 +104,12 @@
     "search": "Search",
     "searchPlaceholder": "Search products...",
     "cart": "Cart",
-    "account": "Account"
+    "account": "Account",
+    "myProfile": "My Profile",
+    "myOrders": "Order Management",
+    "dashboard": "Dashboard",
+    "settings": "Account Settings",
+    "logout": "Logout"
   },
   "Admin": {
     "dashboard": {
@@ -191,6 +203,8 @@
       "keywords": "Keywords",
       "keywordsPlaceholder": "Separated by commas",
       "metaDescription": "Search Description",
+      "slug": "URL Slug",
+      "slugPlaceholder": "e.g., midnight-rose-eau-de-parfum",
       "status": "Status",
       "ready": "Ready to publish",
       "draft": "Incomplete information"

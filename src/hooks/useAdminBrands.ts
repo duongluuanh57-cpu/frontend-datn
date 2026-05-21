@@ -83,7 +83,7 @@ export function useAdminBrands(): UseAdminBrandsReturn {
   }, [brands, searchTerm, selectedOrigin]);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 15;
+  const ITEMS_PER_PAGE = 25;
 
   // Reset page when filter changes
   useEffect(() => {

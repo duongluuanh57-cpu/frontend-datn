@@ -148,12 +148,24 @@ export function ProductTable({ catalog }: ProductTableProps) {
                       </div>
                     </td>
                     <td>
-                      {product.tag ? (
-                        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                          {product.tag.split(',').map((singleTag, idx) => {
-                            const cleaned = singleTag.trim();
-                            if (!cleaned) return null;
-                            return (
+                      {(() => {
+                        const tags = product.tag
+                          ? product.tag
+                              .split(',')
+                              .map((t) => t.trim())
+                              .filter(Boolean)
+                          : [];
+
+                        if (tags.length === 0) {
+                          return <span style={{ opacity: 0.5 }}>—</span>;
+                        }
+
+                        const displayTags = tags.slice(0, 2);
+                        const hasMore = tags.length > 2;
+
+                        return (
+                          <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                            {displayTags.map((tag, idx) => (
                               <span
                                 key={idx}
                                 className="admin-badge"
@@ -165,16 +177,136 @@ export function ProductTable({ catalog }: ProductTableProps) {
                                   borderRadius: '4px',
                                   fontSize: '0.6875rem',
                                   fontWeight: 600,
+                                  whiteSpace: 'nowrap',
                                 }}
                               >
-                                {cleaned}
+                                {tag}
                               </span>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <span style={{ opacity: 0.5 }}>—</span>
-                      )}
+                            ))}
+
+                            {hasMore && (
+                              <div
+                                className="group relative inline-block"
+                                style={{ position: 'relative', display: 'inline-block' }}
+                              >
+                                <span
+                                  className="admin-badge"
+                                  style={{
+                                    border: '1px dashed var(--admin-accent, #3d2e24)',
+                                    background: 'rgba(212, 165, 165, 0.08)',
+                                    color: 'var(--admin-accent, #3d2e24)',
+                                    padding: '2px 8px',
+                                    borderRadius: '4px',
+                                    fontSize: '0.6875rem',
+                                    fontWeight: 600,
+                                    cursor: 'pointer',
+                                    whiteSpace: 'nowrap',
+                                    transition: 'all 0.2s ease',
+                                  }}
+                                >
+                                  +{tags.length - 2}
+                                </span>
+
+                                {/* Premium Interactive Tooltip Popover */}
+                                <div
+                                  className="invisible opacity-0 translate-y-1 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200"
+                                  style={{
+                                    position: 'absolute',
+                                    bottom: 'calc(100% + 8px)',
+                                    left: '50%',
+                                    transform: 'translateX(-50%)',
+                                    zIndex: 50,
+                                    background: '#ffffff',
+                                    border: '1px solid var(--admin-border, #e6deda)',
+                                    borderRadius: '8px',
+                                    padding: '8px 10px',
+                                    boxShadow: '0 10px 25px -5px rgba(61, 46, 36, 0.15), 0 8px 10px -6px rgba(61, 46, 36, 0.15)',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '6px',
+                                    minWidth: '130px',
+                                    pointerEvents: 'none',
+                                  }}
+                                >
+                                  {/* Tooltip Title */}
+                                  <span
+                                    style={{
+                                      fontSize: '0.625rem',
+                                      fontWeight: 700,
+                                      color: 'var(--admin-text-muted, #8c7e76)',
+                                      textTransform: 'uppercase',
+                                      letterSpacing: '0.05em',
+                                      borderBottom: '1px solid var(--admin-border-subtle, #f5f0ed)',
+                                      paddingBottom: '4px',
+                                      marginBottom: '2px',
+                                      whiteSpace: 'nowrap',
+                                    }}
+                                  >
+                                    {isVi ? 'Tất cả nhãn' : 'All tags'}
+                                  </span>
+
+                                  {/* Remaining Tags */}
+                                  <div
+                                    style={{
+                                      display: 'flex',
+                                      flexWrap: 'wrap',
+                                      gap: '4px',
+                                      maxWidth: '220px',
+                                    }}
+                                  >
+                                    {tags.map((tag, idx) => (
+                                      <span
+                                        key={idx}
+                                        className="admin-badge"
+                                        style={{
+                                          border: '1px solid var(--admin-border-subtle)',
+                                          background: 'var(--admin-surface-muted)',
+                                          color: 'var(--admin-text-secondary)',
+                                          padding: '1px 6px',
+                                          borderRadius: '4px',
+                                          fontSize: '0.625rem',
+                                          fontWeight: 600,
+                                          whiteSpace: 'nowrap',
+                                        }}
+                                      >
+                                        {tag}
+                                      </span>
+                                    ))}
+                                  </div>
+
+                                  {/* Tooltip Arrow */}
+                                  <div
+                                    style={{
+                                      position: 'absolute',
+                                      top: '100%',
+                                      left: '50%',
+                                      transform: 'translateX(-50%)',
+                                      width: '0',
+                                      height: '0',
+                                      borderLeft: '6px solid transparent',
+                                      borderRight: '6px solid transparent',
+                                      borderTop: '6px solid var(--admin-border, #e6deda)',
+                                    }}
+                                  />
+                                  <div
+                                    style={{
+                                      position: 'absolute',
+                                      top: '99%',
+                                      left: '50%',
+                                      transform: 'translateX(-50%)',
+                                      width: '0',
+                                      height: '0',
+                                      borderLeft: '5px solid transparent',
+                                      borderRight: '5px solid transparent',
+                                      borderTop: '5px solid #ffffff',
+                                    }}
+                                  />
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </td>
                     <td>
                       <span

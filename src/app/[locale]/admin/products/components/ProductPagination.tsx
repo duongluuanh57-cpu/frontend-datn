@@ -7,7 +7,7 @@ interface ProductPaginationProps {
   catalog: UseProductCatalogReturn;
 }
 
-const ITEMS_PER_PAGE = 15; // Kept consistent with useProductCatalog hook!
+const ITEMS_PER_PAGE = 25;
 
 export function ProductPagination({ catalog }: ProductPaginationProps) {
   const { isVi, currentPage, setCurrentPage, totalPages, filteredProducts } = catalog;

@@ -9,6 +9,7 @@ import { Link } from '@/navigation';
 import { cn } from '@/lib/utils';
 import { resolveImageUrl } from '@/lib/api';
 import { useHomepageConfig, ProductCardConfig, DEFAULT_PRODUCT_CARD_CONFIG } from '@/hooks/useHomepageConfig';
+import { useHomepageTags } from '@/hooks/useHomepageTags';
 import './new-products.css';
 
 export interface ProductData {
@@ -27,6 +28,9 @@ export interface ProductData {
   discountEndDate?: string | null;
   keywords?: string[];
   size?: string;
+  scentGroup?: string;
+  concentration?: string;
+  segment?: string;
 }
 
 interface ProductCardProps {
@@ -35,6 +39,7 @@ interface ProductCardProps {
   priority?: boolean;
   /** Override config (dùng trong preview editor) */
   configOverride?: ProductCardConfig;
+  forceTag?: string;
 }
 
 // Aspect ratio mapping
@@ -44,10 +49,11 @@ const ASPECT_CLASSES: Record<string, string> = {
   landscape: 'aspect-[4/3]'
 };
 
-export function ProductCard({ product, index = 0, priority = false, configOverride }: ProductCardProps) {
+export function ProductCard({ product, index = 0, priority = false, configOverride, forceTag }: ProductCardProps) {
   const t = useTranslations('NewProducts');
   const locale = useLocale();
   const [isFavorite, setIsFavorite] = useState(false);
+  const { getTagName } = useHomepageTags();
 
   // Đọc config từ DB hoặc dùng override (preview mode)
   const { data: homepageConfig } = useHomepageConfig();
@@ -57,14 +63,7 @@ export function ProductCard({ product, index = 0, priority = false, configOverri
 
   const getTagDisplayName = (tag?: string) => {
     if (!tag) return '';
-    const lower = tag.toLowerCase();
-    if (lower === 'sale' || lower === 'giam-gia' || lower === 'giam gia') {
-      return locale === 'vi' ? 'Giảm giá' : 'Sale';
-    }
-    if (lower === 'new' || lower === 'san-pham-moi' || lower === 'san pham moi') {
-      return locale === 'vi' ? 'Sản phẩm mới' : 'New Arrivals';
-    }
-    return tag;
+    return getTagName(tag, tag);
   };
 
   const isDiscountActive = () => {
@@ -188,15 +187,30 @@ export function ProductCard({ product, index = 0, priority = false, configOverri
         {/* Tag Badge */}
         {product.tag && (
           <div className="absolute left-4 top-4 z-20 flex flex-col gap-1.5">
-            {product.tag.split(',').slice(0, 1).map((singleTag, idx) => {
-              const cleaned = singleTag.trim();
-              if (!cleaned) return null;
+            {(() => {
+              const allTags = product.tag.split(',').map((t) => t.trim()).filter(Boolean);
+              
+              if (forceTag) {
+                const match = allTags.find((t) => t.toLowerCase() === forceTag.toLowerCase());
+                if (match) {
+                  return (
+                    <div className="px-3.5 py-1 text-[9px] font-bold uppercase tracking-wider border border-white/30 shadow-sm rounded-lg" style={tagStyle}>
+                      {getTagDisplayName(match)}
+                    </div>
+                  );
+                }
+                return null;
+              }
+
+              const firstTag = allTags[0];
+              if (!firstTag) return null;
+              
               return (
-                <div key={idx} className="px-3.5 py-1 text-[9px] font-bold uppercase tracking-wider border border-white/30 shadow-sm rounded-lg" style={tagStyle}>
-                  {getTagDisplayName(cleaned)}
+                <div className="px-3.5 py-1 text-[9px] font-bold uppercase tracking-wider border border-white/30 shadow-sm rounded-lg" style={tagStyle}>
+                  {getTagDisplayName(firstTag)}
                 </div>
               );
-            })}
+            })()}
           </div>
         )}
 

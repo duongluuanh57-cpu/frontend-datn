@@ -18,6 +18,13 @@ export interface Product {
   priceReport?: string;
   sizeReport?: string;
   discountReport?: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  slug?: string;
+  ogTitle?: string;
+  ogDescription?: string;
+  ogImage?: string;
+  canonicalUrl?: string;
 }
 
 export interface Brand {

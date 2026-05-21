@@ -63,6 +63,56 @@ const NewProducts = dynamic(
     )
   }
 );
+const LimitedProducts = dynamic(
+  () => import('@/components/ui/limited-products').then((m) => m.LimitedProducts),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full py-12 lg:py-20 bg-transparent animate-pulse">
+        <div className="max-w-[1400px] mx-auto px-6">
+          <div className="h-20 w-1/3 bg-[#7A5C5C]/5 rounded-2xl mb-12" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="flex flex-col gap-6">
+                <div className="aspect-square w-full rounded-2xl bg-[#7A5C5C]/5" />
+                <div className="flex flex-col items-center gap-3">
+                  <div className="h-3 w-16 rounded bg-[#7A5C5C]/5" />
+                  <div className="h-4 w-32 rounded bg-[#7A5C5C]/5" />
+                  <div className="h-5 w-20 rounded bg-[#7A5C5C]/5" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+);
+const TrendingProducts = dynamic(
+  () => import('@/components/ui/trending-products').then((m) => m.TrendingProducts),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full py-12 lg:py-20 bg-transparent animate-pulse">
+        <div className="max-w-[1400px] mx-auto px-6">
+          <div className="h-20 w-1/3 bg-[#7A5C5C]/5 rounded-2xl mb-12" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="flex flex-col gap-6">
+                <div className="aspect-square w-full rounded-2xl bg-[#7A5C5C]/5" />
+                <div className="flex flex-col items-center gap-3">
+                  <div className="h-3 w-16 rounded bg-[#7A5C5C]/5" />
+                  <div className="h-4 w-32 rounded bg-[#7A5C5C]/5" />
+                  <div className="h-5 w-20 rounded bg-[#7A5C5C]/5" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+);
 const LuxuryGallery = dynamic(
   () => import('@/components/ui/luxury-gallery').then((m) => m.LuxuryGallery),
   {
@@ -86,6 +136,8 @@ const DEFAULT_ORDER = [
   'brandsMarquee',
   'saleProducts',
   'newProducts',
+  'limitedProducts',
+  'trendingProducts',
   'brandUsp',
   'luxuryGallery',
   'blogPosts'
@@ -106,7 +158,14 @@ export function HomepageDynamicRenderer() {
     if (isLoading || !config?.sections?.length) {
       return DEFAULT_ORDER.map((id) => ({ id, enabled: true, order: DEFAULT_ORDER.indexOf(id) }));
     }
-    return [...config.sections].sort((a, b) => a.order - b.order).filter((s) => s.enabled);
+    const configured = [...config.sections].sort((a, b) => a.order - b.order);
+    const merged = DEFAULT_ORDER.map((id, index) => configured.find((section) => section.id === id) ?? ({
+      id,
+      enabled: true,
+      order: index
+    }));
+    const extras = configured.filter((section) => !DEFAULT_ORDER.includes(section.id));
+    return [...merged, ...extras].sort((a, b) => a.order - b.order).filter((s) => s.enabled);
   }, [isLoading, config]);
 
   const renderSection = (id: string) => {
@@ -131,6 +190,10 @@ export function HomepageDynamicRenderer() {
         return <SaleProducts key="saleProducts" />;
       case 'newProducts':
         return <NewProducts key="newProducts" />;
+      case 'limitedProducts':
+        return <LimitedProducts key="limitedProducts" />;
+      case 'trendingProducts':
+        return <TrendingProducts key="trendingProducts" />;
       case 'brandUsp':
         return <BrandUsp key="brandUsp" />;
       case 'luxuryGallery':

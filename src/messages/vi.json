@@ -42,6 +42,13 @@
     "inStock": "Còn {count}",
     "outOfStock": "Hết hàng"
   },
+  "TrendingProducts": {
+    "title": "SẢN PHẨM THỊNH HÀNH",
+    "addToCart": "Thêm vào giỏ",
+    "viewAll": "Xem tất cả bộ sưu tập",
+    "inStock": "Còn {count}",
+    "outOfStock": "Hết hàng"
+  },
   "SaleProducts": {
     "title": "ƯU ĐÃI ĐẶC BIỆT",
     "addToCart": "Thêm vào giỏ",
@@ -97,7 +104,12 @@
     "search": "Tìm kiếm",
     "searchPlaceholder": "Tìm kiếm sản phẩm...",
     "cart": "Giỏ hàng",
-    "account": "Tài khoản"
+    "account": "Tài khoản",
+    "myProfile": "Hồ sơ của tôi",
+    "myOrders": "Quản lý đơn hàng",
+    "dashboard": "Dashboard",
+    "settings": "Cài đặt tài khoản",
+    "logout": "Đăng xuất"
   },
   "Admin": {
     "dashboard": {
@@ -191,6 +203,8 @@
       "keywords": "Từ khóa",
       "keywordsPlaceholder": "Ngăn cách bằng dấu phẩy",
       "metaDescription": "Mô tả tìm kiếm",
+      "slug": "Đường dẫn URL (slug)",
+      "slugPlaceholder": "VD: midnight-rose-eau-de-parfum",
       "status": "Trạng thái",
       "ready": "Sẵn sàng xuất bản",
       "draft": "Chưa đủ thông tin"

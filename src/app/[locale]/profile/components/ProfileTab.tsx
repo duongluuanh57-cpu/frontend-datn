@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import { Edit2, Heart, Calendar } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Edit2, Heart, Calendar, Lock, ShieldCheck } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { UseUserProfileReturn } from '@/hooks/useUserProfile';
 
 interface ProfileTabProps {
@@ -56,8 +56,32 @@ export function ProfileTab({ userProfile }: ProfileTabProps) {
     addresses,
     handleSetDefault,
     openEditAddressForm,
-    handleDeleteAddress
+    handleDeleteAddress,
+    // Destructured fields for personal details
+    editedFullName,
+    setEditedFullName,
+    editedPhone,
+    setEditedPhone,
+    detailsSubmitting,
+    detailsError,
+    detailsSuccess,
+    handleUpdateDetails,
+    // Destructured fields for password changing
+    currentPassword,
+    setCurrentPassword,
+    newPassword,
+    setNewPassword,
+    confirmPassword,
+    setConfirmPassword,
+    statusMessage,
+    setStatusMessage,
+    handleChangePassword,
+    submitting
   } = userProfile;
+
+  const hasDetailsChanged =
+    (editedFullName.trim() !== (user.fullName || '')) ||
+    (editedPhone.trim() !== (user.phoneNumber || ''));
 
   return (
     <motion.div
@@ -74,6 +98,40 @@ export function ProfileTab({ userProfile }: ProfileTabProps) {
 
       <div className="profile-grid-details">
         
+        <div className="profile-details-card" style={{ gridColumn: 'span 3' }}>
+          <div className="profile-card-label">Họ và Tên</div>
+          {user.fullName ? (
+            <div className="profile-card-value">{user.fullName}</div>
+          ) : (
+            <input
+              type="text"
+              placeholder="Nhập họ và tên đầy đủ..."
+              value={editedFullName}
+              onChange={(e) => setEditedFullName(e.target.value)}
+              className="profile-form-input"
+              style={{ marginTop: '6px', width: '100%' }}
+              disabled={detailsSubmitting}
+            />
+          )}
+        </div>
+
+        <div className="profile-details-card" style={{ gridColumn: 'span 3' }}>
+          <div className="profile-card-label">Số điện thoại</div>
+          {user.phoneNumber ? (
+            <div className="profile-card-value">{user.phoneNumber}</div>
+          ) : (
+            <input
+              type="tel"
+              placeholder="Nhập số điện thoại..."
+              value={editedPhone}
+              onChange={(e) => setEditedPhone(e.target.value)}
+              className="profile-form-input"
+              style={{ marginTop: '6px', width: '100%' }}
+              disabled={detailsSubmitting}
+            />
+          )}
+        </div>
+
         <div className="profile-details-card" style={{ gridColumn: 'span 3' }}>
           <div className="profile-card-label">Tên tài khoản</div>
           <div className="profile-card-value">
@@ -174,7 +232,96 @@ export function ProfileTab({ userProfile }: ProfileTabProps) {
             <span>{formatJoinDate(user.createdAt)}</span>
           </div>
         </div>
+      </div>
 
+      {/* Action buttons for details */}
+      {(!user.fullName || !user.phoneNumber) && hasDetailsChanged && (
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '1.5rem' }}>
+          <button
+            onClick={handleUpdateDetails}
+            disabled={detailsSubmitting}
+            className="btn-profile-primary"
+            style={{ borderRadius: '12px' }}
+          >
+            {detailsSubmitting ? 'Đang lưu...' : 'Lưu thông tin cá nhân'}
+          </button>
+        </div>
+      )}
+
+      {detailsError && (
+        <div className="profile-alert danger" style={{ marginTop: '1rem', padding: '10px 14px' }}>
+          {detailsError}
+        </div>
+      )}
+      {detailsSuccess && (
+        <div className="profile-alert success" style={{ marginTop: '1rem', padding: '10px 14px' }}>
+          {detailsSuccess}
+        </div>
+      )}
+
+      {/* ── Đổi mật khẩu Section (Hiện thẳng trên form) ── */}
+      <div style={{ marginTop: '2.5rem', padding: '1.5rem', background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1.2rem' }}>
+          <Lock size={18} style={{ color: 'var(--primary)' }} />
+          <h2 style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--foreground)', margin: 0 }}>Đổi mật khẩu tài khoản</h2>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.2rem' }}>
+          <div className="profile-field-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--content)' }}>Mật khẩu hiện tại</label>
+            <input 
+              type="password"
+              placeholder="••••••••"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              className="profile-form-input"
+              style={{ width: '100%' }}
+            />
+          </div>
+
+          <div className="profile-field-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--content)' }}>Mật khẩu mới</label>
+            <input 
+              type="password"
+              placeholder="Tối thiểu 6 ký tự"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className="profile-form-input"
+              style={{ width: '100%' }}
+            />
+          </div>
+
+          <div className="profile-field-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--content)' }}>Xác nhận mật khẩu mới</label>
+            <input 
+              type="password"
+              placeholder="Nhập lại mật khẩu mới"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="profile-form-input"
+              style={{ width: '100%' }}
+            />
+          </div>
+        </div>
+
+        {statusMessage && (
+          <div className={`profile-alert ${statusMessage.type}`} style={{ marginTop: '1rem', padding: '8px 12px', fontSize: '0.82rem' }}>
+            {statusMessage.text}
+          </div>
+        )}
+
+        <div style={{ display: 'flex', justifyContent: 'flex-start', marginTop: '1.2rem' }}>
+          <button 
+            onClick={async () => {
+              await handleChangePassword();
+            }}
+            disabled={submitting}
+            className="btn-profile-primary"
+            style={{ borderRadius: '12px', padding: '10px 24px' }}
+          >
+            {submitting ? 'Đang cập nhật mật khẩu...' : 'Xác nhận đổi mật khẩu'}
+          </button>
+        </div>
       </div>
 
       {/* Decorative glass divider */}

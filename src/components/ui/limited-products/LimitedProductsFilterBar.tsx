@@ -2,13 +2,13 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { useNewProducts } from './useNewProducts';
+import { useLimitedProducts } from './useLimitedProducts';
 
-interface NewProductsFilterBarProps {
-  formHelpers: ReturnType<typeof useNewProducts>;
+interface LimitedProductsFilterBarProps {
+  formHelpers: ReturnType<typeof useLimitedProducts>;
 }
 
-export function NewProductsFilterBar({ formHelpers }: NewProductsFilterBarProps) {
+export function LimitedProductsFilterBar({ formHelpers }: LimitedProductsFilterBarProps) {
   const {
     locale,
     brands,

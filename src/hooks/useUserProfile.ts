@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useRouter } from '@/navigation';
+import { useSearchParams } from 'next/navigation';
 import api, { uploadImageToR2 } from '@/lib/api';
 
 export type ActiveTab = 'profile' | 'orders' | 'security' | 'settings';
@@ -121,8 +122,16 @@ export interface UseUserProfileReturn {
 export function useUserProfile(): UseUserProfileReturn {
   const { user, isAuthenticated, logout, accessToken, updateUser } = useAuthStore();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams ? searchParams.get('tab') as ActiveTab | null : null;
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('profile');
+
+  useEffect(() => {
+    if (tabParam && ['profile', 'orders', 'security', 'settings'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');

@@ -419,3 +419,17 @@ a {
 .search-container.active .nav-link {
   transform: scale(0.9);
 }
+
+/* Dropdown Item Styles */
+.dropdown-item {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.dropdown-item:hover {
+  background: rgba(231, 184, 184, 0.2) !important;
+  transform: translateX(4px);
+}
+
+.dropdown-item:active {
+  transform: scale(0.98) translateX(4px);
+}

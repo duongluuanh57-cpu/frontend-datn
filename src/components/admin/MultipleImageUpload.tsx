@@ -122,6 +122,20 @@ export function MultipleImageUpload({
     }
   };
 
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    e.dataTransfer.setData('text/plain', String(index));
+  };
+
+  const handleDrop = (e: React.DragEvent, targetIndex: number) => {
+    const sourceIndex = Number(e.dataTransfer.getData('text/plain'));
+    if (isNaN(sourceIndex) || sourceIndex === targetIndex) return;
+
+    const rearranged = [...images];
+    const [removed] = rearranged.splice(sourceIndex, 1);
+    rearranged.splice(targetIndex, 0, removed);
+    onChange(rearranged);
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
@@ -142,41 +156,108 @@ export function MultipleImageUpload({
 
       {/* Image Grid */}
       {images.length > 0 && (
-        <div className="grid grid-cols-3 gap-3 mb-4">
-          {images.map((url, index) => (
-            <div key={index} className="admin-upload__preview relative aspect-square">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img 
-                src={url} 
-                alt={`Product ${index + 1}`}
-                className="w-full h-full object-cover rounded-lg"
-              />
-              
-              {uploadingIndex === index ? (
-                <div className="admin-upload__overlay">
-                  <Loader2 className="admin-loading__spinner" />
-                </div>
-              ) : (
-                <div className="admin-upload__remove">
-                  <button
-                    type="button"
-                    onClick={() => removeImage(index)}
-                    className="admin-upload__remove-btn"
-                    aria-label="Xóa ảnh"
-                  >
-                    <X size={18} />
-                  </button>
-                </div>
-              )}
+        <div className="flex flex-col gap-4 mb-4">
+          {/* Main Image (Large focused preview) */}
+          <div 
+            className="admin-upload__preview relative w-full aspect-[4/3] rounded-xl overflow-hidden border border-solid border-[var(--admin-border-subtle)] bg-[var(--admin-surface-muted)] shadow-sm group cursor-grab active:cursor-grabbing"
+            style={{
+              width: '100%',
+              maxWidth: '360px',
+              margin: '0 auto',
+              aspectRatio: '4/3',
+              display: 'block',
+            }}
+            draggable
+            onDragStart={(e) => handleDragStart(e, 0)}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => handleDrop(e, 0)}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img 
+              src={images[0]} 
+              alt="Ảnh chính sản phẩm"
+              className="w-full h-full object-cover"
+              style={{ width: '100%', height: '100%', maxHeight: 'none', objectFit: 'cover' }}
+            />
+            
+            {uploadingIndex === 0 ? (
+              <div className="admin-upload__overlay absolute inset-0 flex items-center justify-center bg-black/40">
+                <Loader2 className="admin-loading__spinner animate-spin text-white" />
+              </div>
+            ) : (
+              <div className="absolute inset-0 bg-black/35 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                <button
+                  type="button"
+                  onClick={() => removeImage(0)}
+                  className="w-9 h-9 rounded-full bg-white/90 hover:bg-white text-red-500 shadow-md flex items-center justify-center transition-all hover:scale-110"
+                  aria-label="Xóa ảnh chính"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+            )}
 
-              {/* Primary badge for first image */}
-              {index === 0 && (
-                <div className="absolute top-2 left-2 bg-blue-500 text-white text-xs px-2 py-1 rounded-md font-medium">
-                  Ảnh chính
-                </div>
-              )}
+            {/* Primary badge for first image */}
+            <div className="absolute top-3 left-3 bg-blue-600 text-white text-[10px] tracking-wider font-bold uppercase px-2.5 py-1 rounded-md shadow-sm z-10">
+              Ảnh chính
             </div>
-          ))}
+          </div>
+
+          {/* Sub Images (Sub-grid underneath) */}
+          {images.length > 1 && (
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] font-bold tracking-wider text-[var(--admin-text-muted)] uppercase">
+                  Ảnh phụ / Bộ sưu tập ({images.length - 1})
+                </span>
+                <span className="text-[10px] text-blue-500 font-medium hidden sm:inline">
+                  💡 Kéo thả ảnh để thay đổi thứ tự hiển thị
+                </span>
+              </div>
+              
+              <div className="grid grid-cols-4 sm:grid-cols-5 gap-2.5">
+                {images.slice(1).map((url, subIndex) => {
+                  const actualIndex = subIndex + 1;
+                  return (
+                    <div 
+                      key={actualIndex} 
+                      className="admin-upload__preview relative aspect-square rounded-lg overflow-hidden border border-solid border-[var(--admin-border-subtle)] bg-[var(--admin-surface-muted)] group cursor-grab active:cursor-grabbing"
+                      style={{ width: '100%', aspectRatio: '1/1', margin: 0, display: 'block' }}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, actualIndex)}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={(e) => handleDrop(e, actualIndex)}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img 
+                        src={url} 
+                        alt={`Ảnh phụ ${subIndex + 1}`}
+                        className="w-full h-full object-cover"
+                        style={{ width: '100%', height: '100%', maxHeight: 'none', objectFit: 'cover' }}
+                      />
+                      
+                      {uploadingIndex === actualIndex ? (
+                        <div className="admin-upload__overlay absolute inset-0 flex items-center justify-center bg-black/30">
+                          <Loader2 className="admin-loading__spinner animate-spin text-white" />
+                        </div>
+                      ) : (
+                        <div className="absolute inset-0 bg-black/35 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex items-center justify-center">
+                          <button
+                            type="button"
+                            onClick={() => removeImage(actualIndex)}
+                            className="w-6 h-6 rounded-full bg-white/90 hover:bg-white text-red-500 shadow-sm flex items-center justify-center transition-all hover:scale-110"
+                            aria-label="Xóa ảnh phụ"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

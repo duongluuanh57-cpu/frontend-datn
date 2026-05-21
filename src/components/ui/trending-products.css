@@ -1,0 +1,226 @@
+/* ==========================================================================
+   L'essence Trending Products - Performance Optimized Luxury CSS
+   ========================================================================== */
+
+/* Section Heading styling */
+.trending-products-section h2 {
+  font-family: var(--font-heading), serif;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-shadow: 0 2px 10px rgba(122, 92, 92, 0.03);
+}
+
+/* Product Card - GPU Accelerated translation */
+.product-card-container {
+  font-family: var(--font-body), sans-serif;
+  will-change: transform, opacity;
+  transform: translate3d(0, 0, 0); /* Force GPU compositor context */
+  backface-visibility: hidden;
+}
+
+/* Luxury Product Image Frame - Hardware rendering */
+.product-image-frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  background: #FAF7F5;
+  border: 1px solid rgba(122, 92, 92, 0.06);
+  box-shadow: 0 10px 30px rgba(122, 92, 92, 0.05);
+  will-change: transform, box-shadow;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  cursor: url('/pointer.png') 0 0, pointer !important;
+  /* Target transitions to prevent CPU reflow triggers */
+  transition: 
+    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), 
+    box-shadow 0.5s ease,
+    border-color 0.5s ease;
+}
+
+.product-card-container:hover .product-image-frame {
+  transform: translate3d(0, -8px, 0);
+  box-shadow: 
+    0 25px 50px rgba(122, 92, 92, 0.12),
+    0 0 0 1px rgba(212, 165, 165, 0.2);
+  border-color: rgba(212, 165, 165, 0.3);
+}
+
+/* Floating Active Favorite Heart Badge */
+.floating-favorite-heart {
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: url('/pointer.png') 0 0, pointer !important;
+}
+
+.product-card-container:hover .floating-favorite-heart {
+  transform: translate3d(0, -14px, 0) scale(1.15);
+}
+
+.product-image {
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+}
+
+/* Glass Badge for Product Tags - Static blurs */
+.product-badge-glass {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 4px 15px rgba(122, 92, 92, 0.04);
+  color: #7A5C5C;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  border-radius: 50px;
+}
+
+/* Discount Badge */
+.discount-badge-luxury {
+  background: var(--primary);
+  box-shadow: 0 5px 15px rgba(212, 165, 165, 0.4);
+  color: white;
+  font-size: 9px;
+  font-weight: 800;
+  border-radius: 50px;
+}
+
+/* Translucent Action Buttons (Liquid Glass theme) */
+.quick-action-glass-container {
+  background: linear-gradient(to top, rgba(255,245,245,0.7) 0%, rgba(255,255,255,0) 100%);
+  backdrop-filter: blur(4px);
+  will-change: transform, opacity;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+}
+
+.quick-buy-glass-btn {
+  background: rgba(122, 92, 92, 0.85);
+  backdrop-filter: blur(12px); /* Lower cost, visually identical */
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  will-change: transform, box-shadow, background-color;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  cursor: url('/pointer.png') 0 0, pointer !important;
+  transition: 
+    transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 0.4s ease,
+    border-color 0.4s ease,
+    box-shadow 0.4s ease;
+  box-shadow: 0 8px 20px rgba(122, 92, 92, 0.12);
+}
+
+.quick-buy-glass-btn:hover {
+  background: #7A5C5C;
+  transform: translate3d(0, -2px, 0);
+  box-shadow: 0 12px 25px rgba(122, 92, 92, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.wishlist-glass-btn {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  color: #7A5C5C;
+  will-change: transform, box-shadow, background-color;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  cursor: url('/pointer.png') 0 0, pointer !important;
+  transition: 
+    transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 0.4s ease,
+    box-shadow 0.4s ease;
+  box-shadow: 0 8px 20px rgba(122, 92, 92, 0.06);
+}
+
+.wishlist-glass-btn:hover {
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--primary);
+  transform: translate3d(0, -2px, 0);
+  box-shadow: 0 12px 25px rgba(122, 92, 92, 0.12);
+}
+
+/* Product Meta & Typography */
+.product-brand-luxury {
+  color: var(--primary);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+}
+
+.product-title-luxury {
+  font-family: var(--font-heading), serif;
+  font-size: 16px;
+  font-weight: 500;
+  color: #7A5C5C;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+  transition: color 0.3s ease;
+}
+
+.product-title-luxury:hover {
+  color: var(--primary);
+}
+
+.product-price-luxury {
+  font-size: 15px;
+  font-weight: 700;
+  color: #7A5C5C;
+  letter-spacing: -0.01em;
+}
+
+/* View All button transition */
+.explore-all-btn-luxury {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #7A5C5C;
+  transition: color 0.4s, letter-spacing 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.explore-all-btn-luxury:hover {
+  color: var(--primary);
+  letter-spacing: 0.35em;
+}
+
+.explore-all-btn-luxury .arrow-circle {
+  border: 1px solid rgba(122, 92, 92, 0.2);
+  transition: 
+    border-color 0.4s, 
+    background-color 0.4s, 
+    color 0.4s, 
+    transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+.explore-all-btn-luxury:hover .arrow-circle {
+  border-color: #7A5C5C;
+  background-color: #7A5C5C;
+  color: white;
+  transform: translate3d(4px, 0, 0);
+}
+
+/* Luxury Glassmorphism Countdown */
+.countdown-box {
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(122, 92, 92, 0.08);
+  box-shadow: 0 8px 24px rgba(122, 92, 92, 0.04);
+  transition: all 0.3s ease;
+}
+
+.countdown-box:hover {
+  border-color: rgba(212, 165, 165, 0.3);
+  background: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 10px 30px rgba(122, 92, 92, 0.08);
+}

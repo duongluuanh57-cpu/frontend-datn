@@ -7,8 +7,8 @@ import api from '@/lib/api';
 import { fieldContainsSelectedValue, useHomepageTaxonomies } from '@/hooks/useHomepageTaxonomies';
 import { type ProductData } from '../product-card';
 
-const fetchNewProducts = async (): Promise<ProductData[]> => {
-  const { data } = await api.get('/products/new');
+const fetchTrendingProducts = async (): Promise<ProductData[]> => {
+  const { data } = await api.get('/products/trending');
   return data.data;
 };
 
@@ -17,14 +17,14 @@ const fetchAllBrands = async () => {
   return data.data || [];
 };
 
-export function useNewProducts() {
-  const t = useTranslations('NewProducts');
+export function useTrendingProducts() {
+  const t = useTranslations('TrendingProducts');
   const locale = useLocale();
 
   // 1. Fetch data
   const { data: products, isLoading, error } = useQuery({
-    queryKey: ['new-products'],
-    queryFn: fetchNewProducts,
+    queryKey: ['trending-products'],
+    queryFn: fetchTrendingProducts,
   });
 
   const { data: allBrands } = useQuery({
@@ -89,9 +89,13 @@ export function useNewProducts() {
 
   // 4. Filtering Logic
   const filteredProducts = products ? products.filter((product) => {
-    // Base Filter: Must have 'new' tag
-    const hasNewTag = product.tag && product.tag.toLowerCase().split(',').map(t => t.trim()).includes('new');
-    if (!hasNewTag) return false;
+    // Base Filter: Must have a trending-related tag
+    const trendingTags = ['trending', 'thinh-hanh', 'thinh hanh', 'ban-chay', 'ban chay', 'hot'];
+    const productTags = product.tag
+      ? product.tag.toLowerCase().split(',').map(t => t.trim())
+      : [];
+    const hasTrendingTag = productTags.some(tag => trendingTags.includes(tag));
+    if (!hasTrendingTag) return false;
 
     // Filter by Brand
     if (selectedBrand !== 'all') {

@@ -22,10 +22,17 @@ export function useProductCatalog() {
   const [sortBy, setSortBy] = useState('bestSeller');
   const [isBrandDropdownOpen, setIsBrandDropdownOpen] = useState(false);
   const [brandSearchQuery, setBrandSearchQuery] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState<number>(() => {
+    if (typeof window === 'undefined') return 1;
+    const saved = sessionStorage.getItem('adminProductListPage');
+    const parsed = saved ? parseInt(saved, 10) : 1;
+    // Xóa sau khi đọc để không bị stale khi vào lần sau không phải từ edit
+    sessionStorage.removeItem('adminProductListPage');
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+  });
   const brandDropdownRef = useRef<HTMLDivElement>(null);
 
-  const ITEMS_PER_PAGE = 15; // Set to 15 to match catalog pagination logic from recent updates!
+  const ITEMS_PER_PAGE = 25;
 
   // Fetch Products
   const { data: products, isLoading, error } = useQuery({
@@ -178,6 +185,13 @@ export function useProductCatalog() {
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, selectedBrand, stockFilter, selectedTag, sortBy]);
+
+  // Lưu page hiện tại vào sessionStorage để có thể khôi phục sau khi edit sản phẩm
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('adminProductListCurrentPage', String(currentPage));
+    }
+  }, [currentPage]);
 
   // Pagination Computations
   const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);

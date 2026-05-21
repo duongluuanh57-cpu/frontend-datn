@@ -11,6 +11,7 @@ import {
   Settings,
   LogOut,
   ChevronLeft,
+  ChevronRight,
   Menu,
   Sparkles,
   Search,
@@ -262,48 +263,22 @@ export default function AdminLayout({
         className={`admin-sidebar ${isCollapsed ? 'admin-sidebar--collapsed' : ''}`}
       >
         <div className="admin-sidebar__brand">
-          {!isCollapsed ? (
+          {!isCollapsed && (
             <div>
               <div className="admin-sidebar__logo">L&apos;essence</div>
               <div className="admin-sidebar__tagline">Admin Studio</div>
             </div>
-          ) : (
-            <div className="admin-sidebar__logo-mark">
-              <Sparkles size={18} />
-            </div>
           )}
 
-          {!isCollapsed && (
-            <button
-              type="button"
-              onClick={() => setIsCollapsed(true)}
-              className="admin-sidebar__toggle"
-              aria-label={t('nav.toggleCollapse')}
-            >
-              <ChevronLeft size={18} />
-            </button>
-          )}
-        </div>
-
-        {isCollapsed && (
-          <div
-            style={{
-              padding: '8px 0',
-              display: 'flex',
-              justifyContent: 'center',
-              borderBottom: '1px solid var(--admin-border-subtle)',
-            }}
+          <button
+            type="button"
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="admin-sidebar__toggle"
+            aria-label={isCollapsed ? t('nav.toggleExpand') : t('nav.toggleCollapse')}
           >
-            <button
-              type="button"
-              onClick={() => setIsCollapsed(false)}
-              className="admin-sidebar__toggle"
-              aria-label={t('nav.toggleExpand')}
-            >
-              <Menu size={18} />
-            </button>
-          </div>
-        )}
+            {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+          </button>
+        </div>
 
         <Suspense fallback={
           <div className="admin-sidebar__nav-fallback" style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '12px 14px' }}>

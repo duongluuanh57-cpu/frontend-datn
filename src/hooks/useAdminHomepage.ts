@@ -33,9 +33,11 @@ const DEFAULT_SECTIONS: SectionConfig[] = [
   { id: 'brandsMarquee', enabled: true, order: 1 },
   { id: 'saleProducts', enabled: true, order: 2 },
   { id: 'newProducts', enabled: true, order: 3 },
-  { id: 'brandUsp', enabled: true, order: 4 },
-  { id: 'luxuryGallery', enabled: true, order: 5 },
-  { id: 'blogPosts', enabled: true, order: 6 }
+  { id: 'limitedProducts', enabled: true, order: 4 },
+  { id: 'trendingProducts', enabled: true, order: 5 },
+  { id: 'brandUsp', enabled: true, order: 6 },
+  { id: 'luxuryGallery', enabled: true, order: 7 },
+  { id: 'blogPosts', enabled: true, order: 8 }
 ];
 
 const DEFAULT_GALLERY = Array.from({ length: 6 }, () => ({
@@ -131,7 +133,11 @@ export function useAdminHomepage() {
     if (!dbConfig) return;
     if (dbConfig.sections?.length > 0) {
       const sorted = [...dbConfig.sections].sort((a, b) => a.order - b.order);
-      setSections(sorted);
+      const merged = DEFAULT_SECTIONS.map((section, index) =>
+        sorted.find((item) => item.id === section.id) ?? { ...section, order: index }
+      );
+      const extras = sorted.filter((section) => !DEFAULT_SECTIONS.some((item) => item.id === section.id));
+      setSections([...merged, ...extras].sort((a, b) => a.order - b.order));
     }
     if (dbConfig.bannerImages?.length > 0) setBanners(dbConfig.bannerImages);
     if (dbConfig.bannerTitleVi) setBannerTitleVi(dbConfig.bannerTitleVi);

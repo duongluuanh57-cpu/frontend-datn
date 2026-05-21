@@ -73,9 +73,11 @@ const DEFAULT_SECTIONS: SectionConfig[] = [
   { id: 'brandsMarquee', enabled: true, order: 1 },
   { id: 'saleProducts', enabled: true, order: 2 },
   { id: 'newProducts', enabled: true, order: 3 },
-  { id: 'brandUsp', enabled: true, order: 4 },
-  { id: 'luxuryGallery', enabled: true, order: 5 },
-  { id: 'blogPosts', enabled: true, order: 6 }
+  { id: 'limitedProducts', enabled: true, order: 4 },
+  { id: 'trendingProducts', enabled: true, order: 5 },
+  { id: 'brandUsp', enabled: true, order: 6 },
+  { id: 'luxuryGallery', enabled: true, order: 7 },
+  { id: 'blogPosts', enabled: true, order: 8 }
 ];
 
 const fetchHomepageConfig = async (): Promise<HomepageConfigData> => {

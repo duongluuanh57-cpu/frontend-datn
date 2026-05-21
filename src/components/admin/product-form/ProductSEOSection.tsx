@@ -40,6 +40,20 @@ export function ProductSEOSection({ formHelpers }: { formHelpers: UseProductForm
         </div>
 
         <div className="admin-field">
+          <label className="admin-label" htmlFor="slug">
+            {t('fields.slug')}
+          </label>
+          <input
+            id="slug"
+            type="text"
+            value={formData.slug || ''}
+            onChange={(e) => update({ slug: e.target.value })}
+            placeholder={t('fields.slugPlaceholder')}
+            className="admin-input"
+          />
+        </div>
+
+        <div className="admin-field">
           <label className="admin-label" htmlFor="keywords">
             {t('fields.keywords')}
           </label>

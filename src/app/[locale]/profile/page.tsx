@@ -11,7 +11,7 @@ import { OrderDetailModal } from './components/OrderDetailModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import './profile.css';
 
-export default function ProfilePage() {
+function ProfilePageContent() {
   const userProfile = useUserProfile();
   const { activeTab, mounted, isAuthenticated, user } = userProfile;
 
@@ -47,5 +47,17 @@ export default function ProfilePage() {
 
       <OrderDetailModal userProfile={userProfile} />
     </div>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <React.Suspense fallback={
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', color: 'var(--content)' }}>
+        Đang tải thông tin cá nhân...
+      </div>
+    }>
+      <ProfilePageContent />
+    </React.Suspense>
   );
 }
