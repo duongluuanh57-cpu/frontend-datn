@@ -41,19 +41,33 @@ export interface User {
   _id: string;
   username: string;
   email: string;
-  role: 'USER' | 'ADMIN';
+  passwordHash?: string;
+  role: 'USER' | 'ADMIN' | 'SUBADMIN';
+  memberTier: 'MEMBER' | 'Bac' | 'Vang' | 'KimCuong';
+  totalSpent: number;
+  tenantId?: string;
+  status: 'active' | 'inactive' | 'suspended';
+  twoFactorEnabled: boolean;
+  fullName?: string;
+  phoneNumber?: string;
+  gender?: 'MALE' | 'FEMALE' | 'OTHER' | '';
+  address?: string;
+  province?: string;
+  district?: string;
+  oauthProvider?: 'google' | 'github';
+  oauthId?: string;
   avatar?: string;
   createdAt: string;
-  twoFactorEnabled: boolean;
+  updatedAt?: string;
 }
 
-export type RoleFilter = 'ALL' | 'USER' | 'ADMIN';
+export type RoleFilter = 'ALL' | 'USER' | 'ADMIN' | 'SUBADMIN';
 
 export interface UserFormData {
   username: string;
   email: string;
   password?: string;
-  role: 'USER' | 'ADMIN';
+  role: 'USER' | 'ADMIN' | 'SUBADMIN';
 }
 
 export interface TaxonomyItem {

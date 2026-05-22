@@ -14,6 +14,7 @@ import {
   Eye
 } from 'lucide-react';
 import Image from 'next/image';
+import { Link } from '@/navigation';
 import { toast } from 'sonner';
 import type { UseAdminUsersReturn } from '@/hooks/useAdminUsers';
 
@@ -27,7 +28,6 @@ export function UserTable({ adminUsers }: UserTableProps) {
     isLoading,
     updateRoleMutation,
     handleToggleRole,
-    setViewingUser,
     handleOpenModal,
     deleteMutation,
     totalPages,
@@ -119,20 +119,20 @@ export function UserTable({ adminUsers }: UserTableProps) {
                     </td>
                     <td>
                       <div className="admin-table-actions">
-                        <button 
+                        <Link 
+                          href={`/admin/users/${user._id}`}
                           className="admin-icon-btn" 
                           title="Xem chi tiết"
-                          onClick={() => setViewingUser(user)}
                         >
                           <Eye size={16} />
-                        </button>
-                        <button 
+                        </Link>
+                        <Link 
+                          href={`/admin/users/${user._id}/edit`}
                           className="admin-icon-btn" 
                           title="Chỉnh sửa"
-                          onClick={() => handleOpenModal(user)}
                         >
                           <Edit2 size={16} />
-                        </button>
+                        </Link>
                         <button 
                           className="admin-icon-btn admin-icon-btn--danger"
                           onClick={() => {

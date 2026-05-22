@@ -15,7 +15,7 @@ export function BrandHeader({ adminBrands }: BrandHeaderProps) {
   return (
     <header className="admin-page-header">
       <div>
-        <h1 className="admin-page-header__title">{isVi ? 'QUẢN LÝ THƯƠNG HIỆU' : 'BRAND MANAGEMENT'}</h1>
+        <h1 className="admin-page-header__title">{isVi ? 'Quản lý thương hiệu' : 'BRAND MANAGEMENT'}</h1>
         <p className="admin-page-header__subtitle">
           {isVi ? 'Danh sách các thương hiệu nước hoa xa xỉ đang hoạt động.' : 'Active premium fragrance brands catalog.'}
         </p>

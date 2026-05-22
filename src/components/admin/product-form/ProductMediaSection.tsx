@@ -63,7 +63,7 @@ export const ProductMediaSection = React.memo(function ProductMediaSection({
               {isVi ? '-- Chọn thương hiệu --' : '-- Select Brand --'}
             </option>
             {brands?.map((b) => (
-              <option key={b._id} value={b.name}>
+              <option key={b._id} value={b._id}>
                 {b.name}
               </option>
             ))}

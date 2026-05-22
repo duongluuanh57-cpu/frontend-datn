@@ -3,10 +3,10 @@
 import React from 'react';
 import { useAdminTaxonomy } from '@/hooks/useAdminTaxonomy';
 import { TaxonomyHeader } from './components/TaxonomyHeader';
+import { TaxonomyFilterBar } from './components/TaxonomyFilterBar';
 import { TaxonomyTabs } from './components/TaxonomyTabs';
 import { TaxonomyTable } from './components/TaxonomyTable';
 import { TaxonomyPagination } from './components/TaxonomyPagination';
-import { TaxonomyModal } from './components/TaxonomyModal';
 import { AlertCircle } from 'lucide-react';
 
 export default function AdminTaxonomyPage() {
@@ -28,10 +28,10 @@ export default function AdminTaxonomyPage() {
   return (
     <div className="admin-page">
       <TaxonomyHeader adminTaxonomy={adminTaxonomy} />
+      <TaxonomyFilterBar adminTaxonomy={adminTaxonomy} />
       <TaxonomyTabs adminTaxonomy={adminTaxonomy} />
       <TaxonomyTable adminTaxonomy={adminTaxonomy} />
       <TaxonomyPagination adminTaxonomy={adminTaxonomy} />
-      <TaxonomyModal adminTaxonomy={adminTaxonomy} />
     </div>
   );
 }

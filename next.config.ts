@@ -24,6 +24,11 @@ const nextConfig: NextConfig = {
         hostname: 'images.unsplash.com',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'www.thegioinuochoa.com.vn',
+        pathname: '/**',
+      },
     ],
   },
   async headers() {

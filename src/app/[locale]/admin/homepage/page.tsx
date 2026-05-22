@@ -7,7 +7,7 @@ import { HomepageLayoutTab } from './components/HomepageLayoutTab';
 import { HomepageBannersTab } from './components/HomepageBannersTab';
 import { HomepageGalleryTab } from './components/HomepageGalleryTab';
 import { HomepageCardTab } from './components/HomepageCardTab';
-import { LayoutTemplate, Images, Package } from 'lucide-react';
+import { HomepageBlogCardTab } from './components/HomepageBlogCardTab';
 import { AnimatePresence } from 'framer-motion';
 
 function HomepageConfigContent() {
@@ -19,32 +19,10 @@ function HomepageConfigContent() {
       <HomepageHeader
         isBannersMode={adminHomepage.isBannersMode}
         isSaving={adminHomepage.isSaving}
-        handleRestoreDefaults={adminHomepage.handleRestoreDefaults}
         handleSave={adminHomepage.handleSave}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
       />
-
-      {!isBannersMode && (
-        <div className="flex flex-wrap border-b border-gray-200 mb-8 select-none gap-1">
-          {[
-            { key: 'layout', label: 'Bố cục Trang chủ', icon: LayoutTemplate },
-            { key: 'gallery', label: 'Album Nghệ Thuật (6 ảnh)', icon: Images },
-            { key: 'cardCustomizer', label: 'Tùy biến Product Card', icon: Package }
-          ].map(({ key, label, icon: Icon }) => (
-            <button
-              key={key}
-              onClick={() => setActiveTab(key as any)}
-              className={`flex items-center gap-2 px-5 py-3 border-b-2 text-sm font-semibold tracking-wide transition-all duration-300 ${
-                activeTab === key
-                  ? 'border-[#7A5C5C] text-[#7A5C5C]'
-                  : 'border-transparent text-gray-400 hover:text-[#7A5C5C]/60'
-              }`}
-            >
-              <Icon size={15} />
-              {label}
-            </button>
-          ))}
-        </div>
-      )}
 
       <AnimatePresence mode="wait">
         {activeTab === 'layout' && (
@@ -87,6 +65,15 @@ function HomepageConfigContent() {
             setCardConfig={adminHomepage.setCardConfig}
             cardElementOrder={adminHomepage.cardElementOrder}
             setCardElementOrder={adminHomepage.setCardElementOrder}
+            cardElementSensors={adminHomepage.cardElementSensors}
+          />
+        )}
+        {activeTab === 'blogCard' && (
+          <HomepageBlogCardTab
+            blogCardConfig={adminHomepage.blogCardConfig}
+            setBlogCardConfig={adminHomepage.setBlogCardConfig}
+            blogElementOrder={adminHomepage.blogElementOrder}
+            setBlogElementOrder={adminHomepage.setBlogElementOrder}
             cardElementSensors={adminHomepage.cardElementSensors}
           />
         )}

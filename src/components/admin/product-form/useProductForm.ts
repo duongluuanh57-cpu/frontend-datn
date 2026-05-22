@@ -196,6 +196,17 @@ export function useProductForm({ initialData, productId }: UseProductFormProps) 
     }
   });
 
+  // Chuyển đổi brand name sang brandId khi brands load xong (cho edit mode)
+  useEffect(() => {
+    if (brands && initialData?.brand && /^[0-9a-fA-F]{24}$/.test(initialData.brand) === false) {
+      // brand hiện tại là tên, cần chuyển sang ID
+      const matchedBrand = brands.find(b => b.name.toLowerCase() === initialData.brand!.toLowerCase());
+      if (matchedBrand) {
+        setFormData(prev => ({ ...prev, brand: matchedBrand._id }));
+      }
+    }
+  }, [brands, initialData]);
+
   const update: (patch: Partial<ProductFormData>) => void = (patch) => {
     setFormData((prev) => ({ ...prev, ...patch } as typeof prev));
   };
@@ -311,16 +322,34 @@ export function useProductForm({ initialData, productId }: UseProductFormProps) 
       });
       if (data.success && data.data) {
         const info = data.data;
-        setFormData((prev) => ({
-          ...prev, brand: info.brand || prev.brand, price: info.price || prev.price,
-          size: info.size || prev.size, description: info.description || prev.description,
-          quantityInStock: prev.quantityInStock,
-          discountPercentage: info.discountPercentage !== undefined ? info.discountPercentage : prev.discountPercentage,
-          metaTitle: info.metaTitle || prev.metaTitle, metaDescription: info.metaDescription || prev.metaDescription,
-          keywords: Array.isArray(info.keywords) ? info.keywords.join(', ') : (info.keywords || prev.keywords),
-          scentGroup: info.scentGroup || prev.scentGroup, concentration: info.concentration || prev.concentration,
-          segment: info.segment || prev.segment, gender: info.gender || prev.gender, tag: info.tag || prev.tag,
-        }));
+        setFormData((prev) => {
+          // Ưu tiên dùng brandId từ AI response, nếu không có thì resolve từ brand name
+          let brandId = prev.brand;
+          if (info.brandId) {
+            // AI đã trả về brandId sẵn
+            brandId = info.brandId;
+          } else if (info.brand && brands) {
+            // AI chỉ trả về brand name, cần resolve sang brandId
+            const matchedBrand = brands.find(b => b.name.toLowerCase() === info.brand.toLowerCase());
+            if (matchedBrand) {
+              brandId = matchedBrand._id;
+            } else {
+              // Nếu không tìm thấy, giữ nguyên tên để backend xử lý fallback
+              brandId = info.brand;
+            }
+          }
+
+          return {
+            ...prev, brand: brandId, price: info.price || prev.price,
+            size: info.size || prev.size, description: info.description || prev.description,
+            quantityInStock: prev.quantityInStock,
+            discountPercentage: info.discountPercentage !== undefined ? info.discountPercentage : prev.discountPercentage,
+            metaTitle: info.metaTitle || prev.metaTitle, metaDescription: info.metaDescription || prev.metaDescription,
+            keywords: Array.isArray(info.keywords) ? info.keywords.join(', ') : (info.keywords || prev.keywords),
+            scentGroup: info.scentGroup || prev.scentGroup, concentration: info.concentration || prev.concentration,
+            segment: info.segment || prev.segment, gender: info.gender || prev.gender, tag: info.tag || prev.tag,
+          };
+        });
         setPriceReport(info.priceReport || null);
         setSizeReport(info.sizeReport || null);
         setDiscountReport(info.discountReport || null);
@@ -406,8 +435,17 @@ export function useProductForm({ initialData, productId }: UseProductFormProps) 
     e.preventDefault();
     setIsSubmitting(true);
     try {
+      // Upload base64 images lên R2 trước khi submit
+      const folder = formData.name.trim() ? `products/${slugify(formData.name)}` : 'products';
+      const allImages = formData.image ? [formData.image, ...(formData.images || [])] : [];
+      const uploadedImages = await uploadBase64ImagesToR2(allImages, folder);
+
+      // Cập nhật payload với URLs đã upload
       const payload = {
-        ...formData, priceReport, sizeReport, discountReport,
+        ...formData,
+        image: uploadedImages[0] || '',
+        images: uploadedImages.slice(1),
+        priceReport, sizeReport, discountReport,
         slug: formData.slug || '',
         keywords: formData.keywords.split(',').map((k) => k.trim()).filter(Boolean),
       };
@@ -462,6 +500,56 @@ export function useProductForm({ initialData, productId }: UseProductFormProps) 
     handleOpenPriceSuggestion, handleRecalculatePriceMarkup,
     priceReport, sizeReport, discountReport,
   };
+}
+
+/**
+ * Helper function để upload base64 strings lên R2
+ * Chỉ upload các string bắt đầu bằng "data:image" (chưa upload)
+ */
+export async function uploadBase64ImagesToR2(
+  images: string[],
+  folder: string
+): Promise<string[]> {
+  const uploadedUrls: string[] = [];
+
+  for (const image of images) {
+    // Nếu là URL từ R2 rồi thì giữ nguyên
+    if (!image.startsWith('data:image')) {
+      uploadedUrls.push(image);
+      continue;
+    }
+
+    try {
+      // Convert base64 to blob
+      const response = await fetch(image);
+      const blob = await response.blob();
+      const file = new File([blob], 'image.jpg', { type: blob.type });
+
+      // Upload lên R2
+      const formData = new FormData();
+      formData.append('image', file);
+      formData.append('maxWidth', '1920');
+      formData.append('quality', '90');
+      formData.append('folder', folder);
+
+      const { data } = await api.post('/media/upload-r2', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      if (data.success && data.data.url) {
+        uploadedUrls.push(data.data.url);
+      } else {
+        // Fallback: giữ nguyên base64 nếu upload thất bại
+        uploadedUrls.push(image);
+      }
+    } catch (err) {
+      console.error('Failed to upload base64 image:', err);
+      // Fallback: giữ nguyên base64 nếu upload thất bại
+      uploadedUrls.push(image);
+    }
+  }
+
+  return uploadedUrls;
 }
 
 export type UseProductFormReturn = ReturnType<typeof useProductForm>;

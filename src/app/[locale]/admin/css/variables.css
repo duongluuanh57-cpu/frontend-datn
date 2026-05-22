@@ -1,4 +1,4 @@
-/* L'essence  EAdmin design system */
+/* L'essence Admin design system */
 
 /* Custom Cursor Support inside Admin Panel */
 .admin-shell, .admin-shell * {
@@ -78,11 +78,43 @@
   --admin-ease: cubic-bezier(0.4, 0, 0.2, 1);
   --admin-content-max: 1280px;
 
+  /* Typography System - Đồng bộ hoàn toàn */
+  --font-primary: var(--font-inter), system-ui, -apple-system, sans-serif;
+  --font-secondary: Georgia, 'Times New Roman', serif;
+  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
+
+  /* Font Sizes - Typography Scale */
+  --text-xs: 0.75rem;     /* 12px */
+  --text-sm: 0.875rem;    /* 14px */
+  --text-base: 1rem;      /* 16px */
+  --text-lg: 1.125rem;    /* 18px */
+  --text-xl: 1.25rem;     /* 20px */
+  --text-2xl: 1.5rem;     /* 24px */
+  --text-3xl: 1.875rem;   /* 30px */
+  --text-4xl: 2.25rem;    /* 36px */
+
+  /* Font Weights */
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+
+  /* Line Heights */
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+
+  /* Letter Spacing */
+  --tracking-tight: -0.02em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.02em;
+  --tracking-wider: 0.06em;
+  --tracking-widest: 0.1em;
+
   display: flex;
   height: 100vh;
   overflow: hidden;
   background: var(--admin-bg);
   color: var(--admin-text);
-  font-family: var(--font-inter), system-ui, sans-serif;
+  font-family: var(--font-primary);
 }
-

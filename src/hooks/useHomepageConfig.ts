@@ -16,6 +16,40 @@ export interface GalleryImage {
   quote: string;
 }
 
+export interface BlogCardConfig {
+  imageAspect: 'landscape' | 'square' | 'portrait';
+  imagePadding: number;
+  cardRadius: number;
+  categoryBadgeBg: string;
+  categoryBadgeText: string;
+  titleFontSize: number;
+  excerptFontSize: number;
+  textAlign: 'left' | 'center';
+  elementOrder: string[];
+  showCategory: boolean;
+  showDate: boolean;
+  showReadTime: boolean;
+  showExcerpt: boolean;
+  showReadMore: boolean;
+}
+
+export const DEFAULT_BLOG_CARD_CONFIG: BlogCardConfig = {
+  imageAspect: 'landscape',
+  imagePadding: 0,
+  cardRadius: 12,
+  categoryBadgeBg: '#FFFFFF',
+  categoryBadgeText: '#7A5C5C',
+  titleFontSize: 14,
+  excerptFontSize: 11,
+  textAlign: 'left',
+  elementOrder: ['category', 'date', 'title', 'excerpt', 'readMore'],
+  showCategory: true,
+  showDate: true,
+  showReadTime: true,
+  showExcerpt: true,
+  showReadMore: true
+};
+
 export interface ProductCardConfig {
   imageAspect: 'square' | 'portrait' | 'landscape';
   imagePadding: number;
@@ -66,6 +100,7 @@ export interface HomepageConfigData {
   galleryVi: GalleryImage[];
   galleryEn: GalleryImage[];
   productCardConfig: ProductCardConfig;
+  blogCardConfig: BlogCardConfig;
 }
 
 const DEFAULT_SECTIONS: SectionConfig[] = [
@@ -103,7 +138,8 @@ const fetchHomepageConfig = async (): Promise<HomepageConfigData> => {
           bannerLabelEn: parsed.banner_label_en || '',
           galleryVi: parsed.gallery || [],
           galleryEn: parsed.gallery_en || [],
-          productCardConfig: DEFAULT_PRODUCT_CARD_CONFIG
+          productCardConfig: DEFAULT_PRODUCT_CARD_CONFIG,
+          blogCardConfig: DEFAULT_BLOG_CARD_CONFIG
         };
       }
     }
@@ -121,7 +157,8 @@ const fetchHomepageConfig = async (): Promise<HomepageConfigData> => {
     bannerLabelEn: '',
     galleryVi: [],
     galleryEn: [],
-    productCardConfig: DEFAULT_PRODUCT_CARD_CONFIG
+    productCardConfig: DEFAULT_PRODUCT_CARD_CONFIG,
+    blogCardConfig: DEFAULT_BLOG_CARD_CONFIG
   };
 };
 

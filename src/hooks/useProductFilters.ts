@@ -33,6 +33,24 @@ export function useProductFilters() {
     staleTime: 300_000,
   });
 
+  const { data: brandCounts = {} } = useQuery({
+    queryKey: ['admin-products-brand-counts'],
+    queryFn: async () => {
+      const { data } = await api.get('/products', {
+        params: { page: 1, limit: 9999, fields: 'brand' }
+      });
+      const items = data?.data?.items ?? data?.data ?? [];
+      if (!Array.isArray(items)) return {};
+      const counts: Record<string, number> = {};
+      for (const p of items) {
+        const name = p.brand || 'Unknown';
+        counts[name] = (counts[name] || 0) + 1;
+      }
+      return counts;
+    },
+    staleTime: 60_000,
+  });
+
   const { data: tags = [] } = useQuery({
     queryKey: ['admin-product-tags'],
     queryFn: async () => {
@@ -83,6 +101,7 @@ export function useProductFilters() {
     brandSearchQuery, setBrandSearchQuery,
     brandDropdownRef,
     brands, filteredBrands,
+    brandCounts,
     tags,
     handleClearFilters,
   };

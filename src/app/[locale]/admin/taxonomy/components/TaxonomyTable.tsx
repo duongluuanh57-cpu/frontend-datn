@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Loader2, Sparkles, Search, Pencil, Lock, Trash2 } from 'lucide-react';
+import { Link } from '@/navigation';
 import { toast } from 'sonner';
 import type { UseAdminTaxonomyReturn } from '@/hooks/useAdminTaxonomy';
 
@@ -101,14 +102,13 @@ export function TaxonomyTable({ adminTaxonomy }: TaxonomyTableProps) {
                     </td>
                     <td>
                       <div className="admin-table-actions">
-                        <button
-                          type="button"
+                        <Link
+                          href={`/admin/taxonomy/${item._id}/edit?tab=${activeTab}`}
                           className="admin-icon-btn"
                           aria-label={`Sửa ${item.name}`}
-                          onClick={() => handleEditClick(item)}
                         >
                           <Pencil size={17} />
-                        </button>
+                        </Link>
                         {isSystemTag ? (
                           <button
                             type="button"

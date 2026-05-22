@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Package } from 'lucide-react';
 import { UseProductFiltersReturn } from '@/hooks/useProductFilters';
 
 interface BrandDropdownProps {
@@ -19,6 +19,7 @@ export function BrandDropdown({ filters }: BrandDropdownProps) {
     setIsBrandDropdownOpen,
     brandDropdownRef,
     filteredBrands,
+    brandCounts,
   } = filters;
 
   return (
@@ -161,45 +162,68 @@ export function BrandDropdown({ filters }: BrandDropdownProps) {
                   {isVi ? 'Không tìm thấy thương hiệu' : 'No brands found'}
                 </div>
               ) : (
-                filteredBrands.map((brand) => (
-                  <button
-                    key={brand}
-                    type="button"
-                    onClick={() => {
-                      setSelectedBrand(brand);
-                      setBrandSearchQuery('');
-                      setIsBrandDropdownOpen(false);
-                    }}
-                    style={{
-                      width: '100%',
-                      padding: '8px 12px',
-                      textAlign: 'left',
-                      background:
-                        selectedBrand === brand ? 'rgba(212, 165, 165, 0.15)' : 'transparent',
-                      border: 'none',
-                      borderRadius: 'var(--admin-radius-sm)',
-                      color:
-                        selectedBrand === brand
-                          ? 'var(--admin-accent-hover, #D4A5A5)'
-                          : 'var(--admin-text)',
-                      fontSize: '0.75rem',
-                      cursor: 'pointer',
-                      transition: 'all 0.15s',
-                      fontWeight: selectedBrand === brand ? 600 : 400,
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'rgba(212, 165, 165, 0.15)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background =
-                        selectedBrand === brand
-                          ? 'rgba(212, 165, 165, 0.15)'
-                          : 'transparent';
-                    }}
-                  >
-                    <span>{brand}</span>
-                  </button>
-                ))
+                filteredBrands.map((brand) => {
+                  const count = brandCounts[brand] ?? 0;
+                  return (
+                    <button
+                      key={brand}
+                      type="button"
+                      onClick={() => {
+                        setSelectedBrand(brand);
+                        setBrandSearchQuery('');
+                        setIsBrandDropdownOpen(false);
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        textAlign: 'left',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '8px',
+                        background:
+                          selectedBrand === brand ? 'rgba(212, 165, 165, 0.15)' : 'transparent',
+                        border: 'none',
+                        borderRadius: 'var(--admin-radius-sm)',
+                        color:
+                          selectedBrand === brand
+                            ? 'var(--admin-accent-hover, #D4A5A5)'
+                            : 'var(--admin-text)',
+                        fontSize: '0.75rem',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s',
+                        fontWeight: selectedBrand === brand ? 600 : 400,
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'rgba(212, 165, 165, 0.15)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background =
+                          selectedBrand === brand
+                            ? 'rgba(212, 165, 165, 0.15)'
+                            : 'transparent';
+                      }}
+                    >
+                      <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{brand}</span>
+                      {count > 0 && (
+                        <span
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '3px',
+                            fontSize: '0.625rem',
+                            fontWeight: 600,
+                            color: 'var(--admin-text-muted)',
+                            flexShrink: 0,
+                          }}
+                        >
+                          <Package size={10} />
+                          {count}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })
               )}
             </div>
           </div>

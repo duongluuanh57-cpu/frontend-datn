@@ -15,8 +15,8 @@ import {
   sortableKeyboardCoordinates
 } from '@dnd-kit/sortable';
 import api from '@/lib/api';
-import type { SectionConfig, HomepageConfigData, ProductCardConfig } from '@/hooks/useHomepageConfig';
-import { DEFAULT_PRODUCT_CARD_CONFIG } from '@/hooks/useHomepageConfig';
+import type { SectionConfig, HomepageConfigData, ProductCardConfig, BlogCardConfig } from '@/hooks/useHomepageConfig';
+import { DEFAULT_PRODUCT_CARD_CONFIG, DEFAULT_BLOG_CARD_CONFIG } from '@/hooks/useHomepageConfig';
 
 // --- Default data ---
 const DEFAULT_BANNERS = [
@@ -59,7 +59,7 @@ const saveConfig = async (payload: Partial<HomepageConfigData>): Promise<Homepag
 export function useAdminHomepage() {
   const locale = useLocale();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<'banners' | 'gallery' | 'layout' | 'cardCustomizer'>('layout');
+  const [activeTab, setActiveTab] = useState<'banners' | 'gallery' | 'layout' | 'cardCustomizer' | 'blogCard'>('layout');
   const searchParams = useSearchParams();
   const tabParam = searchParams.get('tab');
   const isBannersMode = tabParam === 'banners';
@@ -68,7 +68,7 @@ export function useAdminHomepage() {
   useEffect(() => {
     if (tabParam === 'banners') {
       setActiveTab('banners');
-    } else if (tabParam === 'gallery' || tabParam === 'layout' || tabParam === 'cardCustomizer') {
+    } else if (tabParam === 'gallery' || tabParam === 'layout' || tabParam === 'cardCustomizer' || tabParam === 'blogCard') {
       setActiveTab(tabParam);
     } else {
       // If we leave banner mode, reset activeTab to 'layout' if it was on banners
@@ -112,6 +112,16 @@ export function useAdminHomepage() {
   const [galleryVi, setGalleryVi] = useState(DEFAULT_GALLERY);
   const [galleryEn, setGalleryEn] = useState(DEFAULT_GALLERY);
   const [galleryAiLoading, setGalleryAiLoading] = useState<Record<number, boolean>>({});
+
+  // ── Blog Card Config state ──
+  const [blogCardConfig, setBlogCardConfig] = useState<BlogCardConfig>(DEFAULT_BLOG_CARD_CONFIG);
+  const [blogElementOrder, setBlogElementOrder] = useState<Array<{ id: string; label: string; show: boolean }>>([
+    { id: 'category', label: 'Danh mục / Category', show: true },
+    { id: 'date', label: 'Ngày đăng + Giờ đọc', show: true },
+    { id: 'title', label: 'Tiêu đề bài viết', show: true },
+    { id: 'excerpt', label: 'Đoạn trích', show: true },
+    { id: 'readMore', label: 'Nút Đọc tiếp', show: true }
+  ]);
 
   // ── Product Card Config state ──
   const [cardConfig, setCardConfig] = useState<ProductCardConfig>(DEFAULT_PRODUCT_CARD_CONFIG);
@@ -159,7 +169,7 @@ export function useAdminHomepage() {
           const parsed = JSON.parse(saved);
           if (parsed.gallery?.length > 0) setGalleryVi(parsed.gallery);
         }
-      } catch {}
+      } catch { }
     }
 
     if (dbHasGalleryEn) {
@@ -171,7 +181,23 @@ export function useAdminHomepage() {
           const parsed = JSON.parse(saved);
           if (parsed.gallery_en?.length > 0) setGalleryEn(parsed.gallery_en);
         }
-      } catch {}
+      } catch { }
+    }
+
+    // Populate Blog Card Config
+    if (dbConfig.blogCardConfig) {
+      const cfg = dbConfig.blogCardConfig;
+      setBlogCardConfig(cfg);
+      if (cfg.elementOrder?.length > 0) {
+        setBlogElementOrder(prev =>
+          cfg.elementOrder.map(id => {
+            const existing = prev.find(e => e.id === id);
+            return existing
+              ? { ...existing, show: id === 'category' ? (cfg.showCategory ?? true) : id === 'date' ? true : id === 'readTime' ? (cfg.showReadTime ?? true) : id === 'excerpt' ? (cfg.showExcerpt ?? true) : id === 'readMore' ? (cfg.showReadMore ?? true) : true }
+              : { id, label: id, show: true };
+          })
+        );
+      }
     }
 
     // Populate Product Card Config
@@ -223,6 +249,16 @@ export function useAdminHomepage() {
 
   // ── Save all ──
   const handleSave = useCallback(() => {
+    const finalBlogCardConfig: BlogCardConfig = {
+      ...blogCardConfig,
+      elementOrder: blogElementOrder.map(e => e.id),
+      showCategory: blogElementOrder.find(e => e.id === 'category')?.show ?? true,
+      showDate: blogElementOrder.find(e => e.id === 'date')?.show ?? true,
+      showReadTime: blogElementOrder.find(e => e.id === 'date')?.show ?? true,
+      showExcerpt: blogElementOrder.find(e => e.id === 'excerpt')?.show ?? true,
+      showReadMore: blogElementOrder.find(e => e.id === 'readMore')?.show ?? true
+    };
+
     const finalCardConfig: ProductCardConfig = {
       ...cardConfig,
       elementOrder: cardElementOrder.map(e => e.id),
@@ -241,9 +277,10 @@ export function useAdminHomepage() {
       bannerLabelEn,
       galleryVi,
       galleryEn,
-      productCardConfig: finalCardConfig
+      productCardConfig: finalCardConfig,
+      blogCardConfig: finalBlogCardConfig
     });
-  }, [sections, banners, bannerTitleVi, bannerSubtitleVi, bannerLabelVi, bannerTitleEn, bannerSubtitleEn, bannerLabelEn, galleryVi, galleryEn, cardConfig, cardElementOrder, saveMutation]);
+  }, [sections, banners, bannerTitleVi, bannerSubtitleVi, bannerLabelVi, bannerTitleEn, bannerSubtitleEn, bannerLabelEn, galleryVi, galleryEn, cardConfig, cardElementOrder, blogCardConfig, blogElementOrder, saveMutation]);
 
   // ── Restore defaults ──
   const handleRestoreDefaults = useCallback(() => {
@@ -368,6 +405,10 @@ export function useAdminHomepage() {
     galleryEn,
     setGalleryEn,
     galleryAiLoading,
+    blogCardConfig,
+    setBlogCardConfig,
+    blogElementOrder,
+    setBlogElementOrder,
     cardConfig,
     setCardConfig,
     cardElementOrder,

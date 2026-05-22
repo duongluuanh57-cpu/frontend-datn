@@ -138,10 +138,6 @@ export default function EditBrandPage({ params }: PageProps) {
     <div className="admin-form-page">
       <div className="admin-form-toolbar">
         <div className="admin-form-toolbar__left">
-          <Link href="/admin/brands" className="admin-back-link">
-            <ChevronLeft size={16} />
-            {isVi ? 'Danh sách' : 'List'}
-          </Link>
           <div>
             <h2 className="admin-form-toolbar__title">
               {isVi ? 'Chỉnh sửa thương hiệu' : 'Edit Brand'}
@@ -151,19 +147,27 @@ export default function EditBrandPage({ params }: PageProps) {
             </p>
           </div>
         </div>
-        <button
-          type="submit"
-          onClick={handleSubmit}
-          disabled={updateMutation.isPending || isLogoUploading}
-          className="admin-btn-submit disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {updateMutation.isPending || isLogoUploading ? (
-            <Loader2 className="animate-spin" size={14} />
-          ) : null}
-          {isLogoUploading 
-            ? (isVi ? 'Đang tải ảnh...' : 'Uploading logo...')
-            : (isVi ? 'Lưu thay đổi' : 'Save Changes')}
-        </button>
+        <div className="admin-page-header__actions flex gap-2">
+          <Link
+            href="/admin/brands"
+            className="px-4 py-2 border border-gray-200 rounded-xl text-sm font-semibold text-[#7A5C5C]/60 hover:bg-gray-50 transition-all inline-flex items-center gap-2"
+          >
+            <ChevronLeft size={16} /> {isVi ? 'Quay lại' : 'Back'}
+          </Link>
+          <button
+            type="submit"
+            onClick={handleSubmit}
+            disabled={updateMutation.isPending || isLogoUploading}
+            className="px-4 py-2 bg-[#7A5C5C] hover:bg-[#604444] text-white rounded-xl text-sm font-semibold transition-all disabled:opacity-60 inline-flex items-center gap-2"
+          >
+            {updateMutation.isPending || isLogoUploading ? (
+              <Loader2 className="animate-spin" size={14} />
+            ) : null}
+            {isLogoUploading 
+              ? (isVi ? 'Đang tải ảnh...' : 'Uploading logo...')
+              : (isVi ? 'Lưu thay đổi' : 'Save Changes')}
+          </button>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="admin-form-grid" style={{ gridTemplateColumns: '300px 1fr' }}>

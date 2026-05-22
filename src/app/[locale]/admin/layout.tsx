@@ -92,13 +92,12 @@ function AdminSidebarNav({ isCollapsed, pathname, t }: AdminSidebarNavProps) {
       items: [
         { name: t('nav.products'), icon: Package, href: '/admin/products' },
         { name: t('nav.brands'), icon: Award, href: '/admin/brands' },
-        { name: pathname.includes('/vi') ? 'Quản lý tập trung' : 'Centralized Management', icon: TagIcon, href: '/admin/taxonomy' },
+        { name: pathname.includes('/vi') ? 'Quản lý chung' : 'Centralized Management', icon: TagIcon, href: '/admin/taxonomy' },
         { name: t('nav.orders'), icon: ShoppingBag, href: '/admin/orders' },
         { 
           name: pathname.includes('/vi') ? 'Mã giảm giá' : 'Discount Codes', 
           icon: Ticket, 
-          href: '#',
-          isPlaceholder: true 
+          href: '/admin/vouchers',
         },
         { 
           name: pathname.includes('/vi') ? 'Quản lý Kho hàng' : 'Inventory Management', 

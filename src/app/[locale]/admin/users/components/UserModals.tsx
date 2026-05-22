@@ -9,11 +9,7 @@ import {
   Edit2,
   X,
   Save,
-  Eye,
-  Mail,
-  Calendar
 } from 'lucide-react';
-import Image from 'next/image';
 import { toast } from 'sonner';
 import type { UseAdminUsersReturn } from '@/hooks/useAdminUsers';
 import type { User, UserFormData } from '@/types/admin';
@@ -29,8 +25,6 @@ export function UserModals({ adminUsers }: UserModalsProps) {
     editingUser,
     createUserMutation,
     updateUserMutation,
-    viewingUser,
-    setViewingUser
   } = adminUsers;
 
   const handleSubmitForm = (data: UserFormData) => {
@@ -50,12 +44,6 @@ export function UserModals({ adminUsers }: UserModalsProps) {
         user={editingUser}
         onSubmit={handleSubmitForm}
         isLoading={createUserMutation.isPending || updateUserMutation.isPending}
-      />
-
-      {/* User Detail Modal */}
-      <UserDetailModal
-        user={viewingUser}
-        onClose={() => setViewingUser(null)}
       />
     </>
   );
@@ -255,112 +243,3 @@ function UserFormModal({ isOpen, onClose, user, onSubmit, isLoading }: UserFormM
   );
 }
 
-// ============================================================
-// User Detail Modal Component
-// ============================================================
-interface UserDetailModalProps {
-  user: User | null;
-  onClose: () => void;
-}
-
-function UserDetailModal({ user, onClose }: UserDetailModalProps) {
-  if (!user) return null;
-
-  return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-        onClick={onClose}
-      >
-        <motion.div
-          initial={{ scale: 0.95, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.95, opacity: 0 }}
-          onClick={(e) => e.stopPropagation()}
-          className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden"
-        >
-          {/* Header */}
-          <div className="bg-gradient-to-r from-[#D4A5A5] to-[#B8A5C8] px-6 py-4 flex items-center justify-between">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              <Eye size={20} />
-              Chi tiết người dùng
-            </h2>
-            <button
-              onClick={onClose}
-              className="text-white/80 hover:text-white transition-colors"
-            >
-              <X size={20} />
-            </button>
-          </div>
-
-          {/* Content */}
-          <div className="p-6 space-y-6">
-            {/* Avatar & Basic Info */}
-            <div className="flex items-center gap-4 pb-6 border-b border-gray-100">
-              <div className="relative h-20 w-20 rounded-full bg-[#F9F6F3] overflow-hidden border-4 border-white shadow-lg">
-                {user.avatar && user.avatar.startsWith('http') ? (
-                  <Image 
-                    src={user.avatar} 
-                    alt={user.username} 
-                    fill 
-                    className="object-cover"
-                    unoptimized={!user.avatar.includes('r2.dev') && !user.avatar.includes('googleusercontent.com')}
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-[#7A5C5C] font-bold text-2xl">
-                    {user.username.substring(0, 2).toUpperCase()}
-                  </div>
-                )}
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-[#7A5C5C]">{user.username}</h3>
-                <p className="text-sm text-[#7A5C5C]/60 flex items-center gap-1.5 mt-1">
-                  <Mail size={14} /> {user.email}
-                </p>
-              </div>
-            </div>
-
-            {/* Details Grid */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-gray-50 rounded-xl p-4 col-span-2">
-                <p className="text-xs font-bold text-[#7A5C5C]/60 uppercase tracking-wider mb-2">Vai trò</p>
-                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase ${
-                  user.role === 'ADMIN' 
-                    ? 'bg-[#7A5C5C]/10 text-[#7A5C5C]' 
-                    : 'bg-[#D4A5A5]/10 text-[#D4A5A5]'
-                }`}>
-                  <Shield size={12} />
-                  {user.role}
-                </span>
-              </div>
-
-              <div className="bg-gray-50 rounded-xl p-4 col-span-2">
-                <p className="text-xs font-bold text-[#7A5C5C]/60 uppercase tracking-wider mb-2">Ngày tham gia</p>
-                <p className="text-sm font-semibold text-[#7A5C5C] flex items-center gap-2">
-                  <Calendar size={16} />
-                  {new Date(user.createdAt).toLocaleDateString('vi-VN', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}
-                </p>
-              </div>
-            </div>
-
-            {/* Close Button */}
-            <button
-              onClick={onClose}
-              className="w-full px-4 py-3 bg-gray-100 hover:bg-gray-200 text-[#7A5C5C] rounded-xl text-sm font-semibold transition-all"
-            >
-              Đóng
-            </button>
-          </div>
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
-  );
-}

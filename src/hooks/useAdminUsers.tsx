@@ -17,8 +17,6 @@ export interface UseAdminUsersReturn {
   setIsModalOpen: (open: boolean) => void;
   editingUser: User | null;
   setEditingUser: (user: User | null) => void;
-  viewingUser: User | null;
-  setViewingUser: (user: User | null) => void;
   itemsPerPage: number;
   users: User[] | undefined;
   isLoading: boolean;
@@ -47,7 +45,6 @@ export function useAdminUsers(): UseAdminUsersReturn {
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [viewingUser, setViewingUser] = useState<User | null>(null);
   const itemsPerPage = 10;
 
   // Build query params
@@ -197,8 +194,6 @@ export function useAdminUsers(): UseAdminUsersReturn {
     setIsModalOpen,
     editingUser,
     setEditingUser,
-    viewingUser,
-    setViewingUser,
     itemsPerPage,
     users,
     isLoading,
