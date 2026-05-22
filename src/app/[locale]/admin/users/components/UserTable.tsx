@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Users, 
   Trash2, 
@@ -15,6 +14,7 @@ import {
   Eye
 } from 'lucide-react';
 import Image from 'next/image';
+import { toast } from 'sonner';
 import type { UseAdminUsersReturn } from '@/hooks/useAdminUsers';
 
 interface UserTableProps {
@@ -23,7 +23,7 @@ interface UserTableProps {
 
 export function UserTable({ adminUsers }: UserTableProps) {
   const {
-    paginatedUsers,
+    users,
     isLoading,
     updateRoleMutation,
     handleToggleRole,
@@ -34,7 +34,7 @@ export function UserTable({ adminUsers }: UserTableProps) {
     currentPage,
     setCurrentPage,
     itemsPerPage,
-    filteredUsers
+    total
   } = adminUsers;
 
   return (
@@ -59,7 +59,7 @@ export function UserTable({ adminUsers }: UserTableProps) {
                   </div>
                 </td>
               </tr>
-            ) : !paginatedUsers?.length ? (
+            ) : !users?.length ? (
               <tr>
                 <td colSpan={4}>
                   <div className="admin-empty py-20">
@@ -69,14 +69,8 @@ export function UserTable({ adminUsers }: UserTableProps) {
                 </td>
               </tr>
             ) : (
-              <AnimatePresence>
-                {paginatedUsers.map((user) => (
-                  <motion.tr 
-                    key={user._id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                  >
+              users.map((user) => (
+                <tr key={user._id}>
                     <td>
                       <div className="flex items-center gap-4">
                         <div className="relative h-10 w-10 rounded-full bg-[#F9F6F3] overflow-hidden border-2 border-white shadow-sm">
@@ -142,9 +136,29 @@ export function UserTable({ adminUsers }: UserTableProps) {
                         <button 
                           className="admin-icon-btn admin-icon-btn--danger"
                           onClick={() => {
-                            if (confirm(`Bạn có chắc muốn xóa người dùng "${user.username}"?`)) {
-                              deleteMutation.mutate(user._id);
-                            }
+                            const t = toast.custom((tId) => (
+                              <div className="bg-white rounded-xl border border-gray-200 shadow-lg p-4 flex flex-col gap-3 min-w-[280px]">
+                                <p className="text-sm font-semibold text-[#7A5C5C]">Xác nhận xóa</p>
+                                <p className="text-xs text-[#7A5C5C]/70">Bạn có chắc muốn xóa người dùng &quot;{user.username}&quot;?</p>
+                                <div className="flex gap-2 justify-end pt-1">
+                                  <button
+                                    onClick={() => toast.dismiss(tId)}
+                                    className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 text-[#7A5C5C] hover:bg-gray-50 transition-colors"
+                                  >
+                                    Hủy
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      deleteMutation.mutate(user._id);
+                                      toast.dismiss(tId);
+                                    }}
+                                    className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors"
+                                  >
+                                    Xóa
+                                  </button>
+                                </div>
+                              </div>
+                            ), { duration: Infinity });
                           }}
                           disabled={deleteMutation.isPending}
                           title="Xóa người dùng"
@@ -153,9 +167,8 @@ export function UserTable({ adminUsers }: UserTableProps) {
                         </button>
                       </div>
                     </td>
-                  </motion.tr>
-                ))}
-              </AnimatePresence>
+                </tr>
+              ))
             )}
           </tbody>
         </table>
@@ -165,7 +178,7 @@ export function UserTable({ adminUsers }: UserTableProps) {
       {!isLoading && totalPages > 1 && (
         <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">
           <p className="text-sm text-[#7A5C5C]/60">
-            Hiển thị <span className="font-semibold text-[#7A5C5C]">{(currentPage - 1) * itemsPerPage + 1}</span> - <span className="font-semibold text-[#7A5C5C]">{Math.min(currentPage * itemsPerPage, filteredUsers.length)}</span> trong tổng số <span className="font-semibold text-[#7A5C5C]">{filteredUsers.length}</span> người dùng
+            Hiển thị <span className="font-semibold text-[#7A5C5C]">{(currentPage - 1) * itemsPerPage + 1}</span> - <span className="font-semibold text-[#7A5C5C]">{Math.min(currentPage * itemsPerPage, total)}</span> trong tổng số <span className="font-semibold text-[#7A5C5C]">{total}</span> người dùng
           </p>
           <div className="flex items-center gap-2">
             <button

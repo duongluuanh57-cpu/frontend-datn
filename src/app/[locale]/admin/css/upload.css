@@ -1,0 +1,115 @@
+
+/* — EImage upload — E*/
+.admin-upload__label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--admin-text-muted);
+}
+
+.admin-upload__preview {
+  position: relative;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
+  border-radius: var(--admin-radius);
+  overflow: hidden;
+  background: var(--admin-surface-muted);
+  border: 1px solid var(--admin-border);
+  display: flex;
+}
+
+.admin-upload__preview img {
+  max-width: 100%;
+  max-height: 180px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  display: block;
+}
+
+.admin-upload__overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.75);
+}
+
+.admin-upload__remove {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(61, 46, 36, 0.35);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.admin-upload__preview:hover .admin-upload__remove {
+  opacity: 1;
+}
+
+.admin-upload__remove-btn {
+  display: flex;
+  padding: 10px;
+  border: none;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--admin-danger);
+  cursor: pointer;
+  box-shadow: var(--admin-shadow);
+}
+
+.admin-upload__dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  max-height: 200px;
+  border: 2px dashed var(--admin-border);
+  border-radius: var(--admin-radius);
+  background: var(--admin-surface-muted);
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.admin-upload__dropzone:hover {
+  border-color: var(--admin-highlight);
+  background: #faf8f6;
+}
+
+.admin-upload__dropzone-icon {
+  display: flex;
+  padding: 12px;
+  margin-bottom: 10px;
+  border-radius: 12px;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  color: var(--admin-accent);
+}
+
+.admin-upload__dropzone-title {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--admin-text-secondary);
+}
+
+.admin-upload__dropzone-hint {
+  font-size: 0.625rem;
+  color: var(--admin-text-muted);
+  margin-top: 4px;
+}
+
+.admin-upload__dropzone input[type='file'] {
+  display: none;
+}

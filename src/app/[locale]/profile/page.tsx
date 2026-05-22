@@ -7,6 +7,7 @@ import { ProfileTab } from './components/ProfileTab';
 import { OrdersTab } from './components/OrdersTab';
 import { SecurityTab } from './components/SecurityTab';
 import { SettingsTab } from './components/SettingsTab';
+import { BankCardsTab } from './components/BankCardsTab';
 import { OrderDetailModal } from './components/OrderDetailModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import './profile.css';
@@ -38,6 +39,7 @@ function ProfilePageContent() {
             <AnimatePresence mode="wait">
               {activeTab === 'profile' && <ProfileTab key="profile" userProfile={userProfile} />}
               {activeTab === 'orders' && <OrdersTab key="orders" userProfile={userProfile} />}
+              {activeTab === 'bankcards' && <BankCardsTab key="bankcards" userProfile={userProfile} />}
               {activeTab === 'security' && <SecurityTab key="security" userProfile={userProfile} />}
               {activeTab === 'settings' && <SettingsTab key="settings" userProfile={userProfile} />}
             </AnimatePresence>

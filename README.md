@@ -1,36 +1,68 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# L'essence Frontend — Elite SaaS 2026
 
-## Getting Started
+Frontend E-commerce luxury cho thương hiệu nước hoa **L'essence Haute Parfumerie**. Xây dựng với **Next.js 16 (App Router)**, **React 19**, **Tailwind CSS**, và **Zustand**.
 
-First, run the development server:
+---
+
+## Quick Start
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local    # Chỉnh sửa NEXT_PUBLIC_API_URL
+npm run dev                    # → http://localhost:3000
+npm run build                  # Production build
+npm start                      # Start production server
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Scripts
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Development + hot reload |
+| `npm run build` | Production build (esbuild) |
+| `npm start` | Start production server |
+| `npm run lint` | ESLint check |
+| `npm test` | Vitest unit tests |
+| `npx playwright test` | E2E tests |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Tech Stack
 
-## Learn More
+- **Framework:** Next.js 16 (App Router), React 19
+- **Styling:** Tailwind CSS 3.4, shadcn/ui
+- **State:** Zustand 5 (persist), Axios interceptors
+- **Forms:** React Hook Form + Zod 4
+- **AI:** Vercel AI SDK, Edge proxy → Backend Gemini
+- **i18n:** next-intl (vi + en)
+- **Testing:** Vitest + Playwright
+- **Monitoring:** Sentry + PostHog
 
-To learn more about Next.js, take a look at the following resources:
+## Project Structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+src/
+├── app/[locale]/          # Pages (admin, login, register, profile...)
+├── app/api/chat/          # AI chat proxy (Edge)
+├── components/ui/         # Public components (banner, product-card, chat-widget...)
+├── components/admin/      # Admin components (ProductForm, ImageUpload...)
+├── hooks/                 # Custom hooks (useLogin, useAdminBrands...)
+├── lib/                   # API client, utilities
+├── store/                 # Zustand stores (useAuthStore, useChatStore...)
+├── providers/             # Context providers (Auth, Query, PostHog...)
+└── messages/              # i18n translations (en.json, vi.json)
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Documentation
 
-## Deploy on Vercel
+Chi tiết trong thư mục [Docs/](./Docs/):
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **[Project Structure](./Docs/PROJECT_STRUCTURE.md)** — Kiến trúc, routes, data flow
+- **[Tech Stack](./Docs/TECH_STACK.md)** — Công nghệ & lý do chọn
+- **[Coding Standards](./Docs/CODING_STANDARDS.md)** — Patterns, hooks, interceptors
+- **[State Management](./Docs/STATE_MANAGEMENT.md)** — Zustand stores, Axios interceptor, silent refresh
+- **[UI Conventions](./Docs/UI_CONVENTIONS.md)** — Design tokens (L'essence palette), components
+- **[Component Architecture](./Docs/COMPONENT_ARCHITECTURE.md)** — Component tree, admin CRUD pattern
+- **[Environment Variables](./Docs/ENV_VARIABLES.md)** — Cấu hình biến môi trường
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+*Frontend cho L'essence Haute Parfumerie — Elite SaaS Stack 2026*

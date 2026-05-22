@@ -15,15 +15,16 @@ export function BrandTable({ adminBrands }: BrandTableProps) {
     isVi,
     isLoading,
     brands,
-    filteredBrands,
-    paginatedBrands,
     isAllSelected,
     isSomeSelected,
     handleSelectAll,
     selectedIds,
     handleSelectRow,
     handleToggleFeatured,
-    setBrandToDelete
+    setBrandToDelete,
+    searchTerm,
+    selectedOrigin,
+    total,
   } = adminBrands;
 
   return (
@@ -66,7 +67,7 @@ export function BrandTable({ adminBrands }: BrandTableProps) {
                   </div>
                 </td>
               </tr>
-            ) : !brands?.length ? (
+            ) : total === 0 && !searchTerm && !selectedOrigin ? (
               <tr>
                 <td colSpan={6}>
                   <div className="admin-empty">
@@ -75,7 +76,7 @@ export function BrandTable({ adminBrands }: BrandTableProps) {
                   </div>
                 </td>
               </tr>
-            ) : !filteredBrands?.length ? (
+            ) : !brands?.length ? (
               <tr>
                 <td colSpan={6}>
                   <div className="admin-empty">
@@ -85,7 +86,7 @@ export function BrandTable({ adminBrands }: BrandTableProps) {
                 </td>
               </tr>
             ) : (
-              paginatedBrands.map((brand) => {
+              brands.map((brand) => {
                 const isChecked = selectedIds.includes(brand._id);
                 return (
                   <tr key={brand._id} style={isChecked ? { background: 'rgba(212, 165, 165, 0.05)' } : undefined}>

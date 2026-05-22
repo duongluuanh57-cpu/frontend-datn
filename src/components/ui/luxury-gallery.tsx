@@ -39,42 +39,31 @@ export function LuxuryGallery() {
   } = formHelpers;
 
   return (
-    <section className="luxury-gallery-section w-full bg-transparent pt-12 pb-10 lg:pt-20 lg:pb-14 overflow-hidden">
+    <section className="luxury-gallery-section w-full bg-transparent pt-12 pb-10 lg:pt-20 lg:pb-14 overflow-hidden"
+      style={{ contain: 'content', contentVisibility: 'auto' } as React.CSSProperties}>
       <div className="max-w-[1400px] mx-auto px-6">
         
         {/* Section Header */}
-        <div className="relative mb-16 lg:mb-20 flex flex-col items-center lg:items-start text-center lg:text-left border-b border-[#D4A5A5]/10 pb-8">
-          <motion.span
-            initial={{ opacity: 0, letterSpacing: '0.2em' }}
-            whileInView={{ opacity: 1, letterSpacing: '0.45em' }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-            className="text-[10px] font-bold uppercase text-[#D4A5A5]"
-          >
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+          className="relative mb-16 lg:mb-20 flex flex-col items-center lg:items-start text-center lg:text-left border-b border-[#D4A5A5]/10 pb-8"
+        >
+          <span className="text-[10px] font-bold uppercase text-[#D4A5A5]">
             {locale === 'vi' ? 'BỘ SƯU TẬP KHOẢNH KHẮC' : "L'ESSENCE GALLERY"}
-          </motion.span>
-          <motion.h2
-            initial={{ opacity: 0, y: 15 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.1, duration: 0.8 }}
-            className="mt-4 text-3xl font-medium text-[#7A5C5C] md:text-4xl lg:text-5xl uppercase"
-            style={{ fontFamily: 'var(--font-heading), serif' }}
-          >
+          </span>
+          <h2 className="mt-4 text-3xl font-medium text-[#7A5C5C] md:text-4xl lg:text-5xl uppercase"
+            style={{ fontFamily: 'var(--font-heading), serif' }}>
             {locale === 'vi' ? 'KHOẢNH KHẮC NGHỆ THUẬT' : 'Moments d\'Élégance'}
-          </motion.h2>
-          <motion.p
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 0.6 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.2, duration: 0.8 }}
-            className="mt-3 text-[11px] md:text-xs text-[#7A5C5C] max-w-[480px] font-medium leading-relaxed"
-          >
+          </h2>
+          <p className="mt-3 text-[11px] md:text-xs text-[#7A5C5C] max-w-[480px] font-medium leading-relaxed">
             {locale === 'vi'
               ? 'Nhật ký hình ảnh lưu giữ nguồn cảm hứng thơ mộng và phong cách sống tinh tế.'
               : 'A visual journal of romantic inspiration and high-end aesthetic lifestyles.'}
-          </motion.p>
-        </div>
+          </p>
+        </motion.div>
 
         {/* Pinterest Masonry Columns */}
         <motion.div
@@ -89,7 +78,7 @@ export function LuxuryGallery() {
               key={index}
               variants={itemVariants}
               onClick={() => setSelectedImageIndex(index)}
-              className="break-inside-avoid mb-6 group relative rounded-2xl overflow-hidden border border-white/60 bg-white/30 backdrop-blur-md p-2.5 shadow-[0_8px_32px_rgba(122,92,92,0.02)] hover:shadow-[0_20px_50px_rgba(212,165,165,0.12)] hover:border-[#D4A5A5]/30 transition-all duration-700 cursor-pointer"
+              className="break-inside-avoid mb-6 group relative rounded-2xl overflow-hidden border border-white/60 bg-white/40 p-2.5 shadow-[0_8px_32px_rgba(122,92,92,0.02)] hover:shadow-[0_20px_50px_rgba(212,165,165,0.12)] hover:border-[#D4A5A5]/30 transition-all duration-700 cursor-pointer"
             >
               {/* Image Frame with Glass background */}
               <div className={`relative w-full ${image.aspect} rounded-xl overflow-hidden bg-[#7A5C5C]/3`}>
@@ -99,8 +88,6 @@ export function LuxuryGallery() {
                   fill
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   className="object-cover transition-transform duration-[1.2s] ease-out group-hover:scale-110 group-hover:rotate-[1deg]"
-                  quality={95}
-                  unoptimized
                 />
 
                 {/* Soft Vignette Overlay */}

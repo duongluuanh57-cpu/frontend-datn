@@ -27,9 +27,8 @@ export interface UseAdminBrandsReturn {
   isLoading: boolean;
   error: any;
   origins: string[] | undefined;
-  filteredBrands: Brand[];
+  total: number;
   totalPages: number;
-  paginatedBrands: Brand[];
   updateMutation: any;
   deleteMutation: any;
   bulkDeleteMutation: any;
@@ -38,6 +37,7 @@ export interface UseAdminBrandsReturn {
   isSomeSelected: boolean;
   handleSelectAll: () => void;
   handleSelectRow: (id: string) => void;
+  selectedBrandNames: Map<string, string>;
 }
 
 export function useAdminBrands(): UseAdminBrandsReturn {
@@ -47,57 +47,68 @@ export function useAdminBrands(): UseAdminBrandsReturn {
 
   const [brandToDelete, setBrandToDelete] = useState<Brand | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [selectedBrandNames, setSelectedBrandNames] = useState<Map<string, string>>(new Map());
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
-
-  // Lấy danh sách thương hiệu
-  const { data: brands, isLoading, error } = useQuery({
-    queryKey: ['admin-brands'],
-    queryFn: async () => {
-      const { data } = await api.get('/brands');
-      return data.data as Brand[];
-    },
-  });
-
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedOrigin, setSelectedOrigin] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 25;
 
-  // Lấy danh sách xuất xứ duy nhất từ API
+  // Build query params
+  const queryParams = useMemo(() => {
+    const params: Record<string, string | number> = {
+      page: currentPage,
+      limit: ITEMS_PER_PAGE,
+    };
+    if (searchTerm) params.search = searchTerm;
+    if (selectedOrigin) params.origin = selectedOrigin;
+    return params;
+  }, [currentPage, searchTerm, selectedOrigin]);
+
+  // Fetch brands with server-side pagination
+  const { data: pageData, isLoading, error } = useQuery({
+    queryKey: ['admin-brands', queryParams],
+    queryFn: async () => {
+      const { data } = await api.get('/brands', { params: queryParams });
+      return data.data as { items: Brand[]; total: number; page: number; totalPages: number };
+    },
+    staleTime: 15_000,
+  });
+
+  const brands = pageData?.items;
+  const total = pageData?.total || 0;
+  const totalPages = pageData?.totalPages || 0;
+
+  // Fetch origins (still full list, small dataset)
   const { data: origins } = useQuery({
     queryKey: ['brand-origins'],
     queryFn: async () => {
       const { data } = await api.get('/brands/origins');
       return data.data as string[];
     },
+    staleTime: 300_000,
   });
-
-  // Lọc thương hiệu dựa trên ô tìm kiếm và dropdown xuất xứ
-  const filteredBrands = useMemo(() => {
-    if (!brands) return [];
-    return brands.filter(brand => {
-      const nameMatch = brand.name.toLowerCase().includes(searchTerm.toLowerCase());
-      const descMatch = brand.description ? brand.description.toLowerCase().includes(searchTerm.toLowerCase()) : false;
-      const matchesSearch = nameMatch || descMatch;
-      const matchesOrigin = !selectedOrigin || brand.origin === selectedOrigin;
-      return matchesSearch && matchesOrigin;
-    });
-  }, [brands, searchTerm, selectedOrigin]);
-
-  const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 25;
 
   // Reset page when filter changes
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, selectedOrigin]);
 
-  const totalPages = Math.ceil(filteredBrands.length / ITEMS_PER_PAGE);
+  // Track selected brand names for bulk delete modal
+  useEffect(() => {
+    if (!brands) return;
+    setSelectedBrandNames(prev => {
+      const next = new Map(prev);
+      for (const b of brands) {
+        if (selectedIds.includes(b._id)) {
+          next.set(b._id, b.name);
+        }
+      }
+      return next;
+    });
+  }, [brands, selectedIds]);
 
-  const paginatedBrands = useMemo(() => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    return filteredBrands.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  }, [filteredBrands, currentPage]);
-
-  // Mutation: Cập nhật thương hiệu (dành cho nút toggle featured)
+  // Mutation: Update brand (for featured toggle)
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<Brand> }) =>
       api.patch(`/brands/${id}`, data),
@@ -116,7 +127,7 @@ export function useAdminBrands(): UseAdminBrandsReturn {
     }
   });
 
-  // Mutation: Xóa thương hiệu
+  // Mutation: Delete brand
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => api.delete(`/brands/${id}`),
     onSuccess: (_, id) => {
@@ -138,13 +149,14 @@ export function useAdminBrands(): UseAdminBrandsReturn {
     }
   });
 
-  // Mutation: Xóa hàng loạt thương hiệu
+  // Mutation: Bulk delete brands
   const bulkDeleteMutation = useMutation({
     mutationFn: async (ids: string[]) => api.post('/brands/bulk-delete', { ids }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-brands'] });
       toast.success(isVi ? 'Đã xóa hàng loạt thương hiệu thành công!' : 'Bulk deleted brands successfully!');
       setSelectedIds([]);
+      setSelectedBrandNames(new Map());
       setShowBulkDeleteModal(false);
     },
     onError: (err: any) => {
@@ -161,7 +173,7 @@ export function useAdminBrands(): UseAdminBrandsReturn {
     });
   };
 
-  const allFilteredIds = paginatedBrands.map(b => b._id);
+  const allFilteredIds = brands?.map(b => b._id) || [];
   const isAllSelected = allFilteredIds.length > 0 && allFilteredIds.every(id => selectedIds.includes(id));
   const isSomeSelected = selectedIds.length > 0 && !isAllSelected;
 
@@ -201,9 +213,8 @@ export function useAdminBrands(): UseAdminBrandsReturn {
     isLoading,
     error,
     origins,
-    filteredBrands,
+    total,
     totalPages,
-    paginatedBrands,
     updateMutation,
     deleteMutation,
     bulkDeleteMutation,
@@ -211,6 +222,7 @@ export function useAdminBrands(): UseAdminBrandsReturn {
     isAllSelected,
     isSomeSelected,
     handleSelectAll,
-    handleSelectRow
+    handleSelectRow,
+    selectedBrandNames,
   };
 }

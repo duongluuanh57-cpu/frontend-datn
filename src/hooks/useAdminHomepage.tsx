@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
 import { useLocale } from 'next-intl';
@@ -8,8 +8,6 @@ import { toast } from 'sonner';
 import {
   PointerSensor,
   KeyboardSensor,
-  useSensor,
-  useSensors,
   DragEndEvent
 } from '@dnd-kit/core';
 import {
@@ -194,16 +192,16 @@ export function useAdminHomepage() {
   }, [dbConfig]);
 
   // ── Drag & Drop sensors ──
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  );
+  const sensors = useMemo(() => [
+    { sensor: PointerSensor, options: { activationConstraint: { distance: 5 } } },
+    { sensor: KeyboardSensor, options: { coordinateGetter: sortableKeyboardCoordinates } }
+  ], []);
 
   // ── Drag & Drop sensors for card element ordering ──
-  const cardElementSensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  );
+  const cardElementSensors = useMemo(() => [
+    { sensor: PointerSensor, options: { activationConstraint: { distance: 5 } } },
+    { sensor: KeyboardSensor, options: { coordinateGetter: sortableKeyboardCoordinates } }
+  ], []);
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
@@ -248,23 +246,44 @@ export function useAdminHomepage() {
   }, [sections, banners, bannerTitleVi, bannerSubtitleVi, bannerLabelVi, bannerTitleEn, bannerSubtitleEn, bannerLabelEn, galleryVi, galleryEn, cardConfig, cardElementOrder, saveMutation]);
 
   // ── Restore defaults ──
-  const handleRestoreDefaults = () => {
-    if (!confirm("Bạn có chắc muốn khôi phục lại thiết kế trang chủ mặc định của L'essence?")) return;
-    setSections(DEFAULT_SECTIONS);
-    setBanners(DEFAULT_BANNERS);
-    setBannerTitleVi('Độc bản hương thơm Niche');
-    setBannerSubtitleVi('Khám phá tinh hoa mùi hương quý tộc mang đậm phong vị cá nhân từ những nhà điều chế hàng đầu thế giới.');
-    setBannerLabelVi('BST NƯỚC HOA CAO CẤP');
-    setBannerTitleEn('Bespoke Niche Perfumery');
-    setBannerSubtitleEn('Explore the elite essence of royal perfumery, crafted for individual distinction by master scent designers.');
-    setBannerLabelEn('PREMIUM FRAGRANCE HOUSE');
-    setGalleryVi(DEFAULT_GALLERY);
-    setGalleryEn(DEFAULT_GALLERY);
-    toast.info('Đã khôi phục cài đặt mặc định. Bấm Lưu để áp dụng.');
-  };
+  const handleRestoreDefaults = useCallback(() => {
+    toast.custom((tId) => (
+      <div className="bg-white rounded-xl border border-gray-200 shadow-lg p-4 flex flex-col gap-3 min-w-[280px]">
+        <p className="text-sm font-semibold text-[#7A5C5C]">Xác nhận khôi phục</p>
+        <p className="text-xs text-[#7A5C5C]/70">Bạn có chắc muốn khôi phục lại thiết kế trang chủ mặc định?</p>
+        <div className="flex gap-2 justify-end pt-1">
+          <button
+            onClick={() => toast.dismiss(tId)}
+            className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 text-[#7A5C5C] hover:bg-gray-50 transition-colors"
+          >
+            Hủy
+          </button>
+          <button
+            onClick={() => {
+              toast.dismiss(tId);
+              setSections(DEFAULT_SECTIONS);
+              setBanners(DEFAULT_BANNERS);
+              setBannerTitleVi('Độc bản hương thơm Niche');
+              setBannerSubtitleVi('Khám phá tinh hoa mùi hương quý tộc mang đậm phong vị cá nhân từ những nhà điều chế hàng đầu thế giới.');
+              setBannerLabelVi('BST NƯỚC HOA CAO CẤP');
+              setBannerTitleEn('Bespoke Niche Perfumery');
+              setBannerSubtitleEn('Explore the elite essence of royal perfumery, crafted for individual distinction by master scent designers.');
+              setBannerLabelEn('PREMIUM FRAGRANCE HOUSE');
+              setGalleryVi(DEFAULT_GALLERY);
+              setGalleryEn(DEFAULT_GALLERY);
+              toast.info('Đã khôi phục cài đặt mặc định. Bấm Lưu để áp dụng.');
+            }}
+            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#7A5C5C] text-white hover:bg-[#604444] transition-colors"
+          >
+            Xác nhận
+          </button>
+        </div>
+      </div>
+    ), { duration: Infinity });
+  }, []);
 
   // ── Gallery helpers ──
-  const handleGalleryFieldChange = (
+  const handleGalleryFieldChange = useCallback((
     lang: 'vi' | 'en',
     index: number,
     field: 'url' | 'aspect' | 'title' | 'quote',
@@ -283,9 +302,9 @@ export function useAdminHomepage() {
         return next;
       });
     }
-  };
+  }, []);
 
-  const handleGalleryImageUpload = async (idx: number, newUrl: string) => {
+  const handleGalleryImageUpload = useCallback(async (idx: number, newUrl: string) => {
     handleGalleryFieldChange('vi', idx, 'url', newUrl);
     handleGalleryFieldChange('en', idx, 'url', newUrl);
     if (!newUrl) return;
@@ -313,7 +332,7 @@ export function useAdminHomepage() {
     } finally {
       setGalleryAiLoading((prev) => ({ ...prev, [idx]: false }));
     }
-  };
+  }, []);
 
   // ── Derived display values for banner preview ──
   const displayTitle = locale === 'vi' ? bannerTitleVi : bannerTitleEn;

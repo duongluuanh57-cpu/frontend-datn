@@ -145,8 +145,6 @@ export function BrandsMarquee() {
                   fill
                   sizes="(max-width: 768px) 120px, 160px"
                   className="object-contain"
-                  quality={100}
-                  unoptimized
                   priority={index < 6}
                   loading={index < 6 ? undefined : "lazy"}
                 />

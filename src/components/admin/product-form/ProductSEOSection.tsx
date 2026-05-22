@@ -2,17 +2,19 @@
 
 import React from 'react';
 import { Search } from 'lucide-react';
-import { UseProductFormReturn } from './useProductForm';
+import { ProductFormData } from './useProductForm';
 
-export function ProductSEOSection({ formHelpers }: { formHelpers: UseProductFormReturn }) {
-  const {
-    t,
-    isVi,
-    formData,
-    update,
-    isFormComplete,
-  } = formHelpers;
+interface ProductSEOSectionProps {
+  t: (key: string) => string;
+  isVi: boolean;
+  formData: ProductFormData;
+  update: (patch: Partial<ProductFormData>) => void;
+  isFormComplete: boolean;
+}
 
+export const ProductSEOSection = React.memo(function ProductSEOSection({
+  t, isVi, formData, update, isFormComplete,
+}: ProductSEOSectionProps) {
   return (
     <section className="admin-form-card admin-form-grid__seo">
       <div className="admin-form-card__head">
@@ -82,12 +84,12 @@ export function ProductSEOSection({ formHelpers }: { formHelpers: UseProductForm
 
         <div className="admin-status-pill">
           <span className="admin-status-pill__label">
-            <span 
-              className="admin-status-pill__dot" 
-              style={{ 
+            <span
+              className="admin-status-pill__dot"
+              style={{
                 background: isFormComplete ? 'var(--admin-success)' : 'var(--admin-warning)',
                 boxShadow: isFormComplete ? '0 0 8px var(--admin-success)' : '0 0 8px var(--admin-warning)'
-              }} 
+              }}
               aria-hidden="true"
             />
             {t('fields.status')}
@@ -99,4 +101,4 @@ export function ProductSEOSection({ formHelpers }: { formHelpers: UseProductForm
       </div>
     </section>
   );
-}
+});

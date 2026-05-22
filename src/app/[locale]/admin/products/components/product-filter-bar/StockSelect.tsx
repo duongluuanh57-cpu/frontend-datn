@@ -1,14 +1,14 @@
 'use client';
 
 import React from 'react';
-import { UseProductCatalogReturn } from '@/hooks/useProductCatalog';
+import { UseProductFiltersReturn } from '@/hooks/useProductFilters';
 
 interface StockSelectProps {
-  catalog: UseProductCatalogReturn;
+  filters: UseProductFiltersReturn;
 }
 
-export function StockSelect({ catalog }: StockSelectProps) {
-  const { isVi, stockFilter, setStockFilter } = catalog;
+export function StockSelect({ filters }: StockSelectProps) {
+  const { isVi, stockFilter, setStockFilter } = filters;
 
   return (
     <select

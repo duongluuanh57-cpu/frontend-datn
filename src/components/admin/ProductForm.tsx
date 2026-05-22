@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useProductForm, ProductFormData } from './product-form/useProductForm';
+import { useProductForm, ProductFormData, UseProductFormReturn } from './product-form/useProductForm';
 import { ProductFormToolbar } from './product-form/ProductFormToolbar';
 import { ProductDetailsSection } from './product-form/ProductDetailsSection';
 import { ProductMediaSection } from './product-form/ProductMediaSection';
@@ -14,29 +14,109 @@ export interface ProductFormProps {
 }
 
 export function ProductForm({ initialData, productId }: ProductFormProps) {
-  const formHelpers = useProductForm({ initialData, productId });
+  const {
+    t, isVi, isSubmitting, formData, update,
+    handleSubmit, isImageUploading, setIsImageUploading,
+    parsedSizes, selectedSizes, isFormComplete,
+    brands, tags, scentGroups, concentrations, segments,
+    selectedTags, handleTagToggle,
+    isTagModalOpen, setIsTagModalOpen,
+    isGenderModalOpen, setIsGenderModalOpen,
+    isScentGroupModalOpen, setIsScentGroupModalOpen,
+    isConcentrationModalOpen, setIsConcentrationModalOpen,
+    isSegmentModalOpen, setIsSegmentModalOpen,
+    customGender, setCustomGender,
+    customScentGroup, setCustomScentGroup,
+    customConcentration, setCustomConcentration,
+    customSegment, setCustomSegment,
+    selectedGenders, selectedScentGroups, selectedConcentrations, selectedSegments,
+    handleGenderToggle, handleScentGroupToggle, handleConcentrationToggle, handleSegmentToggle,
+    addScentGroupMutation, addConcentrationMutation, addSegmentMutation,
+    isPriceSuggestModalOpen, setIsPriceSuggestModalOpen,
+    isSuggestingPrice, priceMarkupPercentage,
+    priceSuggestionData, setPriceSuggestionData,
+    activeSuggestContext, setActiveSuggestContext,
+    dynamicSizeReport, dynamicDiscountReport,
+    handleOpenPriceSuggestion, handleRecalculatePriceMarkup,
+  } = useProductForm({ initialData, productId });
 
   return (
     <>
-      <form onSubmit={formHelpers.handleSubmit} className="admin-form-page">
-        <ProductFormToolbar formHelpers={formHelpers} />
+      <form onSubmit={handleSubmit} className="admin-form-page">
+        <ProductFormToolbar
+          t={t}
+          isVi={isVi}
+          isSubmitting={isSubmitting}
+          isImageUploading={isImageUploading}
+          productId={productId}
+        />
 
         <div className="admin-form-grid">
-          {/* Cột trái: Thông tin sản phẩm */}
           <div className="admin-form-column-left">
-            <ProductDetailsSection formHelpers={formHelpers} />
+            <ProductDetailsSection
+              t={t}
+              isVi={isVi}
+              formData={formData}
+              update={update}
+              priceMarkupPercentage={priceMarkupPercentage}
+              dynamicSizeReport={dynamicSizeReport}
+              dynamicDiscountReport={dynamicDiscountReport}
+              setIsPriceSuggestModalOpen={setIsPriceSuggestModalOpen}
+              setPriceSuggestionData={setPriceSuggestionData}
+              setActiveSuggestContext={setActiveSuggestContext}
+              handleOpenPriceSuggestion={handleOpenPriceSuggestion}
+              setIsGenderModalOpen={setIsGenderModalOpen}
+              setIsScentGroupModalOpen={setIsScentGroupModalOpen}
+              setIsConcentrationModalOpen={setIsConcentrationModalOpen}
+              setIsSegmentModalOpen={setIsSegmentModalOpen}
+              selectedGenders={selectedGenders}
+              selectedScentGroups={selectedScentGroups}
+              selectedConcentrations={selectedConcentrations}
+              selectedSegments={selectedSegments}
+            />
           </div>
 
-          {/* Cột phải: Media & Phân loại, SEO */}
           <div className="admin-form-column-right">
-            <ProductMediaSection formHelpers={formHelpers} />
-            <ProductSEOSection formHelpers={formHelpers} />
+            <ProductMediaSection
+              t={t}
+              isVi={isVi}
+              formData={formData}
+              update={update}
+              setIsImageUploading={setIsImageUploading}
+              brands={brands}
+              tags={tags}
+              selectedTags={selectedTags}
+              setIsTagModalOpen={setIsTagModalOpen}
+            />
+            <ProductSEOSection
+              t={t}
+              isVi={isVi}
+              formData={formData}
+              update={update}
+              isFormComplete={isFormComplete}
+            />
           </div>
         </div>
       </form>
 
-      {/* Render all overlay modals */}
-      <ProductFormModals formHelpers={formHelpers} />
+      <ProductFormModals
+        formHelpers={{
+          t, isVi, formData, update,
+          tags, selectedTags, handleTagToggle, isTagModalOpen, setIsTagModalOpen,
+          isGenderModalOpen, setIsGenderModalOpen, isScentGroupModalOpen, setIsScentGroupModalOpen,
+          isConcentrationModalOpen, setIsConcentrationModalOpen, isSegmentModalOpen, setIsSegmentModalOpen,
+          customGender, setCustomGender, customScentGroup, setCustomScentGroup,
+          customConcentration, setCustomConcentration, customSegment, setCustomSegment,
+          selectedGenders, selectedScentGroups, selectedConcentrations, selectedSegments,
+          handleGenderToggle, handleScentGroupToggle, handleConcentrationToggle, handleSegmentToggle,
+          scentGroups, concentrations, segments,
+          addScentGroupMutation, addConcentrationMutation, addSegmentMutation,
+          isPriceSuggestModalOpen, setIsPriceSuggestModalOpen,
+          isSuggestingPrice, priceMarkupPercentage, priceSuggestionData, setPriceSuggestionData,
+          activeSuggestContext, setActiveSuggestContext,
+          handleRecalculatePriceMarkup, parsedSizes, selectedSizes,
+        } as UseProductFormReturn}
+      />
     </>
   );
 }

@@ -78,7 +78,8 @@ export function BrandUsp() {
   };
 
   return (
-    <section className="relative w-full bg-transparent pt-12 pb-10 lg:pt-20 lg:pb-14 overflow-hidden">
+    <section className="relative w-full bg-transparent pt-12 pb-10 lg:pt-20 lg:pb-14 overflow-hidden"
+      style={{ contain: 'content', contentVisibility: 'auto' } as React.CSSProperties}>
       
       {/* Decorative Liquid Glass Glowing Blobs in the background */}
       <div className="absolute top-1/2 left-1/4 -z-10 h-72 w-72 -translate-y-1/2 rounded-full bg-[#D4A5A5]/8 blur-[80px] pointer-events-none" />
@@ -101,7 +102,7 @@ export function BrandUsp() {
                 key={index}
                 variants={cardVariants}
                 whileHover={{ y: -8, scale: 1.02 }}
-                className="group relative flex flex-col items-center p-7 text-center rounded-2xl border border-white/60 bg-gradient-to-b from-white/45 via-white/30 to-white/15 backdrop-blur-xl shadow-[0_8px_32px_rgba(122,92,92,0.03)] hover:shadow-[0_20px_50px_rgba(212,165,165,0.12),0_0_30px_rgba(212,165,165,0.06)_inset] hover:border-[#D4A5A5]/40 transition-all duration-500 cursor-pointer overflow-hidden"
+                className="group relative flex flex-col items-center p-7 text-center rounded-2xl border border-white/60 bg-gradient-to-b from-white/45 via-white/30 to-white/15 shadow-[0_8px_32px_rgba(122,92,92,0.03)] hover:shadow-[0_20px_50px_rgba(212,165,165,0.12),0_0_30px_rgba(212,165,165,0.06)_inset] hover:border-[#D4A5A5]/40 transition-all duration-500 cursor-pointer overflow-hidden"
               >
                 {/* Dynamic light reflection & inner glowing aura */}
                 <div 

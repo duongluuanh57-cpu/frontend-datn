@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, useInView } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslations, useLocale } from 'next-intl';
@@ -22,6 +22,8 @@ interface CountdownTimerProps {
 }
 
 function CountdownTimer({ targetDate, locale }: CountdownTimerProps) {
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: false });
   const [timeLeft, setTimeLeft] = useState<{
     days: number;
     hours: number;
@@ -30,8 +32,7 @@ function CountdownTimer({ targetDate, locale }: CountdownTimerProps) {
   }>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
   useEffect(() => {
-    if (!targetDate) {
-      setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+    if (!targetDate || !isInView) {
       return;
     }
 
@@ -56,7 +57,7 @@ function CountdownTimer({ targetDate, locale }: CountdownTimerProps) {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [targetDate]);
+  }, [targetDate, isInView]);
 
   const pad = (n: number) => String(n).padStart(2, '0');
   const labels = locale === 'vi'
@@ -65,6 +66,7 @@ function CountdownTimer({ targetDate, locale }: CountdownTimerProps) {
 
   return (
     <motion.div
+      ref={ref}
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.15, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
@@ -121,42 +123,31 @@ export function SaleProducts() {
   const targetDate = products?.[0]?.discountEndDate;
 
   return (
-    <section className="new-products-section w-full bg-transparent pt-[56px] pb-10 lg:pt-[96px] lg:pb-14 overflow-hidden">
+    <section className="new-products-section w-full bg-transparent pt-[56px] pb-10 lg:pt-[96px] lg:pb-14 overflow-hidden"
+      style={{ contain: 'content', contentVisibility: 'auto' } as React.CSSProperties}>
       <div className="max-w-[1400px] mx-auto px-6">
 
         {/* Header Section */}
         <div className="relative mb-16 lg:mb-20 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 border-b border-[#D4A5A5]/10 pb-8">
-          <div className="flex flex-col items-center lg:items-start text-center lg:text-left">
-            <motion.span
-              initial={{ opacity: 0, letterSpacing: '0.2em' }}
-              whileInView={{ opacity: 1, letterSpacing: '0.45em' }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
-              className="text-[10px] font-bold uppercase text-[#D4A5A5]"
-            >
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="flex flex-col items-center lg:items-start text-center lg:text-left"
+          >
+            <span className="text-[10px] font-bold uppercase text-[#D4A5A5]">
               L'essence Promotions
-            </motion.span>
-            <motion.h2
-              initial={{ opacity: 0, y: 15 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.1, duration: 0.8 }}
-              className="mt-4 text-3xl font-medium text-[#7A5C5C] md:text-4xl lg:text-5xl"
-            >
+            </span>
+            <h2 className="mt-4 text-3xl font-medium text-[#7A5C5C] md:text-4xl lg:text-5xl">
               {t('title')}
-            </motion.h2>
-            <motion.p
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 0.6 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.2, duration: 0.8 }}
-              className="mt-3 text-[11px] md:text-xs text-[#7A5C5C] max-w-[480px] font-medium leading-relaxed"
-            >
+            </h2>
+            <p className="mt-3 text-[11px] md:text-xs text-[#7A5C5C] max-w-[480px] font-medium leading-relaxed">
               {locale === 'vi' 
                 ? 'Trải nghiệm những hương thơm Niche tinh tuyển với ưu đãi đặc quyền giới hạn.' 
                 : 'Curated selection of exquisite Niche fragrances with limited luxury offers.'}
-            </motion.p>
-          </div>
+            </p>
+          </motion.div>
 
           {/* Active Campaign Countdown */}
           <div className="flex justify-center lg:justify-end">

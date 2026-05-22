@@ -231,7 +231,7 @@ export function ProductCard({ product, index = 0, priority = false, configOverri
                   src={resolveImageUrl(product.image)}
                   alt={product.name}
                   fill
-                  unoptimized
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                   className="product-image object-contain"
                   priority={priority}
                 />

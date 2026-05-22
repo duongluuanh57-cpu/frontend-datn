@@ -3,12 +3,18 @@
 import React from 'react';
 import { ChevronLeft, Loader2, Save } from 'lucide-react';
 import { Link } from '@/navigation';
-import { UseProductFormReturn } from './useProductForm';
 
-export function ProductFormToolbar({ formHelpers }: { formHelpers: UseProductFormReturn }) {
-  const { t, isVi, isSubmitting, isImageUploading, formData } = formHelpers;
-  const productId = (formHelpers as any).productId || (formHelpers as any).initialData?._id; // safe fallback or passing down
+interface ProductFormToolbarProps {
+  t: (key: string) => string;
+  isVi: boolean;
+  isSubmitting: boolean;
+  isImageUploading: boolean;
+  productId?: string;
+}
 
+export const ProductFormToolbar = React.memo(function ProductFormToolbar({
+  t, isVi, isSubmitting, isImageUploading, productId,
+}: ProductFormToolbarProps) {
   return (
     <div className="admin-form-toolbar">
       <div className="admin-form-toolbar__left">
@@ -24,9 +30,9 @@ export function ProductFormToolbar({ formHelpers }: { formHelpers: UseProductFor
         </div>
       </div>
 
-      <button 
-        type="submit" 
-        disabled={isSubmitting || isImageUploading} 
+      <button
+        type="submit"
+        disabled={isSubmitting || isImageUploading}
         className="admin-btn-submit"
       >
         {isSubmitting || isImageUploading ? (
@@ -34,12 +40,12 @@ export function ProductFormToolbar({ formHelpers }: { formHelpers: UseProductFor
         ) : (
           <Save size={16} />
         )}
-        {isImageUploading 
-          ? (isVi ? 'Đang tải ảnh...' : 'Uploading image...') 
-          : isSubmitting 
+        {isImageUploading
+          ? (isVi ? 'Đang tải ảnh...' : 'Uploading image...')
+          : isSubmitting
             ? (isVi ? 'Đang lưu...' : 'Saving...')
             : t('saveToCollection')}
       </button>
     </div>
   );
-}
+});

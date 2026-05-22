@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { toast } from 'sonner';
 import { User, RoleFilter, UserFormData } from '@/types/admin';
 
@@ -23,9 +23,8 @@ export interface UseAdminUsersReturn {
   users: User[] | undefined;
   isLoading: boolean;
   error: any;
-  filteredUsers: User[];
+  total: number;
   totalPages: number;
-  paginatedUsers: User[];
   stats: {
     total: number;
     admins: number;
@@ -51,13 +50,35 @@ export function useAdminUsers(): UseAdminUsersReturn {
   const [viewingUser, setViewingUser] = useState<User | null>(null);
   const itemsPerPage = 10;
 
-  const { data: users, isLoading, error } = useQuery({
-    queryKey: ['admin-users'],
+  // Build query params
+  const queryParams = useMemo(() => {
+    const params: Record<string, string | number> = {
+      page: currentPage,
+      limit: itemsPerPage,
+    };
+    if (searchTerm) params.search = searchTerm;
+    if (roleFilter !== 'ALL') params.role = roleFilter;
+    return params;
+  }, [currentPage, searchTerm, roleFilter]);
+
+  // Fetch users with server-side pagination
+  const { data: pageData, isLoading, error } = useQuery({
+    queryKey: ['admin-users', queryParams],
     queryFn: async () => {
-      const { data } = await api.get('/users');
-      return data.data as User[];
+      const { data } = await api.get('/users', { params: queryParams });
+      return data.data as { items: User[]; total: number; page: number; totalPages: number };
     },
+    staleTime: 15_000,
   });
+
+  const users = pageData?.items;
+  const total = pageData?.total || 0;
+  const totalPages = pageData?.totalPages || 0;
+
+  // Reset page on filter change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, roleFilter]);
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => api.delete(`/users/${id}`),
@@ -109,36 +130,24 @@ export function useAdminUsers(): UseAdminUsersReturn {
     }
   });
 
-  // Filter and pagination logic
-  const filteredUsers = useMemo(() => {
-    if (!users) return [];
-    
-    return users.filter(user => {
-      const matchesSearch = 
-        user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesRole = roleFilter === 'ALL' || user.role === roleFilter;
-      
-      return matchesSearch && matchesRole;
-    });
-  }, [users, searchTerm, roleFilter]);
-
-  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
-  const paginatedUsers = filteredUsers.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  // Stats - computed from server data (total from pagination response, roles from API)
+  const { data: allUsers } = useQuery({
+    queryKey: ['admin-users-stats'],
+    queryFn: async () => {
+      const { data } = await api.get('/users');
+      return data.data as User[];
+    },
+    staleTime: 60_000,
+  });
 
   const stats = useMemo(() => {
-    if (!users) return { total: 0, admins: 0, regularUsers: 0 };
-    
+    if (!allUsers) return { total: 0, admins: 0, regularUsers: 0 };
     return {
-      total: users.length,
-      admins: users.filter(u => u.role === 'ADMIN').length,
-      regularUsers: users.filter(u => u.role === 'USER').length
+      total: allUsers.length,
+      admins: allUsers.filter(u => u.role === 'ADMIN').length,
+      regularUsers: allUsers.filter(u => u.role === 'USER').length
     };
-  }, [users]);
+  }, [allUsers]);
 
   const handleOpenModal = (user?: User) => {
     setEditingUser(user || null);
@@ -152,9 +161,29 @@ export function useAdminUsers(): UseAdminUsersReturn {
 
   const handleToggleRole = (user: User) => {
     const newRole = user.role === 'ADMIN' ? 'USER' : 'ADMIN';
-    if (confirm(`Bạn có chắc muốn thay đổi vai trò của "${user.username}" thành ${newRole}?`)) {
-      updateRoleMutation.mutate({ id: user._id, role: newRole });
-    }
+    toast.custom((tId) => (
+      <div className="bg-white rounded-xl border border-gray-200 shadow-lg p-4 flex flex-col gap-3 min-w-[280px]">
+        <p className="text-sm font-semibold text-[#7A5C5C]">Xác nhận đổi vai trò</p>
+        <p className="text-xs text-[#7A5C5C]/70">Bạn có chắc muốn thay đổi vai trò của &quot;{user.username}&quot; thành {newRole}?</p>
+        <div className="flex gap-2 justify-end pt-1">
+          <button
+            onClick={() => toast.dismiss(tId)}
+            className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 text-[#7A5C5C] hover:bg-gray-50 transition-colors"
+          >
+            Hủy
+          </button>
+          <button
+            onClick={() => {
+              updateRoleMutation.mutate({ id: user._id, role: newRole });
+              toast.dismiss(tId);
+            }}
+            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#7A5C5C] text-white hover:bg-[#604444] transition-colors"
+          >
+            Xác nhận
+          </button>
+        </div>
+      </div>
+    ), { duration: Infinity });
   };
 
   return {
@@ -174,9 +203,8 @@ export function useAdminUsers(): UseAdminUsersReturn {
     users,
     isLoading,
     error,
-    filteredUsers,
+    total,
     totalPages,
-    paginatedUsers,
     stats,
     deleteMutation,
     updateRoleMutation,

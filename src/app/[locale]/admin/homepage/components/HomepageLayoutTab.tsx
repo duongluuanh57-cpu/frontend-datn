@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { DndContext, closestCenter } from '@dnd-kit/core';
+import { DndContext, closestCenter, type DragEndEvent, type SensorDescriptor } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import {
@@ -18,7 +18,6 @@ import {
   Image as ImageIcon,
   Layout
 } from 'lucide-react';
-import type { UseAdminHomepageReturn } from '@/hooks/useAdminHomepage';
 import type { SectionConfig } from '@/hooks/useHomepageConfig';
 
 const SECTION_META: Record<
@@ -159,17 +158,21 @@ function SortableSectionCard({ section, onToggle }: SortableSectionCardProps) {
 }
 
 interface HomepageLayoutTabProps {
-  adminHomepage: UseAdminHomepageReturn;
+  sections: SectionConfig[];
+  isLoadingConfig: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  sensors: SensorDescriptor<any>[];
+  handleDragEnd: (event: DragEndEvent) => void;
+  handleToggleSection: (id: string) => void;
 }
 
-export function HomepageLayoutTab({ adminHomepage }: HomepageLayoutTabProps) {
-  const {
-    sections,
-    isLoadingConfig,
-    sensors,
-    handleDragEnd,
-    handleToggleSection
-  } = adminHomepage;
+export const HomepageLayoutTab = React.memo(function HomepageLayoutTab({
+  sections,
+  isLoadingConfig,
+  sensors,
+  handleDragEnd,
+  handleToggleSection
+}: HomepageLayoutTabProps) {
 
   return (
     <motion.div
@@ -255,4 +258,4 @@ export function HomepageLayoutTab({ adminHomepage }: HomepageLayoutTabProps) {
       )}
     </motion.div>
   );
-}
+});

@@ -16,7 +16,12 @@ function HomepageConfigContent() {
 
   return (
     <div className="admin-dashboard p-6 max-w-[1400px] mx-auto">
-      <HomepageHeader adminHomepage={adminHomepage} />
+      <HomepageHeader
+        isBannersMode={adminHomepage.isBannersMode}
+        isSaving={adminHomepage.isSaving}
+        handleRestoreDefaults={adminHomepage.handleRestoreDefaults}
+        handleSave={adminHomepage.handleSave}
+      />
 
       {!isBannersMode && (
         <div className="flex flex-wrap border-b border-gray-200 mb-8 select-none gap-1">
@@ -42,10 +47,49 @@ function HomepageConfigContent() {
       )}
 
       <AnimatePresence mode="wait">
-        {activeTab === 'layout' && <HomepageLayoutTab adminHomepage={adminHomepage} />}
-        {activeTab === 'banners' && <HomepageBannersTab adminHomepage={adminHomepage} />}
-        {activeTab === 'gallery' && <HomepageGalleryTab adminHomepage={adminHomepage} />}
-        {activeTab === 'cardCustomizer' && <HomepageCardTab adminHomepage={adminHomepage} />}
+        {activeTab === 'layout' && (
+          <HomepageLayoutTab
+            sections={adminHomepage.sections}
+            isLoadingConfig={adminHomepage.isLoadingConfig}
+            sensors={adminHomepage.sensors}
+            handleDragEnd={adminHomepage.handleDragEnd}
+            handleToggleSection={adminHomepage.handleToggleSection}
+          />
+        )}
+        {activeTab === 'banners' && (
+          <HomepageBannersTab
+            locale={adminHomepage.locale}
+            banners={adminHomepage.banners}
+            setBanners={adminHomepage.setBanners}
+            displayTitle={adminHomepage.displayTitle}
+            displaySubtitle={adminHomepage.displaySubtitle}
+            displayLabel={adminHomepage.displayLabel}
+            setBannerTitleVi={adminHomepage.setBannerTitleVi}
+            setBannerTitleEn={adminHomepage.setBannerTitleEn}
+            setBannerSubtitleVi={adminHomepage.setBannerSubtitleVi}
+            setBannerSubtitleEn={adminHomepage.setBannerSubtitleEn}
+            setBannerLabelVi={adminHomepage.setBannerLabelVi}
+            setBannerLabelEn={adminHomepage.setBannerLabelEn}
+          />
+        )}
+        {activeTab === 'gallery' && (
+          <HomepageGalleryTab
+            galleryVi={adminHomepage.galleryVi}
+            galleryEn={adminHomepage.galleryEn}
+            galleryAiLoading={adminHomepage.galleryAiLoading}
+            handleGalleryFieldChange={adminHomepage.handleGalleryFieldChange}
+            handleGalleryImageUpload={adminHomepage.handleGalleryImageUpload}
+          />
+        )}
+        {activeTab === 'cardCustomizer' && (
+          <HomepageCardTab
+            cardConfig={adminHomepage.cardConfig}
+            setCardConfig={adminHomepage.setCardConfig}
+            cardElementOrder={adminHomepage.cardElementOrder}
+            setCardElementOrder={adminHomepage.setCardElementOrder}
+            cardElementSensors={adminHomepage.cardElementSensors}
+          />
+        )}
       </AnimatePresence>
     </div>
   );

@@ -27,42 +27,31 @@ export function NewProducts() {
   if (error) return null;
 
   return (
-    <section className="new-products-section w-full bg-transparent pt-12 pb-10 lg:pt-20 lg:pb-14 overflow-hidden">
+    <section className="new-products-section w-full bg-transparent pt-12 pb-10 lg:pt-20 lg:pb-14 overflow-hidden"
+      style={{ contain: 'content', contentVisibility: 'auto' } as React.CSSProperties}>
       <div className="max-w-[1400px] mx-auto px-6">
         
         {/* Header Section */}
         <div className="relative mb-16 lg:mb-20 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 border-b border-[#D4A5A5]/10 pb-8">
-          <div className="flex flex-col items-center lg:items-start text-center lg:text-left">
-            <motion.span 
-              initial={{ opacity: 0, letterSpacing: '0.2em' }}
-              whileInView={{ opacity: 1, letterSpacing: '0.45em' }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
-              className="text-[10px] font-bold uppercase text-[#D4A5A5]"
-            >
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="flex flex-col items-center lg:items-start text-center lg:text-left"
+          >
+            <span className="text-[10px] font-bold uppercase text-[#D4A5A5]">
               Sản phẩm mới
-            </motion.span>
-            <motion.h2 
-              initial={{ opacity: 0, y: 15 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.1, duration: 0.8 }}
-              className="mt-4 text-3xl font-medium text-[#7A5C5C] md:text-4xl lg:text-5xl"
-            >
+            </span>
+            <h2 className="mt-4 text-3xl font-medium text-[#7A5C5C] md:text-4xl lg:text-5xl">
               Sản phẩm mới
-            </motion.h2>
-            <motion.p
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 0.6 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.2, duration: 0.8 }}
-              className="mt-3 text-[11px] md:text-xs text-[#7A5C5C] max-w-[480px] font-medium leading-relaxed"
-            >
+            </h2>
+            <p className="mt-3 text-[11px] md:text-xs text-[#7A5C5C] max-w-[480px] font-medium leading-relaxed">
               {locale === 'vi'
                 ? 'Khám phá những kiệt tác mùi hương mới nhất vừa cập bến bộ sưu tập L\'essence.'
                 : 'Discover the latest olfactory masterpieces freshly arrived in our boutique.'}
-            </motion.p>
-          </div>
+            </p>
+          </motion.div>
 
           {/* Filters Controls Bar */}
           {!isLoading && products && products.length > 0 && (
@@ -85,7 +74,7 @@ export function NewProducts() {
             ))
           ) : (
             <div className="col-span-full py-16 flex flex-col items-center justify-center text-center">
-              <span className="text-xs font-medium text-[#7A5C5C]/60 backdrop-blur-md bg-white/30 border border-[#7A5C5C]/10 rounded-2xl px-8 py-6 shadow-sm">
+              <span className="text-xs font-medium text-[#7A5C5C]/60 bg-white/60 border border-[#7A5C5C]/10 rounded-2xl px-8 py-6 shadow-sm">
                 {locale === 'vi' 
                   ? 'Không tìm thấy sản phẩm mới nào phù hợp với bộ lọc.' 
                   : 'No new products found matching the filters.'}

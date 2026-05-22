@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { Loader2, Sparkles, Pencil, Lock, Trash2 } from 'lucide-react';
+import { Loader2, Sparkles, Search, Pencil, Lock, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 import type { UseAdminTaxonomyReturn } from '@/hooks/useAdminTaxonomy';
 
 interface TaxonomyTableProps {
@@ -16,7 +17,9 @@ export function TaxonomyTable({ adminTaxonomy }: TaxonomyTableProps) {
     items,
     currentTabConfig,
     handleEditClick,
-    deleteMutation
+    deleteMutation,
+    total,
+    searchTerm,
   } = adminTaxonomy;
 
   return (
@@ -43,12 +46,21 @@ export function TaxonomyTable({ adminTaxonomy }: TaxonomyTableProps) {
                   </div>
                 </td>
               </tr>
-            ) : !items?.length ? (
+            ) : total === 0 && !searchTerm ? (
               <tr>
                 <td colSpan={activeTab === 'tags' ? 6 : 5}>
                   <div className="admin-empty" style={{ padding: '60px 0' }}>
                     <Sparkles className="admin-empty__icon" />
                     <p>{isVi ? 'Chưa có bản ghi nào được tạo lập.' : 'No taxonomy items found.'}</p>
+                  </div>
+                </td>
+              </tr>
+            ) : !items?.length ? (
+              <tr>
+                <td colSpan={activeTab === 'tags' ? 6 : 5}>
+                  <div className="admin-empty" style={{ padding: '60px 0' }}>
+                    <Search className="admin-empty__icon" style={{ opacity: 0.5, marginBottom: '8px' }} />
+                    <p>{isVi ? 'Không tìm thấy bản ghi nào khớp với bộ lọc.' : 'No items matching the filters found.'}</p>
                   </div>
                 </td>
               </tr>
@@ -112,12 +124,31 @@ export function TaxonomyTable({ adminTaxonomy }: TaxonomyTableProps) {
                             className="admin-icon-btn admin-icon-btn--danger"
                             aria-label={`Xóa ${item.name}`}
                             onClick={() => {
-                              const confirmMsg = isVi 
-                                ? `Bạn có chắc chắn muốn xóa "${item.name}" khỏi cơ sở dữ liệu?`
-                                : `Are you sure you want to delete "${item.name}" from the database?`;
-                              if (confirm(confirmMsg)) {
-                                deleteMutation.mutate(item._id);
-                              }
+                              toast.custom((tId) => (
+                                <div className="bg-white rounded-xl border border-gray-200 shadow-lg p-4 flex flex-col gap-3 min-w-[280px]">
+                                  <p className="text-sm font-semibold text-[#7A5C5C]">{isVi ? 'Xác nhận xóa' : 'Confirm deletion'}</p>
+                                  <p className="text-xs text-[#7A5C5C]/70">
+                                    {isVi ? `Bạn có chắc muốn xóa "${item.name}"?` : `Are you sure you want to delete "${item.name}"?`}
+                                  </p>
+                                  <div className="flex gap-2 justify-end pt-1">
+                                    <button
+                                      onClick={() => toast.dismiss(tId)}
+                                      className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 text-[#7A5C5C] hover:bg-gray-50 transition-colors"
+                                    >
+                                      {isVi ? 'Hủy' : 'Cancel'}
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        deleteMutation.mutate(item._id);
+                                        toast.dismiss(tId);
+                                      }}
+                                      className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors"
+                                    >
+                                      {isVi ? 'Xóa' : 'Delete'}
+                                    </button>
+                                  </div>
+                                </div>
+                              ), { duration: Infinity });
                             }}
                           >
                             <Trash2 size={17} />

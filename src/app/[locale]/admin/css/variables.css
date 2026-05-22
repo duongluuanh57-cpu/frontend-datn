@@ -1,0 +1,88 @@
+/* L'essence  EAdmin design system */
+
+/* Custom Cursor Support inside Admin Panel */
+.admin-shell, .admin-shell * {
+  cursor: url('/cursor.png') 0 0, auto;
+}
+
+.admin-shell a,
+.admin-shell button,
+.admin-shell input[type="button"],
+.admin-shell input[type="submit"],
+.admin-shell select,
+.admin-shell label,
+.admin-shell [role="button"],
+.admin-shell [onclick],
+.admin-shell .clickable,
+.admin-shell .admin-select,
+.admin-shell .admin-btn-submit,
+.admin-shell .admin-upload__dropzone,
+.admin-shell .admin-upload__remove-btn,
+.admin-shell .admin-status-pill,
+.admin-shell .admin-icon-btn,
+.admin-shell .admin-nav-item,
+.admin-shell .admin-nav-item *,
+.admin-shell .admin-sidebar__toggle,
+.admin-shell .admin-sidebar__toggle *,
+.admin-shell .admin-logout-btn,
+.admin-shell .admin-logout-btn *,
+.admin-shell .admin-header__avatar,
+.admin-shell .admin-header__avatar *,
+.admin-shell .admin-header__exit,
+.admin-shell .admin-header__exit * {
+  cursor: url('/pointer.png') 0 0, pointer !important;
+}
+
+/* Ensure read-only input elements representing action fields also get the pointer cursor */
+.admin-shell input[readonly],
+.admin-shell .admin-input[readonly] {
+  cursor: url('/pointer.png') 0 0, pointer !important;
+}
+
+/* Standard text inputs get the normal custom cursor, but on focus/active get text cursor for selection */
+.admin-shell input:not([readonly]),
+.admin-shell textarea {
+  cursor: url('/cursor.png') 0 0, text;
+}
+
+.admin-shell input:not([readonly]):focus,
+.admin-shell textarea:focus,
+.admin-shell input:not([readonly]):active,
+.admin-shell textarea:active {
+  cursor: text !important;
+}
+
+.admin-shell {
+  --admin-bg: #f5f1ed;
+  --admin-surface: #ffffff;
+  --admin-surface-muted: #faf8f6;
+  --admin-border: #e8e0da;
+  --admin-border-subtle: rgba(74, 55, 40, 0.06);
+  --admin-text: #3d2e24;
+  --admin-text-secondary: #6b564c;
+  --admin-text-muted: #9a857c;
+  --admin-accent: #5c4a42;
+  --admin-accent-hover: #4a3728;
+  --admin-highlight: #c9a99a;
+  --admin-success: #5a7d62;
+  --admin-warning: #b8860b;
+  --admin-danger: #b85c5c;
+  --admin-sidebar-w: 248px;
+  --admin-sidebar-w-collapsed: 76px;
+  --admin-header-h: 64px;
+  --admin-radius: 14px;
+  --admin-radius-lg: 20px;
+  --admin-shadow-sm: 0 1px 2px rgba(61, 46, 36, 0.04);
+  --admin-shadow: 0 4px 24px rgba(61, 46, 36, 0.06);
+  --admin-shadow-lg: 0 12px 40px rgba(61, 46, 36, 0.08);
+  --admin-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --admin-content-max: 1280px;
+
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--admin-bg);
+  color: var(--admin-text);
+  font-family: var(--font-inter), system-ui, sans-serif;
+}
+

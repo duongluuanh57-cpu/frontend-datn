@@ -37,7 +37,8 @@ export function CustomerReviews() {
   const t = useTranslations('Index'); // Fallback to index if no specific translations exist, or hardcode
 
   return (
-    <section className="py-12 lg:py-20 relative overflow-hidden bg-[var(--background)]">
+    <section className="py-12 lg:py-20 relative overflow-hidden bg-[var(--background)]"
+      style={{ contain: 'content', contentVisibility: 'auto' } as React.CSSProperties}>
       {/* Subtle background decoration */}
       <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[var(--primary)] to-transparent opacity-20"></div>
       
@@ -66,7 +67,7 @@ export function CustomerReviews() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.2, duration: 0.6 }}
-              className="bg-white/40 backdrop-blur-sm p-8 rounded-2xl border border-[var(--accent)] border-opacity-30 relative group hover:bg-white/60 transition-all duration-500 shadow-[0_4px_20px_rgba(212,165,165,0.05)] hover:shadow-[0_8px_30px_rgba(212,165,165,0.15)]"
+              className="bg-white/40 p-8 rounded-2xl border border-[var(--accent)] border-opacity-30 relative group hover:bg-white/60 transition-all duration-500 shadow-[0_4px_20px_rgba(212,165,165,0.05)] hover:shadow-[0_8px_30px_rgba(212,165,165,0.15)]"
             >
               <Quote className="absolute top-6 right-6 text-[var(--primary)] opacity-20 w-12 h-12 transform -scale-x-100 group-hover:scale-110 transition-transform duration-500" />
               

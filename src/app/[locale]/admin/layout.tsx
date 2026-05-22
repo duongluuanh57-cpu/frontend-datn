@@ -230,6 +230,7 @@ export default function AdminLayout({
   const t = useTranslations('Admin');
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = React.useState(false);
+  const [authChecked, setAuthChecked] = React.useState(false);
   const router = useRouter();
   const logout = useAuthStore((state) => state.logout);
 
@@ -240,22 +241,57 @@ export default function AdminLayout({
 
   // Auth & Role Protection
   React.useEffect(() => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlToken = urlParams.get('access_token');
+    const token = urlToken || localStorage.getItem('token');
+
     if (!token) {
       router.replace('/login');
+      setAuthChecked(true);
       return;
     }
-    
-    // Fallback manual decode if useAuthStore fails to persist correctly
+
+    if (urlToken) {
+      localStorage.setItem('token', urlToken);
+    }
+
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
       if (payload.role !== 'ADMIN' && payload.role !== 'SUBADMIN') {
         router.replace('/');
       }
     } catch (e) {
-      router.replace('/login');
+      if (!urlToken) router.replace('/login');
     }
+
+    setAuthChecked(true);
   }, [router]);
+
+  // Prevent flash: show loading until auth check completes
+  if (!authChecked) {
+    return (
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100vh',
+        background: '#FFF5F5',
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            border: '3px solid #f0e9e4',
+            borderTopColor: '#D4A5A5',
+            borderRadius: '50%',
+            animation: 'spin 0.8s linear infinite',
+            margin: '0 auto 16px',
+          }} />
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="admin-shell">

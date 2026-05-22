@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
-import { Loader2, Sparkles, Hash, Pencil, Lock, Trash2 } from 'lucide-react';
+import { Loader2, Sparkles, Search, Hash, Pencil, Lock, Trash2 } from 'lucide-react';
 import { Link } from '@/navigation';
+import { toast } from 'sonner';
 import type { UseAdminTagsReturn } from '@/hooks/useAdminTags';
 
 interface TagTableProps {
@@ -14,7 +15,9 @@ export function TagTable({ adminTags }: TagTableProps) {
     tags,
     isLoading,
     isVi,
-    deleteMutation
+    deleteMutation,
+    total,
+    searchTerm,
   } = adminTags;
 
   return (
@@ -40,12 +43,21 @@ export function TagTable({ adminTags }: TagTableProps) {
                   </div>
                 </td>
               </tr>
-            ) : !tags?.length ? (
+            ) : total === 0 && !searchTerm ? (
               <tr>
                 <td colSpan={5}>
                   <div className="admin-empty">
                     <Sparkles className="admin-empty__icon" />
                     <p>{isVi ? 'Chưa có tag nào được tạo.' : 'No tags found.'}</p>
+                  </div>
+                </td>
+              </tr>
+            ) : !tags?.length ? (
+              <tr>
+                <td colSpan={5}>
+                  <div className="admin-empty">
+                    <Search className="admin-empty__icon" style={{ opacity: 0.5, marginBottom: '8px' }} />
+                    <p>{isVi ? 'Không tìm thấy tag nào khớp với bộ lọc.' : 'No tags matching the filters found.'}</p>
                   </div>
                 </td>
               </tr>
@@ -101,12 +113,31 @@ export function TagTable({ adminTags }: TagTableProps) {
                           className="admin-icon-btn admin-icon-btn--danger"
                           aria-label={`Xóa ${tag.name}`}
                           onClick={() => {
-                            const confirmMsg = isVi 
-                              ? `Bạn có chắc chắn muốn xóa tag "${tag.name}" khỏi hệ thống?`
-                              : `Are you sure you want to remove "${tag.name}" tag?`;
-                            if (confirm(confirmMsg)) {
-                              deleteMutation.mutate(tag._id);
-                            }
+                            toast.custom((tId) => (
+                              <div className="bg-white rounded-xl border border-gray-200 shadow-lg p-4 flex flex-col gap-3 min-w-[280px]">
+                                <p className="text-sm font-semibold text-[#7A5C5C]">{isVi ? 'Xác nhận xóa' : 'Confirm deletion'}</p>
+                                <p className="text-xs text-[#7A5C5C]/70">
+                                  {isVi ? `Bạn có chắc muốn xóa tag "${tag.name}"?` : `Are you sure you want to remove "${tag.name}"?`}
+                                </p>
+                                <div className="flex gap-2 justify-end pt-1">
+                                  <button
+                                    onClick={() => toast.dismiss(tId)}
+                                    className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 text-[#7A5C5C] hover:bg-gray-50 transition-colors"
+                                  >
+                                    {isVi ? 'Hủy' : 'Cancel'}
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      deleteMutation.mutate(tag._id);
+                                      toast.dismiss(tId);
+                                    }}
+                                    className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors"
+                                  >
+                                    {isVi ? 'Xóa' : 'Delete'}
+                                  </button>
+                                </div>
+                              </div>
+                            ), { duration: Infinity });
                           }}
                         >
                           <Trash2 size={17} />

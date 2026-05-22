@@ -3,21 +3,24 @@
 import React from 'react';
 import { Sparkles, Tag } from 'lucide-react';
 import { MultipleImageUpload } from '@/components/admin/MultipleImageUpload';
-import { UseProductFormReturn, slugify } from './useProductForm';
+import { ProductFormData, slugify } from './useProductForm';
 
-export function ProductMediaSection({ formHelpers }: { formHelpers: UseProductFormReturn }) {
-  const {
-    t,
-    isVi,
-    formData,
-    update,
-    setIsImageUploading,
-    brands,
-    tags,
-    selectedTags,
-    setIsTagModalOpen,
-  } = formHelpers;
+interface ProductMediaSectionProps {
+  t: (key: string) => string;
+  isVi: boolean;
+  formData: ProductFormData;
+  update: (patch: Partial<ProductFormData>) => void;
+  setIsImageUploading: (v: boolean) => void;
+  brands?: { _id: string; name: string; status: string }[];
+  tags?: { _id: string; name: string; slug: string; status: string }[];
+  selectedTags: string[];
+  setIsTagModalOpen: (v: boolean) => void;
+}
 
+export const ProductMediaSection = React.memo(function ProductMediaSection({
+  t, isVi, formData, update, setIsImageUploading,
+  brands, tags, selectedTags, setIsTagModalOpen,
+}: ProductMediaSectionProps) {
   return (
     <section className="admin-form-card">
       <div className="admin-form-card__head">
@@ -30,24 +33,19 @@ export function ProductMediaSection({ formHelpers }: { formHelpers: UseProductFo
         </div>
       </div>
 
-      {/* Lưới hình ảnh (Gồm cả ảnh chính và ảnh phụ) */}
       <div className="mb-4">
         <MultipleImageUpload
           value={formData.image ? [formData.image, ...(formData.images || [])] : []}
           onChange={(urls) => {
             const primary = urls[0] || '';
             const secondary = urls.slice(1);
-            update({
-              image: primary,
-              images: secondary
-            });
+            update({ image: primary, images: secondary });
           }}
           onUploadStateChange={(uploading) => setIsImageUploading(uploading)}
           maxImages={10}
           folder={formData.name.trim() ? `products/${slugify(formData.name)}` : 'products'}
         />
       </div>
-
 
       <div className="admin-form-fields" style={{ marginTop: 10 }}>
         <div className="admin-field">
@@ -78,20 +76,8 @@ export function ProductMediaSection({ formHelpers }: { formHelpers: UseProductFo
           </label>
           <div
             onClick={() => setIsTagModalOpen(true)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '8px',
-              background: 'var(--admin-surface-muted)',
-              border: '1px solid var(--admin-border)',
-              borderRadius: 'var(--admin-radius)',
-              padding: '10px 14px',
-              marginTop: '4px',
-              cursor: 'pointer',
-              minHeight: '44px',
-              transition: 'all 0.2s ease',
-            }}
+            className="flex items-center justify-between gap-2 cursor-pointer mt-1 p-[10px_14px] rounded-[var(--admin-radius)] border border-[var(--admin-border)] bg-[var(--admin-surface-muted)] transition-all duration-200"
+            style={{ minHeight: '44px' }}
             onMouseEnter={(e) => {
               e.currentTarget.style.borderColor = 'rgba(212, 165, 165, 0.4)';
               e.currentTarget.style.boxShadow = '0 0 0 3px rgba(212, 165, 165, 0.1)';
@@ -101,7 +87,7 @@ export function ProductMediaSection({ formHelpers }: { formHelpers: UseProductFo
               e.currentTarget.style.boxShadow = 'none';
             }}
           >
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+            <div className="flex flex-wrap gap-[6px]">
               {selectedTags.length > 0 ? (
                 selectedTags.map((slug) => {
                   const tagObj = tags?.find(t => t.slug === slug);
@@ -109,17 +95,8 @@ export function ProductMediaSection({ formHelpers }: { formHelpers: UseProductFo
                   return (
                     <span
                       key={slug}
-                      style={{
-                        background: 'rgba(212, 165, 165, 0.12)',
-                        color: '#D4A5A5',
-                        border: '1px solid rgba(212, 165, 165, 0.3)',
-                        borderRadius: '6px',
-                        padding: '2px 8px',
-                        fontSize: '0.75rem',
-                        fontWeight: 600,
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                      }}
+                      className="inline-flex items-center px-2 py-[2px] rounded-md text-xs font-semibold"
+                      style={{ background: 'rgba(212, 165, 165, 0.12)', color: '#D4A5A5', border: '1px solid rgba(212, 165, 165, 0.3)' }}
                     >
                       {displayName}
                     </span>
@@ -139,4 +116,4 @@ export function ProductMediaSection({ formHelpers }: { formHelpers: UseProductFo
       </div>
     </section>
   );
-}
+});

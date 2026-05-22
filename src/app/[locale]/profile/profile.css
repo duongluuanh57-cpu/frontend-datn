@@ -1,3 +1,7 @@
+html {
+  scrollbar-gutter: stable;
+}
+
 /* L'essence Admin Dashboard Style Profile Page Stylesheet */
 
 .profile-page-shell {
@@ -430,6 +434,8 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  content-visibility: auto;
+  contain-intrinsic-size: 200px;
 }
 
 .profile-order-item {
@@ -441,6 +447,7 @@
   border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: 16px;
   transition: all 0.25s ease;
+  will-change: transform;
 }
 
 .profile-order-item:hover {
@@ -592,8 +599,7 @@
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.35);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -601,6 +607,8 @@
 }
 
 .profile-modal-container {
+  will-change: transform, opacity;
+  transform: translate3d(0, 0, 0);
   background: rgba(255, 255, 255, 0.95);
   border: 1px solid rgba(255, 255, 255, 0.8);
   border-radius: 24px;
@@ -647,6 +655,9 @@
   flex-direction: column;
   gap: 1.5rem;
   overflow-y: auto;
+  scrollbar-gutter: stable;
+  will-change: scroll-position;
+  -webkit-overflow-scrolling: touch;
 }
 
 .profile-modal-section {
@@ -698,8 +709,6 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-height: 200px;
-  overflow-y: auto;
   padding-right: 6px;
 }
 
@@ -709,6 +718,8 @@
   align-items: center;
   padding: 10px 0;
   border-bottom: 1px dashed rgba(122, 92, 92, 0.1);
+  content-visibility: auto;
+  contain-intrinsic-size: 80px;
 }
 
 .profile-modal-item-row:last-child {

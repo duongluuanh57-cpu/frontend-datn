@@ -5,19 +5,21 @@ import Image from 'next/image';
 import { Trash2, Loader2 } from 'lucide-react';
 import { resolveImageUrl } from '@/lib/api';
 import { formatSizeString } from '@/components/admin/ProductForm';
-import { UseProductCatalogReturn } from '@/hooks/useProductCatalog';
+import { Product } from '@/types/admin';
 
 interface SingleDeleteModalProps {
-  catalog: UseProductCatalogReturn;
+  isVi: boolean;
+  productToDelete: Product | null;
+  setProductToDelete: (product: Product | null) => void;
+  deleteMutation: { mutate: (id: string) => void; isPending: boolean };
 }
 
-export function SingleDeleteModal({ catalog }: SingleDeleteModalProps) {
-  const {
-    isVi,
-    productToDelete,
-    setProductToDelete,
-    deleteMutation,
-  } = catalog;
+export function SingleDeleteModal({
+  isVi,
+  productToDelete,
+  setProductToDelete,
+  deleteMutation,
+}: SingleDeleteModalProps) {
 
   if (!productToDelete) return null;
 
@@ -57,7 +59,6 @@ export function SingleDeleteModal({ catalog }: SingleDeleteModalProps) {
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Icon & Title */}
         <div
           style={{
             display: 'flex',
@@ -115,7 +116,6 @@ export function SingleDeleteModal({ catalog }: SingleDeleteModalProps) {
           </div>
         </div>
 
-        {/* Product Card Preview inside Modal */}
         <div
           style={{
             display: 'flex',
@@ -174,7 +174,6 @@ export function SingleDeleteModal({ catalog }: SingleDeleteModalProps) {
           </div>
         </div>
 
-        {/* Buttons */}
         <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '4px' }}>
           <button
             type="button"

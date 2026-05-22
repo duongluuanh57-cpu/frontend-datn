@@ -4,20 +4,29 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Loader2, Globe } from 'lucide-react';
 import { ImageUpload } from '@/components/admin/ImageUpload';
-import type { UseAdminHomepageReturn } from '@/hooks/useAdminHomepage';
 
-interface HomepageGalleryTabProps {
-  adminHomepage: UseAdminHomepageReturn;
+interface GalleryItemData {
+  url: string;
+  aspect: string;
+  title: string;
+  quote: string;
 }
 
-export function HomepageGalleryTab({ adminHomepage }: HomepageGalleryTabProps) {
-  const {
-    galleryVi,
-    galleryEn,
-    galleryAiLoading,
-    handleGalleryFieldChange,
-    handleGalleryImageUpload
-  } = adminHomepage;
+interface HomepageGalleryTabProps {
+  galleryVi: GalleryItemData[];
+  galleryEn: GalleryItemData[];
+  galleryAiLoading: Record<number, boolean>;
+  handleGalleryFieldChange: (lang: 'vi' | 'en', index: number, field: 'url' | 'aspect' | 'title' | 'quote', value: string) => void;
+  handleGalleryImageUpload: (idx: number, newUrl: string) => Promise<void>;
+}
+
+export const HomepageGalleryTab = React.memo(function HomepageGalleryTab({
+  galleryVi,
+  galleryEn,
+  galleryAiLoading,
+  handleGalleryFieldChange,
+  handleGalleryImageUpload
+}: HomepageGalleryTabProps) {
 
   return (
     <motion.div
@@ -126,4 +135,4 @@ export function HomepageGalleryTab({ adminHomepage }: HomepageGalleryTabProps) {
       </div>
     </motion.div>
   );
-}
+});

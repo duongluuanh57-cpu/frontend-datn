@@ -2,19 +2,17 @@
 
 import React from 'react';
 import { X } from 'lucide-react';
-import { UseProductCatalogReturn } from '@/hooks/useProductCatalog';
-
-// Subcomponents
+import { UseProductFiltersReturn } from '@/hooks/useProductFilters';
 import { SearchAndSort } from './product-filter-bar/SearchAndSort';
 import { TagPills } from './product-filter-bar/TagPills';
 import { BrandDropdown } from './product-filter-bar/BrandDropdown';
 import { StockSelect } from './product-filter-bar/StockSelect';
 
 interface ProductFilterBarProps {
-  catalog: UseProductCatalogReturn;
+  filters: UseProductFiltersReturn;
 }
 
-export function ProductFilterBar({ catalog }: ProductFilterBarProps) {
+export function ProductFilterBar({ filters }: ProductFilterBarProps) {
   const {
     isVi,
     searchQuery,
@@ -23,7 +21,7 @@ export function ProductFilterBar({ catalog }: ProductFilterBarProps) {
     selectedTag,
     sortBy,
     handleClearFilters,
-  } = catalog;
+  } = filters;
 
   const showClearButton =
     searchQuery ||
@@ -48,7 +46,7 @@ export function ProductFilterBar({ catalog }: ProductFilterBarProps) {
       }}
     >
       {/* Row 1: Search & Sort */}
-      <SearchAndSort catalog={catalog} />
+      <SearchAndSort filters={filters} />
 
       {/* Row 2: Filters */}
       <div
@@ -63,7 +61,7 @@ export function ProductFilterBar({ catalog }: ProductFilterBarProps) {
         }}
       >
         {/* Tag Pills */}
-        <TagPills catalog={catalog} />
+        <TagPills filters={filters} />
 
         {/* Dropdown Filters (Stock & Brand) + Clear All Button */}
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -103,10 +101,10 @@ export function ProductFilterBar({ catalog }: ProductFilterBarProps) {
           )}
 
           {/* Brand Custom Dropdown */}
-          <BrandDropdown catalog={catalog} />
+          <BrandDropdown filters={filters} />
 
           {/* Stock Select */}
-          <StockSelect catalog={catalog} />
+          <StockSelect filters={filters} />
         </div>
       </div>
     </div>

@@ -32,7 +32,8 @@ export function NewsletterSubscription() {
   };
 
   return (
-    <section className="py-8 lg:py-12 relative overflow-hidden bg-[var(--background)]">
+    <section className="py-8 lg:py-12 relative overflow-hidden bg-[var(--background)]"
+      style={{ contain: 'content', contentVisibility: 'auto' } as React.CSSProperties}>
       {/* Decorative Elements */}
       <div className="absolute top-1/2 left-0 w-64 h-64 bg-[var(--primary)] rounded-full mix-blend-multiply filter blur-[100px] opacity-20 -translate-y-1/2 -translate-x-1/2"></div>
       <div className="absolute top-1/2 right-0 w-64 h-64 bg-[var(--contrast)] rounded-full mix-blend-multiply filter blur-[100px] opacity-10 -translate-y-1/2 translate-x-1/2"></div>
@@ -43,7 +44,7 @@ export function NewsletterSubscription() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8 }}
-          className="bg-white/40 backdrop-blur-md rounded-3xl p-8 md:p-14 border border-[var(--primary)]/20 shadow-[0_8px_30px_rgba(212,165,165,0.1)] text-center relative overflow-hidden"
+          className="bg-white/60 rounded-3xl p-8 md:p-14 border border-[var(--primary)]/20 shadow-[0_8px_30px_rgba(212,165,165,0.1)] text-center relative overflow-hidden"
         >
           {/* Subtle line decoration inside box */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-[1px] bg-gradient-to-r from-transparent via-[var(--primary)] to-transparent"></div>

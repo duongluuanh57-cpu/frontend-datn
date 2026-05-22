@@ -2,13 +2,13 @@
 
 import React from 'react';
 import { ChevronDown } from 'lucide-react';
-import { UseProductCatalogReturn } from '@/hooks/useProductCatalog';
+import { UseProductFiltersReturn } from '@/hooks/useProductFilters';
 
 interface BrandDropdownProps {
-  catalog: UseProductCatalogReturn;
+  filters: UseProductFiltersReturn;
 }
 
-export function BrandDropdown({ catalog }: BrandDropdownProps) {
+export function BrandDropdown({ filters }: BrandDropdownProps) {
   const {
     isVi,
     selectedBrand,
@@ -19,8 +19,7 @@ export function BrandDropdown({ catalog }: BrandDropdownProps) {
     setIsBrandDropdownOpen,
     brandDropdownRef,
     filteredBrands,
-    brandProductCount,
-  } = catalog;
+  } = filters;
 
   return (
     <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
@@ -91,7 +90,6 @@ export function BrandDropdown({ catalog }: BrandDropdownProps) {
               overflow: 'hidden',
             }}
           >
-            {/* Search input inside dropdown */}
             <div style={{ padding: '8px', borderBottom: '1px solid var(--admin-border-subtle)' }}>
               <input
                 type="text"
@@ -112,7 +110,6 @@ export function BrandDropdown({ catalog }: BrandDropdownProps) {
               />
             </div>
 
-            {/* Scrollable brand list */}
             <div
               style={{
                 overflowY: 'auto',
@@ -120,7 +117,6 @@ export function BrandDropdown({ catalog }: BrandDropdownProps) {
                 padding: '4px',
               }}
             >
-              {/* Clear selection option */}
               <button
                 type="button"
                 onClick={() => {
@@ -201,37 +197,7 @@ export function BrandDropdown({ catalog }: BrandDropdownProps) {
                           : 'transparent';
                     }}
                   >
-                    <span
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        width: '100%',
-                        gap: '8px',
-                      }}
-                    >
-                      <span>{brand}</span>
-                      {brandProductCount[brand] !== undefined && (
-                        <span
-                          style={{
-                            fontSize: '0.65rem',
-                            fontWeight: 600,
-                            color:
-                              selectedBrand === brand
-                                ? 'var(--admin-accent-hover, #D4A5A5)'
-                                : 'var(--admin-text-muted)',
-                            background: 'rgba(212, 165, 165, 0.12)',
-                            borderRadius: '999px',
-                            padding: '1px 7px',
-                            minWidth: '20px',
-                            textAlign: 'center',
-                            flexShrink: 0,
-                          }}
-                        >
-                          {brandProductCount[brand]}
-                        </span>
-                      )}
-                    </span>
+                    <span>{brand}</span>
                   </button>
                 ))
               )}

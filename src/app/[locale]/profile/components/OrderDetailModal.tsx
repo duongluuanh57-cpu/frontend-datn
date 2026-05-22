@@ -4,6 +4,8 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { UseUserProfileReturn } from '@/hooks/useUserProfile';
 
+const currencyFmt = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
+
 interface OrderDetailModalProps {
   userProfile: UseUserProfileReturn;
 }
@@ -25,7 +27,7 @@ export function OrderDetailModal({ userProfile }: OrderDetailModalProps) {
             initial={{ scale: 0.95, y: 15, opacity: 0 }}
             animate={{ scale: 1, y: 0, opacity: 1 }}
             exit={{ scale: 0.95, y: 15, opacity: 0 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
             className="profile-modal-container"
             onClick={(e) => e.stopPropagation()}
           >
@@ -110,28 +112,76 @@ export function OrderDetailModal({ userProfile }: OrderDetailModalProps) {
                 <div className="profile-modal-items">
                   {(Array.isArray(selectedOrder.items) && selectedOrder.items.length > 0) ? (
                     selectedOrder.items.map((item: any, idx: number) => {
-                      const itemTotal = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format((item.price || 0) * (item.quantity || 1));
-                      const formattedPrice = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price || 0);
+                      const itemTotal = currencyFmt.format((item.price || 0) * (item.quantity || 1));
+                      const formattedPrice = currencyFmt.format(item.price || 0);
                       const itemName = item.name || item.productName || 'Sản phẩm';
                       const itemImage = item.image || item.imageUrl || 'https://i.ibb.co/qFf0N0kH/perfume1.webp';
+                      const variants = item.variants || [];
+                      const taxonomy = item.taxonomy || [];
+
+                      const groupedTax = () => {
+                        const groups: Record<string, string[]> = {};
+                        taxonomy.forEach((t: any) => {
+                          const key = t.taxonomyName || t.taxonomySlug || 'Khác';
+                          if (!groups[key]) groups[key] = [];
+                          groups[key].push(t.termName || t.termSlug);
+                        });
+                        return groups;
+                      };
+                      const taxGroups = groupedTax();
                       
                       return (
-                        <div key={idx} className="profile-modal-item-row">
-                          <img 
-                            src={itemImage} 
-                            alt={itemName} 
-                            className="profile-modal-item-img"
-                          />
-                          <div className="profile-modal-item-details">
-                            <div className="profile-modal-item-name">{itemName}</div>
-                            <div className="profile-modal-item-meta">
-                              Số lượng: {item.quantity || 1} &times; {formattedPrice}
+                          <div key={idx} className="profile-modal-item-row">
+                            <img 
+                              src={itemImage} 
+                              alt={itemName} 
+                              className="profile-modal-item-img"
+                            />
+                            <div className="profile-modal-item-details" style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                              <div className="profile-modal-item-name">{itemName}</div>
+                              {variants.length > 0 && (
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                  {variants.map((v: any, vi: number) => (
+                                    <span key={vi} style={{
+                                      display: 'inline-flex', alignItems: 'center', gap: '4px',
+                                      padding: '2px 8px', background: 'rgba(212, 165, 165, 0.12)',
+                                      borderRadius: '6px', fontSize: '0.7rem', fontWeight: 600,
+                                      color: 'var(--primary)', border: '1px solid rgba(212, 165, 165, 0.2)',
+                                    }}>
+                                      {v.size || 'Mặc định'}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                              {Object.keys(taxGroups).length > 0 && (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                  {Object.entries(taxGroups).map(([taxName, terms]) => (
+                                    <div key={taxName} style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
+                                      <span style={{ fontSize: '0.68rem', fontWeight: 600, color: 'rgba(122, 92, 92, 0.5)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                                        {taxName}:
+                                      </span>
+                                      {terms.map((term, ti) => (
+                                        <span key={ti} style={{
+                                          padding: '1px 6px', background: 'rgba(122, 92, 92, 0.06)',
+                                          borderRadius: '4px', fontSize: '0.68rem',
+                                          color: 'rgba(122, 92, 92, 0.7)', fontWeight: 500,
+                                          border: '1px solid rgba(122, 92, 92, 0.1)',
+                                        }}>
+                                          {term}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                              <div className="profile-modal-item-meta" style={{ marginTop: 'auto' }}>
+                                Số lượng: {item.quantity || 1} &times; {formattedPrice}
+                              </div>
+                            </div>
+                            <div className="profile-modal-item-price">
+                              {itemTotal}
                             </div>
                           </div>
-                          <div className="profile-modal-item-price">
-                            {itemTotal}
-                          </div>
-                        </div>
                       );
                     })
                   ) : (
@@ -146,25 +196,26 @@ export function OrderDetailModal({ userProfile }: OrderDetailModalProps) {
               <div className="profile-modal-summary">
                 <div className="profile-summary-row">
                   <span>Tạm tính</span>
-                  <span>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(selectedOrder.totalAmount || 0)}</span>
+                  <span>{currencyFmt.format(selectedOrder.totalAmount || 0)}</span>
                 </div>
                 <div className="profile-summary-row">
                   <span>Phí vận chuyển</span>
                   <span style={{ color: '#27ae60', fontWeight: 600 }}>
-                    {selectedOrder.shippingFee ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(selectedOrder.shippingFee) : 'Miễn phí'}
+                    {selectedOrder.shippingFee ? currencyFmt.format(selectedOrder.shippingFee) : 'Miễn phí'}
                   </span>
                 </div>
-                {selectedOrder.discount > 0 && (
-                  <div className="profile-summary-row">
-                    <span>Giảm giá</span>
-                    <span style={{ color: '#e74c3c', fontWeight: 600 }}>
-                      -{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(selectedOrder.discount)}
-                    </span>
-                  </div>
-                )}
+                <div className="profile-summary-row">
+                  <span>Voucher</span>
+                  <span style={{ color: selectedOrder.voucherDiscount ? '#e74c3c' : 'rgba(122,92,92,0.5)', fontWeight: 600 }}>
+                    {selectedOrder.voucherCode ? `${selectedOrder.voucherCode}: ` : ''}
+                    {selectedOrder.voucherDiscount
+                      ? `-${currencyFmt.format(selectedOrder.voucherDiscount)}`
+                      : 'Không áp dụng'}
+                  </span>
+                </div>
                 <div className="profile-summary-row total">
                   <span>Tổng tiền thanh toán</span>
-                  <span>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(selectedOrder.totalAmount || 0)}</span>
+                  <span>{currencyFmt.format(selectedOrder.totalAmount || 0)}</span>
                 </div>
               </div>
 

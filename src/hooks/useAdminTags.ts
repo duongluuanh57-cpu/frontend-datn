@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { useLocale } from 'next-intl';
+import React, { useState, useMemo, useEffect } from 'react';
 import { TaxonomyItem } from '@/types/admin';
 
 export interface UseAdminTagsReturn {
@@ -12,6 +13,13 @@ export interface UseAdminTagsReturn {
   isLoading: boolean;
   error: any;
   deleteMutation: any;
+  searchTerm: string;
+  setSearchTerm: (term: string) => void;
+  currentPage: number;
+  setCurrentPage: React.Dispatch<React.SetStateAction<number>>;
+  ITEMS_PER_PAGE: number;
+  total: number;
+  totalPages: number;
 }
 
 export function useAdminTags(): UseAdminTagsReturn {
@@ -19,16 +27,36 @@ export function useAdminTags(): UseAdminTagsReturn {
   const queryClient = useQueryClient();
   const isVi = locale === 'vi';
 
-  // Fetch tags
-  const { data: tags, isLoading, error } = useQuery({
-    queryKey: ['admin-tags'],
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 25;
+
+  const queryParams = useMemo(() => {
+    const params: Record<string, string | number> = {
+      page: currentPage,
+      limit: ITEMS_PER_PAGE,
+    };
+    if (searchTerm) params.search = searchTerm;
+    return params;
+  }, [currentPage, searchTerm]);
+
+  const { data: pageData, isLoading, error } = useQuery({
+    queryKey: ['admin-tags', queryParams],
     queryFn: async () => {
-      const { data } = await api.get('/tags');
-      return data.data as TaxonomyItem[];
+      const { data } = await api.get('/tags', { params: queryParams });
+      return data.data as { items: TaxonomyItem[]; total: number; page: number; totalPages: number };
     },
+    staleTime: 15_000,
   });
 
-  // Mutation: Delete tag
+  const tags = pageData?.items;
+  const total = pageData?.total || 0;
+  const totalPages = pageData?.totalPages || 0;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => api.delete(`/tags/${id}`),
     onSuccess: () => {
@@ -52,6 +80,13 @@ export function useAdminTags(): UseAdminTagsReturn {
     tags,
     isLoading,
     error,
-    deleteMutation
+    deleteMutation,
+    searchTerm,
+    setSearchTerm,
+    currentPage,
+    setCurrentPage,
+    ITEMS_PER_PAGE,
+    total,
+    totalPages,
   };
 }

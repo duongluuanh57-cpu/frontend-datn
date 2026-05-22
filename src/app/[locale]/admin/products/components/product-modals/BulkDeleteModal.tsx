@@ -2,27 +2,30 @@
 
 import React from 'react';
 import { Trash2, Loader2, AlertCircle } from 'lucide-react';
-import { UseProductCatalogReturn } from '@/hooks/useProductCatalog';
+import { Product } from '@/types/admin';
 
 interface BulkDeleteModalProps {
-  catalog: UseProductCatalogReturn;
+  isVi: boolean;
+  products: Product[];
+  showBulkDeleteModal: boolean;
+  setShowBulkDeleteModal: (show: boolean) => void;
+  bulkDeleteMutation: { mutate: (ids: string[]) => void; isPending: boolean };
+  selectedIds: string[];
 }
 
-export function BulkDeleteModal({ catalog }: BulkDeleteModalProps) {
-  const {
-    isVi,
-    products,
-    showBulkDeleteModal,
-    setShowBulkDeleteModal,
-    bulkDeleteMutation,
-    selectedIds,
-  } = catalog;
+export function BulkDeleteModal({
+  isVi,
+  products,
+  showBulkDeleteModal,
+  setShowBulkDeleteModal,
+  bulkDeleteMutation,
+  selectedIds,
+}: BulkDeleteModalProps) {
 
   const selectedProducts = products?.filter((p) => selectedIds.includes(p._id)) || [];
 
   return (
     <>
-      {/* Gorgeous Floating Glassmorphic Bulk Action Bar */}
       {selectedIds.length > 0 && (
         <div
           style={{
@@ -81,7 +84,6 @@ export function BulkDeleteModal({ catalog }: BulkDeleteModalProps) {
         </div>
       )}
 
-      {/* Stunning Custom Luxury Modal for Bulk Deleting Products */}
       {showBulkDeleteModal && (
         <div
           style={{
@@ -110,7 +112,6 @@ export function BulkDeleteModal({ catalog }: BulkDeleteModalProps) {
               gap: '20px',
             }}
           >
-            {/* Header */}
             <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
               <div
                 style={{
@@ -149,7 +150,6 @@ export function BulkDeleteModal({ catalog }: BulkDeleteModalProps) {
               </div>
             </div>
 
-            {/* Scrollable list of selected items */}
             <div
               style={{
                 background: 'var(--admin-surface-muted, #faf8f6)',
@@ -196,7 +196,6 @@ export function BulkDeleteModal({ catalog }: BulkDeleteModalProps) {
               ))}
             </div>
 
-            {/* Buttons */}
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '4px' }}>
               <button
                 type="button"

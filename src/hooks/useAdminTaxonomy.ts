@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { useLocale } from 'next-intl';
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Hash, Layers, Sliders, Sparkles,
   LucideIcon
@@ -14,7 +14,7 @@ export interface TabConfig {
   id: TabType;
   labelVi: string;
   labelEn: string;
-  taxonomySlug: string | null; // null = Tags (dùng /tags endpoint riêng)
+  taxonomySlug: string | null;
   queryKey: string;
   icon: LucideIcon;
 }
@@ -50,6 +50,13 @@ export interface UseAdminTaxonomyReturn {
   handleAddNewClick: () => void;
   handleEditClick: (item: TaxonomyItem) => void;
   handleFormSubmit: (e: React.FormEvent) => Promise<void>;
+  searchTerm: string;
+  setSearchTerm: (term: string) => void;
+  currentPage: number;
+  setCurrentPage: React.Dispatch<React.SetStateAction<number>>;
+  ITEMS_PER_PAGE: number;
+  total: number;
+  totalPages: number;
 }
 
 export function useAdminTaxonomy(): UseAdminTaxonomyReturn {
@@ -68,6 +75,10 @@ export function useAdminTaxonomy(): UseAdminTaxonomyReturn {
   });
   const [isSaving, setIsSaving] = useState(false);
 
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 25;
+
   const tabs: TabConfig[] = [
     { id: 'tags',          labelVi: 'Quản lý Tag',            labelEn: 'Tag Management',       taxonomySlug: null,           queryKey: 'admin-tags',           icon: Hash },
     { id: 'notes',         labelVi: 'Quản lý Nhóm hương',     labelEn: 'Scent Groups',          taxonomySlug: 'scent_group',  queryKey: 'admin-scent-groups',   icon: Layers },
@@ -77,44 +88,57 @@ export function useAdminTaxonomy(): UseAdminTaxonomyReturn {
 
   const currentTabConfig = tabs.find(t => t.id === activeTab)!;
 
-  // ── Fetch danh sách Taxonomy (cha) một lần, cache lại ──────────────────────
-  // Dùng để lấy taxonomyId khi cần POST/PATCH/DELETE terms
+  // Reset pagination when tab or search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, searchTerm]);
+
+  const queryParams = useMemo(() => {
+    const params: Record<string, string | number> = {
+      page: currentPage,
+      limit: ITEMS_PER_PAGE,
+    };
+    if (searchTerm) params.search = searchTerm;
+    return params;
+  }, [currentPage, searchTerm]);
+
+  // Fetch taxonomy list (cha) — cached 10 min
   const { data: taxonomyList } = useQuery({
     queryKey: ['v2-taxonomies'],
     queryFn: async () => {
       const { data } = await api.get('/v2/taxonomies');
       return data.data as { _id: string; slug: string; name: string }[];
     },
-    staleTime: 1000 * 60 * 10, // cache 10 phút
+    staleTime: 1000 * 60 * 10,
   });
 
-  // Helper: lấy taxonomyId theo slug
   const getTaxonomyId = (slug: string): string | null =>
     taxonomyList?.find(t => t.slug === slug)?._id ?? null;
 
-  // ── Fetch items theo tab đang active ──────────────────────────────────────
-  const { data: items, isLoading, error } = useQuery({
-    queryKey: [currentTabConfig.queryKey],
+  // Fetch paginated items
+  const { data: pageData, isLoading, error } = useQuery({
+    queryKey: [currentTabConfig.queryKey, queryParams],
     queryFn: async () => {
-      // Tab Tags → dùng endpoint /tags cũ (không đổi)
       if (!currentTabConfig.taxonomySlug) {
-        const { data } = await api.get('/tags');
-        return data.data as TaxonomyItem[];
+        const { data } = await api.get('/tags', { params: queryParams });
+        return data.data as { items: TaxonomyItem[]; total: number; page: number; totalPages: number };
       }
 
-      // Tab taxonomy → lấy taxonomyId rồi fetch terms
       const taxonomyId = getTaxonomyId(currentTabConfig.taxonomySlug);
       if (!taxonomyId) {
-        // Taxonomy cha chưa có → trả về rỗng
-        return [] as TaxonomyItem[];
+        return { items: [] as TaxonomyItem[], total: 0, page: 1, totalPages: 0 };
       }
-      const { data } = await api.get(`/v2/taxonomies/${taxonomyId}/terms`);
-      return data.data as TaxonomyItem[];
+      const { data } = await api.get(`/v2/taxonomies/${taxonomyId}/terms`, { params: queryParams });
+      return data.data as { items: TaxonomyItem[]; total: number; page: number; totalPages: number };
     },
-    enabled: currentTabConfig.taxonomySlug === null || !!taxonomyList, // chờ taxonomyList load xong
+    enabled: currentTabConfig.taxonomySlug === null || !!taxonomyList,
   });
 
-  // ── Delete mutation ────────────────────────────────────────────────────────
+  const items = pageData?.items;
+  const total = pageData?.total || 0;
+  const totalPages = pageData?.totalPages || 0;
+
+  // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       if (!currentTabConfig.taxonomySlug) {
@@ -156,7 +180,6 @@ export function useAdminTaxonomy(): UseAdminTaxonomyReturn {
     setIsModalOpen(true);
   };
 
-  // ── Form submit (create / update) ─────────────────────────────────────────
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim()) return;
@@ -171,14 +194,12 @@ export function useAdminTaxonomy(): UseAdminTaxonomyReturn {
       };
 
       if (!currentTabConfig.taxonomySlug) {
-        // ── Tags: dùng endpoint cũ ──
         if (editingItem) {
           await api.patch(`/tags/${editingItem._id}`, payload);
         } else {
           await api.post('/tags', payload);
         }
       } else {
-        // ── Taxonomy terms: dùng API v2 ──
         const taxonomyId = getTaxonomyId(currentTabConfig.taxonomySlug);
         if (!taxonomyId) throw new Error('Taxonomy cha chưa được tạo. Vui lòng chạy migration trước.');
 
@@ -219,6 +240,13 @@ export function useAdminTaxonomy(): UseAdminTaxonomyReturn {
     deleteMutation,
     handleAddNewClick,
     handleEditClick,
-    handleFormSubmit
+    handleFormSubmit,
+    searchTerm,
+    setSearchTerm,
+    currentPage,
+    setCurrentPage,
+    ITEMS_PER_PAGE,
+    total,
+    totalPages,
   };
 }

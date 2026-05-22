@@ -64,11 +64,9 @@
   backface-visibility: hidden;
 }
 
-/* Glass Badge for Product Tags - Static blurs */
+/* Glass Badge for Product Tags */
 .product-badge-glass {
-  background: rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.7);
   border: 1px solid rgba(255, 255, 255, 0.7);
   box-shadow: 0 4px 15px rgba(122, 92, 92, 0.04);
   color: #7A5C5C;
@@ -92,7 +90,6 @@
 /* Translucent Action Buttons (Liquid Glass theme) */
 .quick-action-glass-container {
   background: linear-gradient(to top, rgba(255,245,245,0.7) 0%, rgba(255,255,255,0) 100%);
-  backdrop-filter: blur(4px);
   will-change: transform, opacity;
   transform: translate3d(0, 0, 0);
   backface-visibility: hidden;
@@ -100,14 +97,11 @@
 
 .quick-buy-glass-btn {
   background: rgba(122, 92, 92, 0.85);
-  backdrop-filter: blur(12px); /* Lower cost, visually identical */
-  -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: white;
   will-change: transform, box-shadow, background-color;
   transform: translate3d(0, 0, 0);
   backface-visibility: hidden;
-  cursor: url('/pointer.png') 0 0, pointer !important;
   transition: 
     transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
     background-color 0.4s ease,
@@ -125,14 +119,11 @@
 
 .wishlist-glass-btn {
   background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.5);
   color: #7A5C5C;
   will-change: transform, box-shadow, background-color;
   transform: translate3d(0, 0, 0);
   backface-visibility: hidden;
-  cursor: url('/pointer.png') 0 0, pointer !important;
   transition: 
     transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
     background-color 0.4s ease,
@@ -184,12 +175,13 @@
   letter-spacing: 0.3em;
   text-transform: uppercase;
   color: #7A5C5C;
-  transition: color 0.4s, letter-spacing 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: color 0.4s, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
 }
 
 .explore-all-btn-luxury:hover {
   color: var(--primary);
-  letter-spacing: 0.35em;
+  transform: scale(1.03);
 }
 
 .explore-all-btn-luxury .arrow-circle {
@@ -212,8 +204,6 @@
 /* Luxury Glassmorphism Countdown */
 .countdown-box {
   background: rgba(255, 255, 255, 0.45);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(122, 92, 92, 0.08);
   box-shadow: 0 8px 24px rgba(122, 92, 92, 0.04);
   transition: all 0.3s ease;

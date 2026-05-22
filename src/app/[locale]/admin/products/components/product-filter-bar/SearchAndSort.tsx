@@ -2,24 +2,23 @@
 
 import React from 'react';
 import { Search } from 'lucide-react';
-import { UseProductCatalogReturn } from '@/hooks/useProductCatalog';
+import { UseProductFiltersReturn } from '@/hooks/useProductFilters';
 
 interface SearchAndSortProps {
-  catalog: UseProductCatalogReturn;
+  filters: UseProductFiltersReturn;
 }
 
-export function SearchAndSort({ catalog }: SearchAndSortProps) {
+export function SearchAndSort({ filters }: SearchAndSortProps) {
   const {
     isVi,
     searchQuery,
     setSearchQuery,
     sortBy,
     setSortBy,
-  } = catalog;
+  } = filters;
 
   return (
     <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center', width: '100%' }}>
-      {/* Search input with search icon */}
       <div style={{ flex: 1, position: 'relative', minWidth: '260px' }}>
         <Search
           size={16}
@@ -62,7 +61,6 @@ export function SearchAndSort({ catalog }: SearchAndSortProps) {
         />
       </div>
 
-      {/* Sort Select */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
         <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--admin-text-muted)' }}>
           {isVi ? 'Sắp xếp' : 'Sort by'}:

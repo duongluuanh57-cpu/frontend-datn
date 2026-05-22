@@ -4,6 +4,7 @@ import React from 'react';
 import { useAdminTags } from '@/hooks/useAdminTags';
 import { TagHeader } from './components/TagHeader';
 import { TagTable } from './components/TagTable';
+import { TagPagination } from './components/TagPagination';
 import { AlertCircle } from 'lucide-react';
 
 export default function AdminTagsPage() {
@@ -26,6 +27,7 @@ export default function AdminTagsPage() {
     <div className="admin-page">
       <TagHeader adminTags={adminTags} />
       <TagTable adminTags={adminTags} />
+      <TagPagination adminTags={adminTags} />
     </div>
   );
 }

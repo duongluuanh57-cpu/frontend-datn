@@ -3,14 +3,14 @@
 import React from 'react';
 import { 
   LogOut, 
-  LayoutDashboard, 
   User as UserIcon, 
   Shield, 
   Settings, 
   ShoppingBag, 
   Lock, 
   Camera, 
-  Loader2 
+  Loader2,
+  CreditCard
 } from 'lucide-react';
 import type { UseUserProfileReturn, ActiveTab } from '@/hooks/useUserProfile';
 
@@ -35,6 +35,7 @@ export function ProfileSidebar({ userProfile }: ProfileSidebarProps) {
   const menuItems = [
     { id: 'profile' as ActiveTab, name: 'Thông tin cá nhân', icon: UserIcon },
     { id: 'orders' as ActiveTab, name: 'Lịch sử mua sắm', icon: ShoppingBag },
+    { id: 'bankcards' as ActiveTab, name: 'Thẻ ngân hàng', icon: CreditCard },
     { id: 'security' as ActiveTab, name: 'Bảo mật & Xác thực', icon: Lock },
     { id: 'settings' as ActiveTab, name: 'Thiết lập hệ thống', icon: Settings },
   ];
@@ -106,16 +107,6 @@ export function ProfileSidebar({ userProfile }: ProfileSidebarProps) {
 
       {/* Actions Footer */}
       <div className="profile-sidebar-footer">
-        {isAdmin && (
-          <button 
-            onClick={() => router.push('/admin')}
-            className="btn-profile-primary"
-            style={{ width: '100%', justifyContent: 'center' }}
-          >
-            <LayoutDashboard size={16} strokeWidth={2.5} />
-            Vào Dashboard
-          </button>
-        )}
         <button 
           onClick={handleLogout}
           className="btn-profile-secondary"

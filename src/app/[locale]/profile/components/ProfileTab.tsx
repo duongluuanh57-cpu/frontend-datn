@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Edit2, Heart, Calendar, Lock, ShieldCheck } from 'lucide-react';
+import { Edit2, Calendar, Lock, ShieldCheck, Medal, Trophy, Gem } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { UseUserProfileReturn } from '@/hooks/useUserProfile';
 
@@ -121,7 +121,7 @@ export function ProfileTab({ userProfile }: ProfileTabProps) {
             <div className="profile-card-value">{user.phoneNumber}</div>
           ) : (
             <input
-              type="tel"
+              type="number"
               placeholder="Nhập số điện thoại..."
               value={editedPhone}
               onChange={(e) => setEditedPhone(e.target.value)}
@@ -215,12 +215,26 @@ export function ProfileTab({ userProfile }: ProfileTabProps) {
         <div className="profile-details-card" style={{ gridColumn: 'span 2' }}>
           <div className="profile-card-label">Hạng thành viên</div>
           <div className="profile-card-value" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            {user.memberTier || 'MEMBER'}
-            {user.memberTier === 'ELITE MEMBER' && (
-              <Heart size={14} style={{ fill: 'var(--primary)', stroke: 'var(--primary)' }} />
+            {(!user.memberTier || user.memberTier === 'MEMBER') && (
+              <span>MEMBER</span>
             )}
-            {user.memberTier === 'VIP' && (
-              <span style={{ fontSize: '14px' }}>👑</span>
+            {user.memberTier === 'Bac' && (
+              <>
+                <Medal size={16} style={{ color: '#A0A0A0' }} />
+                <span>BẠC</span>
+              </>
+            )}
+            {user.memberTier === 'Vang' && (
+              <>
+                <Trophy size={16} style={{ color: '#D4A5A5' }} />
+                <span>VÀNG</span>
+              </>
+            )}
+            {user.memberTier === 'KimCuong' && (
+              <>
+                <Gem size={16} style={{ color: '#00BFFF' }} />
+                <span>KIM CƯƠNG</span>
+              </>
             )}
           </div>
         </div>
@@ -334,23 +348,29 @@ export function ProfileTab({ userProfile }: ProfileTabProps) {
           <p style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.6)', marginTop: '2px' }}>Quản lý địa chỉ nhận hàng của bạn</p>
         </div>
         {!isEditingAddress && (
-          <button
-            onClick={() => {
-              // Ensure provinces loaded before opening
-              if (provinces.length === 0) {
-                setLoadingProvinces(true);
-                fetch('https://provinces.open-api.vn/api/')
-                  .then((r) => r.json())
-                  .then((data) => { setProvinces(data); setLoadingProvinces(false); })
-                  .catch(() => setLoadingProvinces(false));
-              }
-              openNewAddressForm();
-            }}
-            className="btn-profile-primary"
-            style={{ padding: '8px 16px', borderRadius: '12px', fontSize: '0.82rem', gap: '6px' }}
-          >
-            + Thêm địa chỉ
-          </button>
+          addresses.length >= 10 ? (
+            <span style={{ fontSize: '0.82rem', color: 'rgba(122,92,92,0.5)', fontWeight: 500 }}>
+              Đã đạt tối đa 10 địa chỉ
+            </span>
+          ) : (
+            <button
+              onClick={() => {
+                if (addresses.length >= 10) return;
+                if (provinces.length === 0) {
+                  setLoadingProvinces(true);
+                  fetch('https://provinces.open-api.vn/api/')
+                    .then((r) => r.json())
+                    .then((data) => { setProvinces(data); setLoadingProvinces(false); })
+                    .catch(() => setLoadingProvinces(false));
+                }
+                openNewAddressForm();
+              }}
+              className="btn-profile-primary"
+              style={{ padding: '8px 16px', borderRadius: '12px', fontSize: '0.82rem', gap: '6px' }}
+            >
+              + Thêm địa chỉ
+            </button>
+          )
         )}
       </div>
 

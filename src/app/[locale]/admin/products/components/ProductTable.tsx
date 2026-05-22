@@ -6,10 +6,21 @@ import { Link } from '@/navigation';
 import { formatSizeString } from '@/components/admin/ProductForm';
 import { resolveImageUrl } from '@/lib/api';
 import { Loader2, Sparkles, Trash2 } from 'lucide-react';
-import { UseProductCatalogReturn } from '@/hooks/useProductCatalog';
+import { Product } from '@/types/admin';
 
 interface ProductTableProps {
-  catalog: UseProductCatalogReturn;
+  t: (key: string) => string;
+  locale: string;
+  isVi: boolean;
+  products: Product[];
+  isLoading: boolean;
+  total: number;
+  selectedIds: string[];
+  isAllSelected: boolean;
+  isSomeSelected: boolean;
+  handleSelectAll: () => void;
+  handleSelectRow: (id: string) => void;
+  setProductToDelete: (product: Product | null) => void;
 }
 
 const formatPrice = (price: number, locale: string) =>
@@ -18,25 +29,13 @@ const formatPrice = (price: number, locale: string) =>
     currency: locale === 'vi' ? 'VND' : 'USD',
   }).format(locale === 'vi' ? price : price / 25000);
 
-export function ProductTable({ catalog }: ProductTableProps) {
-  const {
-    t,
-    locale,
-    isVi,
-    isLoading,
-    filteredProducts,
-    paginatedProducts,
-    selectedIds,
-    isAllSelected,
-    isSomeSelected,
-    handleSelectAll,
-    handleSelectRow,
-    setProductToDelete,
-    searchQuery,
-    selectedBrand,
-    stockFilter,
-    selectedTag,
-  } = catalog;
+export const ProductTable = React.memo(function ProductTable({
+  t, locale, isVi,
+  products, isLoading, total,
+  selectedIds, isAllSelected, isSomeSelected,
+  handleSelectAll, handleSelectRow,
+  setProductToDelete,
+}: ProductTableProps) {
 
   return (
     <div className="admin-table-wrap">
@@ -79,26 +78,17 @@ export function ProductTable({ catalog }: ProductTableProps) {
                   </div>
                 </td>
               </tr>
-            ) : !filteredProducts.length ? (
+            ) : total === 0 ? (
               <tr>
                 <td colSpan={7}>
                   <div className="admin-empty">
                     <Sparkles className="admin-empty__icon" />
-                    <p>
-                      {searchQuery ||
-                      selectedBrand ||
-                      stockFilter !== 'all' ||
-                      selectedTag !== 'all'
-                        ? isVi
-                          ? 'Không tìm thấy sản phẩm khớp với bộ lọc'
-                          : 'No products match the selected filters'
-                        : t('empty')}
-                    </p>
+                    <p>{t('empty')}</p>
                   </div>
                 </td>
               </tr>
             ) : (
-              paginatedProducts.map((product) => {
+              products.map((product) => {
                 const isChecked = selectedIds.includes(product._id);
                 return (
                   <tr
@@ -207,7 +197,6 @@ export function ProductTable({ catalog }: ProductTableProps) {
                                   +{tags.length - 2}
                                 </span>
 
-                                {/* Premium Interactive Tooltip Popover */}
                                 <div
                                   className="invisible opacity-0 translate-y-1 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200"
                                   style={{
@@ -228,7 +217,6 @@ export function ProductTable({ catalog }: ProductTableProps) {
                                     pointerEvents: 'none',
                                   }}
                                 >
-                                  {/* Tooltip Title */}
                                   <span
                                     style={{
                                       fontSize: '0.625rem',
@@ -245,7 +233,6 @@ export function ProductTable({ catalog }: ProductTableProps) {
                                     {isVi ? 'Tất cả nhãn' : 'All tags'}
                                   </span>
 
-                                  {/* Remaining Tags */}
                                   <div
                                     style={{
                                       display: 'flex',
@@ -274,7 +261,6 @@ export function ProductTable({ catalog }: ProductTableProps) {
                                     ))}
                                   </div>
 
-                                  {/* Tooltip Arrow */}
                                   <div
                                     style={{
                                       position: 'absolute',
@@ -423,4 +409,4 @@ export function ProductTable({ catalog }: ProductTableProps) {
       </div>
     </div>
   );
-}
+});

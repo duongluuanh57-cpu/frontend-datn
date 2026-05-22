@@ -18,7 +18,7 @@ export function BrandModals({ adminBrands }: BrandModalsProps) {
     showBulkDeleteModal,
     setShowBulkDeleteModal,
     selectedIds,
-    brands,
+    selectedBrandNames,
     bulkDeleteMutation
   } = adminBrands;
 
@@ -255,11 +255,11 @@ export function BrandModals({ adminBrands }: BrandModalsProps) {
               flexDirection: 'column',
               gap: '8px',
             }}>
-              {brands?.filter(b => selectedIds.includes(b._id)).map((b) => (
-                <div key={b._id} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.75rem', color: 'var(--admin-text-secondary, #6b564c)' }}>
+              {Array.from(selectedBrandNames.entries()).filter(([id]) => selectedIds.includes(id)).map(([id, name]) => (
+                <div key={id} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.75rem', color: 'var(--admin-text-secondary, #6b564c)' }}>
                   <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--admin-accent-hover, #D4A5A5)' }} />
                   <span style={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {b.name}
+                    {name}
                   </span>
                 </div>
               ))}

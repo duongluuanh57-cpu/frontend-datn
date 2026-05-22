@@ -4,27 +4,36 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Check } from 'lucide-react';
 import { Banner } from '@/components/ui/banner';
-import type { UseAdminHomepageReturn } from '@/hooks/useAdminHomepage';
 
 interface HomepageBannersTabProps {
-  adminHomepage: UseAdminHomepageReturn;
+  locale: string;
+  banners: string[];
+  setBanners: React.Dispatch<React.SetStateAction<string[]>>;
+  displayTitle: string;
+  displaySubtitle: string;
+  displayLabel: string;
+  setBannerTitleVi: React.Dispatch<React.SetStateAction<string>>;
+  setBannerTitleEn: React.Dispatch<React.SetStateAction<string>>;
+  setBannerSubtitleVi: React.Dispatch<React.SetStateAction<string>>;
+  setBannerSubtitleEn: React.Dispatch<React.SetStateAction<string>>;
+  setBannerLabelVi: React.Dispatch<React.SetStateAction<string>>;
+  setBannerLabelEn: React.Dispatch<React.SetStateAction<string>>;
 }
 
-export function HomepageBannersTab({ adminHomepage }: HomepageBannersTabProps) {
-  const {
-    locale,
-    banners,
-    setBanners,
-    displayTitle,
-    displaySubtitle,
-    displayLabel,
-    setBannerTitleVi,
-    setBannerTitleEn,
-    setBannerSubtitleVi,
-    setBannerSubtitleEn,
-    setBannerLabelVi,
-    setBannerLabelEn
-  } = adminHomepage;
+export const HomepageBannersTab = React.memo(function HomepageBannersTab({
+  locale,
+  banners,
+  setBanners,
+  displayTitle,
+  displaySubtitle,
+  displayLabel,
+  setBannerTitleVi,
+  setBannerTitleEn,
+  setBannerSubtitleVi,
+  setBannerSubtitleEn,
+  setBannerLabelVi,
+  setBannerLabelEn
+}: HomepageBannersTabProps) {
 
   return (
     <motion.div
@@ -68,4 +77,4 @@ export function HomepageBannersTab({ adminHomepage }: HomepageBannersTabProps) {
       </div>
     </motion.div>
   );
-}
+});

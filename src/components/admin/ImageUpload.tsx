@@ -62,13 +62,23 @@ export function ImageUpload({ value, onChange, onUploadStateChange, hideUrlInput
 
   const handleUrlUpload = async (url: string) => {
     if (!url.trim()) return;
+
+    const trimmed = url.trim();
+
+    // Nếu URL đã là từ R2 → dùng trực tiếp, không upload lại
+    if (trimmed.includes('.r2.dev')) {
+      onChange(trimmed);
+      setPreview(trimmed);
+      return;
+    }
+
     setIsUploading(true);
     if (onUploadStateChange) onUploadStateChange(true);
-    setPreview(url); // Show temporary loading preview
+    setPreview(trimmed);
 
     try {
       const { data } = await api.post('/media/upload-url', {
-        url: url.trim(),
+        url: trimmed,
         maxWidth: maxWidth ?? 1920,
         quality: quality ?? 90,
         folder
@@ -202,7 +212,7 @@ export function ImageUpload({ value, onChange, onUploadStateChange, hideUrlInput
                 disabled={isUploading}
               />
               <span style={{ fontSize: '0.68rem', color: 'var(--admin-text-muted)', display: 'block', marginTop: '5px', paddingLeft: '4px', lineHeight: '1.4' }}>
-                Nhập link ảnh ngoài. Hệ thống sẽ tự động tải về, nén tối ưu bằng Sharp, rồi đồng bộ lên ImgBB cho bạn.
+                Nhập link ảnh. Nếu là ảnh R2 sẽ dùng trực tiếp, nếu là ảnh ngoài hệ thống sẽ tự động tải về và đồng bộ lên R2.
               </span>
             </div>
           )}

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { DndContext, closestCenter, DragEndEvent } from '@dnd-kit/core';
+import { DndContext, closestCenter, DragEndEvent, type SensorDescriptor } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { arrayMove } from '@dnd-kit/sortable';
@@ -18,22 +18,31 @@ import {
   Star,
   Package
 } from 'lucide-react';
-import type { UseAdminHomepageReturn } from '@/hooks/useAdminHomepage';
 import type { ProductCardConfig } from '@/hooks/useHomepageConfig';
 import { DEFAULT_PRODUCT_CARD_CONFIG } from '@/hooks/useHomepageConfig';
 
-interface HomepageCardTabProps {
-  adminHomepage: UseAdminHomepageReturn;
+interface ElementOrderItem {
+  id: string;
+  label: string;
+  show: boolean;
 }
 
-export function HomepageCardTab({ adminHomepage }: HomepageCardTabProps) {
-  const {
-    cardConfig,
-    setCardConfig,
-    cardElementOrder,
-    setCardElementOrder,
-    cardElementSensors
-  } = adminHomepage;
+interface HomepageCardTabProps {
+  cardConfig: ProductCardConfig;
+  setCardConfig: React.Dispatch<React.SetStateAction<ProductCardConfig>>;
+  cardElementOrder: ElementOrderItem[];
+  setCardElementOrder: React.Dispatch<React.SetStateAction<ElementOrderItem[]>>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  cardElementSensors: SensorDescriptor<any>[];
+}
+
+export const HomepageCardTab = React.memo(function HomepageCardTab({
+  cardConfig,
+  setCardConfig,
+  cardElementOrder,
+  setCardElementOrder,
+  cardElementSensors
+}: HomepageCardTabProps) {
 
   return (
     <motion.div
@@ -260,7 +269,7 @@ export function HomepageCardTab({ adminHomepage }: HomepageCardTabProps) {
       </div>
     </motion.div>
   );
-}
+});
 
 // ============================================================
 // Card Element Row (Sortable)

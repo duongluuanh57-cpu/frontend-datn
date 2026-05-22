@@ -6,7 +6,7 @@ import { useRouter } from '@/navigation';
 import { useSearchParams } from 'next/navigation';
 import api, { uploadImageToR2 } from '@/lib/api';
 
-export type ActiveTab = 'profile' | 'orders' | 'security' | 'settings';
+export type ActiveTab = 'profile' | 'orders' | 'security' | 'settings' | 'bankcards';
 
 export interface UseUserProfileReturn {
   user: any;
@@ -95,6 +95,8 @@ export interface UseUserProfileReturn {
   setFilterStartDate: (date: string) => void;
   filterEndDate: string;
   setFilterEndDate: (date: string) => void;
+  filterStatus: string;
+  setFilterStatus: (st: string) => void;
   selectedOrder: any | null;
   setSelectedOrder: (order: any | null) => void;
   mounted: boolean;
@@ -107,7 +109,7 @@ export interface UseUserProfileReturn {
   handleSaveAddress: () => Promise<void>;
   handleDeleteAddress: (id: string) => Promise<void>;
   handleSetDefault: (id: string) => Promise<void>;
-  fetchOrders: (start?: string, end?: string) => Promise<void>;
+  fetchOrders: (start?: string, end?: string, st?: string) => Promise<void>;
   handleAvatarUpload: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
   fetchDistricts: (provinceCode: number) => void;
   handleLogout: () => void;
@@ -188,6 +190,7 @@ export function useUserProfile(): UseUserProfileReturn {
   const [ordersError, setOrdersError] = useState<string | null>(null);
   const [filterStartDate, setFilterStartDate] = useState('');
   const [filterEndDate, setFilterEndDate] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
 
   const [mounted, setMounted] = useState(false);
@@ -297,7 +300,7 @@ export function useUserProfile(): UseUserProfileReturn {
     }
   };
 
-  const fetchOrders = useCallback(async (start?: string, end?: string) => {
+  const fetchOrders = useCallback(async (start?: string, end?: string, st?: string) => {
     setLoadingOrders(true);
     setOrdersError(null);
     try {
@@ -305,6 +308,7 @@ export function useUserProfile(): UseUserProfileReturn {
       const params: string[] = [];
       if (start) params.push(`startDate=${start}`);
       if (end) params.push(`endDate=${end}`);
+      if (st && st !== 'all') params.push(`status=${st}`);
       if (params.length > 0) {
         url += `?${params.join('&')}`;
       }
@@ -382,12 +386,12 @@ export function useUserProfile(): UseUserProfileReturn {
 
   useEffect(() => {
     if (activeTab === 'orders' && mounted && isAuthenticated) {
-      fetchOrders();
+      fetchOrders(filterStartDate, filterEndDate, filterStatus);
     }
     if (activeTab === 'profile' && mounted && isAuthenticated) {
       fetchAddresses();
     }
-  }, [activeTab, mounted, isAuthenticated, fetchOrders, fetchAddresses]);
+  }, [activeTab, mounted, isAuthenticated, fetchOrders, fetchAddresses, filterStartDate, filterEndDate, filterStatus]);
 
   const handleLogout = () => {
     logout();
@@ -627,6 +631,8 @@ export function useUserProfile(): UseUserProfileReturn {
     setFilterStartDate,
     filterEndDate,
     setFilterEndDate,
+    filterStatus,
+    setFilterStatus,
     selectedOrder,
     setSelectedOrder,
     mounted,

@@ -2,19 +2,20 @@
 
 import React from 'react';
 import { ImageIcon, Sparkles, RotateCcw, Save, Loader2 } from 'lucide-react';
-import type { UseAdminHomepageReturn } from '@/hooks/useAdminHomepage';
 
 interface HomepageHeaderProps {
-  adminHomepage: UseAdminHomepageReturn;
+  isBannersMode: boolean;
+  isSaving: boolean;
+  handleRestoreDefaults: () => void;
+  handleSave: () => void;
 }
 
-export function HomepageHeader({ adminHomepage }: HomepageHeaderProps) {
-  const {
-    isBannersMode,
-    isSaving,
-    handleRestoreDefaults,
-    handleSave
-  } = adminHomepage;
+export const HomepageHeader = React.memo(function HomepageHeader({
+  isBannersMode,
+  isSaving,
+  handleRestoreDefaults,
+  handleSave
+}: HomepageHeaderProps) {
 
   return (
     <header className="admin-page-header flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-[#D4A5A5]/15 pb-6 mb-8">
@@ -57,4 +58,4 @@ export function HomepageHeader({ adminHomepage }: HomepageHeaderProps) {
       </div>
     </header>
   );
-}
+});
