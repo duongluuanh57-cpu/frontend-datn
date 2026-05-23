@@ -1,17 +1,25 @@
 import axios from 'axios';
+import { getActiveOrigin, getActiveApiUrl, getActiveOriginSync } from './backendDiscovery';
 
-const apiBase =
-  process.env.NEXT_PUBLIC_API_URL?.trim() || 'http://localhost:4000/api';
-
-/** Origin backend (bỏ hậu tố /api) — dùng cho /ping, health, v.v. */
+/** Lấy base URL từ cache (sync) — fallback về Render */
 export function getBackendOrigin(): string {
-  const base = apiBase.replace(/\/+$/, '');
-  return base.endsWith('/api') ? base.slice(0, -4) : base;
+  return getActiveOriginSync();
+}
+
+/** Lấy base URL động — ping song song, ưu tiên Render */
+export async function getBackendOriginAsync(): Promise<string> {
+  return getActiveOrigin();
+}
+
+/** Lấy API URL động (origin + /api) — async */
+export async function getApiBase(): Promise<string> {
+  return getActiveApiUrl();
 }
 
 /**
- * Trả về URL đầy đủ cho ảnh. Nếu ảnh là relative path (bắt đầu bằng / vd /uploads/...),
- * sẽ tự động ghép với Origin của backend (e.g., http://localhost:4000/uploads/...).
+ * Trả về URL đầy đủ cho ảnh (đồng bộ — dùng trong JSX). 
+ * Nếu ảnh là relative path (bắt đầu bằng / vd /uploads/...),
+ * sẽ tự động ghép với Origin của backend (e.g., https://backend-datn-y78s.onrender.com/uploads/...).
  */
 export function resolveImageUrl(url?: string): string {
   if (!url) return '';
@@ -19,7 +27,7 @@ export function resolveImageUrl(url?: string): string {
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('data:') || trimmed.startsWith('blob:')) {
     return trimmed;
   }
-  const origin = getBackendOrigin();
+  const origin = getActiveOriginSync();
   return trimmed.startsWith('/') ? `${origin}${trimmed}` : `${origin}/${trimmed}`;
 }
 
@@ -28,7 +36,7 @@ export function resolveImageUrl(url?: string): string {
  * Dùng khi frontend khởi động để đánh thức host ngủ (vd. Render).
  */
 export async function pingBackend(): Promise<boolean> {
-  const origin = getBackendOrigin();
+  const origin = await getActiveOrigin();
   try {
     const res = await fetch(`${origin}/ping`, {
       method: 'GET',
@@ -42,10 +50,16 @@ export async function pingBackend(): Promise<boolean> {
 }
 
 const api = axios.create({
-  baseURL: apiBase.endsWith('/') ? apiBase.slice(0, -1) : apiBase,
   headers: {
     'Content-Type': 'application/json',
   },
+});
+
+// Request interceptor: gắn baseURL động vào mỗi request
+api.interceptors.request.use(async (config) => {
+  const base = await getActiveApiUrl();
+  config.baseURL = base.endsWith('/') ? base.slice(0, -1) : base;
+  return config;
 });
 
 let lastAiRequestTime = 0;
@@ -133,7 +147,8 @@ api.interceptors.response.use(
         }
 
         // Call server to refresh the tokens
-        const res = await axios.post(`${apiBase.replace(/\/+$/, '')}/auth/refresh`, {
+        const refreshBase = await getActiveApiUrl();
+        const res = await axios.post(`${refreshBase.replace(/\/+$/, '')}/auth/refresh`, {
           refreshToken,
         });
 
@@ -190,7 +205,7 @@ export async function uploadImageToR2(
   file: File,
   options?: { maxWidth?: number; quality?: number; folder?: string }
 ): Promise<ImgBBUploadResponseData> {
-  const base = apiBase.replace(/\/+$/, '');
+  const base = (await getActiveApiUrl()).replace(/\/+$/, '');
   const endpoint = `${base}/media/upload-r2`;
 
   const form = new FormData();
