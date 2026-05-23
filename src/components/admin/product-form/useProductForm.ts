@@ -339,17 +339,28 @@ export function useProductForm({ initialData, productId }: UseProductFormProps) 
             }
           }
 
+
+          const nextMetaTitle = info.metaTitle || prev.metaTitle;
+          const nextSlug = info.slug || prev.slug || slugify(nextMetaTitle || info.name || prev.name);
+
           return {
             ...prev, brand: brandId, price: info.price || prev.price,
             size: info.size || prev.size, description: info.description || prev.description,
             quantityInStock: prev.quantityInStock,
             discountPercentage: info.discountPercentage !== undefined ? info.discountPercentage : prev.discountPercentage,
-            metaTitle: info.metaTitle || prev.metaTitle, metaDescription: info.metaDescription || prev.metaDescription,
+            metaTitle: nextMetaTitle,
+            metaDescription: info.metaDescription || prev.metaDescription,
             keywords: Array.isArray(info.keywords) ? info.keywords.join(', ') : (info.keywords || prev.keywords),
+            slug: nextSlug,
+            priceReport: info.priceReport || prev.priceReport,
+            sizeReport: info.sizeReport || prev.sizeReport,
+            discountReport: info.discountReport || prev.discountReport,
             scentGroup: info.scentGroup || prev.scentGroup, concentration: info.concentration || prev.concentration,
             segment: info.segment || prev.segment, gender: info.gender || prev.gender, tag: info.tag || prev.tag,
           };
         });
+// ... existing code ...
+// ... existing code ...
         setPriceReport(info.priceReport || null);
         setSizeReport(info.sizeReport || null);
         setDiscountReport(info.discountReport || null);
@@ -441,16 +452,23 @@ export function useProductForm({ initialData, productId }: UseProductFormProps) 
       const uploadedImages = await uploadBase64ImagesToR2(allImages, folder);
 
       // Cập nhật payload với URLs đã upload
+
+      // Cập nhật payload với URLs đã upload
       const payload = {
         ...formData,
         image: uploadedImages[0] || '',
         images: uploadedImages.slice(1),
-        priceReport, sizeReport, discountReport,
-        slug: formData.slug || '',
-        keywords: formData.keywords.split(',').map((k) => k.trim()).filter(Boolean),
+        priceReport: priceReport || formData.priceReport || '',
+        sizeReport: sizeReport || formData.sizeReport || '',
+        discountReport: discountReport || formData.discountReport || '',
+        slug: formData.slug || slugify(formData.metaTitle || formData.name),
+        keywords: typeof formData.keywords === 'string'
+            ? formData.keywords.split(',').map((k) => k.trim()).filter(Boolean)
+            : formData.keywords || [],
       };
       if (productId) {
         await api.patch(`/products/${productId}`, payload);
+// ... existing code ...
         queryClient.invalidateQueries({ queryKey: ['admin-product', productId] });
       } else {
         await api.post('/products', payload);

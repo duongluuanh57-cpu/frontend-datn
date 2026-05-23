@@ -59,30 +59,73 @@ export const ProductSEOSection = React.memo(function ProductSEOSection({
           <label className="admin-label" htmlFor="keywords">
             {t('fields.keywords')}
           </label>
+
           <input
-            id="keywords"
-            type="text"
-            value={formData.keywords}
-            onChange={(e) => update({ keywords: e.target.value })}
-            placeholder={t('fields.keywordsPlaceholder')}
-            className="admin-input"
+              id="keywords"
+              type="text"
+              value={Array.isArray(formData.keywords) ? formData.keywords.join(', ') : formData.keywords || ''}
+              onChange={(e) => update({ keywords: e.target.value })}
+              placeholder={t('fields.keywordsPlaceholder')}
+              className="admin-input"
           />
+
         </div>
+
 
         <div className="admin-field">
           <label className="admin-label" htmlFor="metaDescription">
             {t('fields.metaDescription')}
           </label>
           <textarea
-            id="metaDescription"
-            rows={4}
-            value={formData.metaDescription}
-            onChange={(e) => update({ metaDescription: e.target.value })}
-            className="admin-textarea"
+              id="metaDescription"
+              rows={4}
+              value={formData.metaDescription}
+              onChange={(e) => update({ metaDescription: e.target.value })}
+              className="admin-textarea"
+          />
+        </div>
+
+        <div className="admin-field">
+          <label className="admin-label" htmlFor="priceReport">
+            {isVi ? 'Báo cáo giá SEO / AI' : 'SEO / AI price report'}
+          </label>
+          <textarea
+              id="priceReport"
+              rows={6}
+              value={formData.priceReport || ''}
+              onChange={(e) => update({ priceReport: e.target.value })}
+              className="admin-textarea"
+          />
+        </div>
+
+        <div className="admin-field">
+          <label className="admin-label" htmlFor="sizeReport">
+            {isVi ? 'Báo cáo dung tích SEO / AI' : 'SEO / AI size report'}
+          </label>
+          <textarea
+              id="sizeReport"
+              rows={6}
+              value={formData.sizeReport || ''}
+              onChange={(e) => update({ sizeReport: e.target.value })}
+              className="admin-textarea"
+          />
+        </div>
+
+        <div className="admin-field">
+          <label className="admin-label" htmlFor="discountReport">
+            {isVi ? 'Báo cáo khuyến mãi SEO / AI' : 'SEO / AI discount report'}
+          </label>
+          <textarea
+              id="discountReport"
+              rows={6}
+              value={formData.discountReport || ''}
+              onChange={(e) => update({ discountReport: e.target.value })}
+              className="admin-textarea"
           />
         </div>
 
         <div className="admin-status-pill">
+
           <span className="admin-status-pill__label">
             <span
               className="admin-status-pill__dot"
