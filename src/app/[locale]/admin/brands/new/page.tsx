@@ -67,7 +67,7 @@ export default function NewBrandPage() {
         alert(isVi ? 'Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại!' : 'Session expired. Please log in again!');
         window.location.href = `/${locale}/login`;
       } else {
-        alert(isVi ? 'Không thể lưu thương hiệu. Vui lòng thử lại!' : 'Failed to save brand. Please try again!');
+        alert(err.response?.data?.message || (isVi ? 'Vui lòng kiểm tra lại thông tin.' : 'Please check the information.'));
       }
     }
   });

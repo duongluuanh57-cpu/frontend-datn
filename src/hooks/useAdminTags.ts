@@ -69,7 +69,7 @@ export function useAdminTags(): UseAdminTagsReturn {
         alert(isVi ? 'Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại!' : 'Session expired. Please log in again!');
         window.location.href = `/${locale}/login`;
       } else {
-        alert(isVi ? 'Không thể xóa tag này.' : 'Failed to delete tag.');
+        alert(err.response?.data?.message || (isVi ? 'Vui lòng kiểm tra lại thông tin.' : 'Please check the information.'));
       }
     }
   });

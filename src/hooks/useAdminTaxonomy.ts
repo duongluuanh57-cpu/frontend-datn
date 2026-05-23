@@ -158,7 +158,7 @@ export function useAdminTaxonomy(): UseAdminTaxonomyReturn {
         alert(isVi ? 'Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại!' : 'Session expired. Please log in again!');
         window.location.href = `/${locale}/login`;
       } else {
-        alert(isVi ? 'Không thể xóa mục này.' : 'Failed to delete this item.');
+        alert(err.response?.data?.message || (isVi ? 'Vui lòng kiểm tra lại thông tin.' : 'Please check the information.'));
       }
     }
   });
@@ -214,7 +214,7 @@ export function useAdminTaxonomy(): UseAdminTaxonomyReturn {
       setIsModalOpen(false);
     } catch (err: any) {
       console.error(err);
-      alert(isVi ? `Có lỗi xảy ra: ${err.message}` : `Error: ${err.message}`);
+      alert(err.response?.data?.message || (isVi ? 'Vui lòng kiểm tra lại thông tin.' : 'Please check the information.'));
     } finally {
       setIsSaving(false);
     }

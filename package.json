@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "clean": "node -e \"const fs = require('fs'); ['.next', 'dist', '.turbo'].forEach(d => { if (fs.existsSync(d)) { fs.rmSync(d, { recursive: true, force: true }); console.log('🧹 Cleaned ' + d); } })\"",
-    "codegraph:update": "codegraph init -i"
+    "codegraph:update": "codegraph index"
   },
   "dependencies": {
     "@ai-sdk/react": "^3.0.186",

@@ -23,7 +23,20 @@ npm start                      # Start production server
 | `npm start` | Start production server |
 | `npm run lint` | ESLint check |
 | `npm test` | Vitest unit tests |
+| `npm run codegraph:update` | Re-index codegraph (`codegraph index`) |
 | `npx playwright test` | E2E tests |
+
+## 🚀 Git Workflow (Code + CodeGraph)
+
+CodeGraph là index cấu trúc toàn bộ source code (`.codegraph/codegraph.db`). Clone repo về là AI đọc được ngay, không cần init lại.
+
+```bash
+# Mỗi lần code xong — push tất cả (code + codegraph)
+npm run codegraph:update   # cập nhật index
+git add .                  # stage code + .codegraph/codegraph.db
+git commit -m "message"
+git push origin Update     # push lên nhánh Update
+```
 
 ## Tech Stack
 
