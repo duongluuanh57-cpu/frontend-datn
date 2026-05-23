@@ -1,16 +1,9 @@
 'use client';
 
 import React from 'react';
-import { Users, UserPlus } from 'lucide-react';
-import type { UseAdminUsersReturn } from '@/hooks/useAdminUsers';
+import { Users } from 'lucide-react';
 
-interface UserHeaderProps {
-  adminUsers: UseAdminUsersReturn;
-}
-
-export function UserHeader({ adminUsers }: UserHeaderProps) {
-  const { handleOpenModal } = adminUsers;
-
+export function UserHeader() {
   return (
     <header className="admin-page-header">
       <div>
@@ -19,15 +12,6 @@ export function UserHeader({ adminUsers }: UserHeaderProps) {
           Quản lý người dùng
         </h1>
         <p className="admin-page-header__subtitle">Quản lý tài khoản khách hàng và nhân viên hệ thống.</p>
-      </div>
-      <div className="admin-page-header__actions">
-        <button 
-          className="admin-btn-primary"
-          onClick={() => handleOpenModal()}
-        >
-          <UserPlus size={18} />
-          Thêm người dùng
-        </button>
       </div>
     </header>
   );

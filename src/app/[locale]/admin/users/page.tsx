@@ -25,7 +25,7 @@ export default function AdminUsersPage() {
 
   return (
     <div className="admin-page">
-      <UserHeader adminUsers={adminUsers} />
+      <UserHeader />
       <UserStats adminUsers={adminUsers} />
       <UserFilterBar adminUsers={adminUsers} />
       <UserTable adminUsers={adminUsers} />

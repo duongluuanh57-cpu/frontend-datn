@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Loader2, Sparkles, Search, Edit3, Trash2, Copy, CheckCircle, XCircle } from 'lucide-react';
+import { Link } from '@/navigation';
 import type { UseAdminVouchersReturn, Voucher } from '@/hooks/useAdminVouchers';
 
 interface VoucherTableProps {
@@ -26,7 +27,7 @@ function formatDate(dateStr: string, locale: string) {
 export function VoucherTable({ adminVouchers }: VoucherTableProps) {
   const {
     locale, isVi, vouchers, isLoading, searchTerm, setSearchTerm,
-    openEditModal, deleteMutation,
+    deleteMutation,
   } = adminVouchers;
 
   return (
@@ -173,14 +174,13 @@ export function VoucherTable({ adminVouchers }: VoucherTableProps) {
                       </td>
                       <td>
                         <div className="admin-table-actions">
-                          <button
-                            type="button"
+                          <Link
+                            href={"/admin/vouchers/" + v._id}
                             className="admin-icon-btn"
-                            onClick={() => openEditModal(v)}
                             title={isVi ? 'Chỉnh sửa' : 'Edit'}
                           >
                             <Edit3 size={16} />
-                          </button>
+                          </Link>
                           <button
                             type="button"
                             className="admin-icon-btn admin-icon-btn--danger"

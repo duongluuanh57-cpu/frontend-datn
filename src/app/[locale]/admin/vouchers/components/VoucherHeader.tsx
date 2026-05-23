@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Ticket, Plus } from 'lucide-react';
+import { Link } from '@/navigation';
 import type { UseAdminVouchersReturn } from '@/hooks/useAdminVouchers';
 
 interface VoucherHeaderProps {
@@ -9,7 +10,7 @@ interface VoucherHeaderProps {
 }
 
 export function VoucherHeader({ adminVouchers }: VoucherHeaderProps) {
-  const { isVi, openCreateModal } = adminVouchers;
+  const { isVi } = adminVouchers;
 
   return (
     <header className="admin-page-header">
@@ -25,10 +26,10 @@ export function VoucherHeader({ adminVouchers }: VoucherHeaderProps) {
         </p>
       </div>
       <div className="admin-page-header__actions">
-        <button className="admin-btn-primary flex items-center gap-2" onClick={openCreateModal}>
+        <Link href="/admin/vouchers/new" className="admin-btn-primary flex items-center gap-2">
           <Plus size={18} />
           {isVi ? 'Thêm mã giảm giá' : 'Add Voucher'}
-        </button>
+        </Link>
       </div>
     </header>
   );

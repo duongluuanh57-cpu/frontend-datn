@@ -88,14 +88,14 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
               selectedTags={selectedTags}
               setIsTagModalOpen={setIsTagModalOpen}
             />
-            <ProductSEOSection
-              t={t}
-              isVi={isVi}
-              formData={formData}
-              update={update}
-              isFormComplete={isFormComplete}
-            />
           </div>
+          <ProductSEOSection
+            t={t}
+            isVi={isVi}
+            formData={formData}
+            update={update}
+            isFormComplete={isFormComplete}
+          />
         </div>
       </form>
 

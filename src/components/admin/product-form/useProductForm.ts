@@ -482,8 +482,9 @@ export function useProductForm({ initialData, productId }: UseProductFormProps) 
       }
       router.push('/admin/products');
       router.refresh();
-    } catch {
-      toast.error(t('savingError'));
+    } catch (err: any) {
+      const backendMsg = err?.response?.data?.message;
+      toast.error(backendMsg || t('savingError'));
     } finally { setIsSubmitting(false); }
   };
 

@@ -6,28 +6,6 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { getBrands } from '@/lib/api';
 
-const FALLBACK_BRANDS = [
-  { name: 'Burberry', logo: 'https://pub-51942afe81314369ba1985f0493bce19.r2.dev/uploads/04pq2s34-burberry.webp' },
-  { name: 'Calvin Klein', logo: 'https://pub-51942afe81314369ba1985f0493bce19.r2.dev/uploads/rn8gigov-calvin-klein.webp' },
-  { name: 'Carolina Herrera', logo: 'https://pub-51942afe81314369ba1985f0493bce19.r2.dev/uploads/lsj1bpnd-carolina-herrera.webp' },
-  { name: 'Chloe', logo: 'https://pub-51942afe81314369ba1985f0493bce19.r2.dev/uploads/25a3ltx8-chloe.webp' },
-  { name: 'Creed', logo: 'https://pub-51942afe81314369ba1985f0493bce19.r2.dev/uploads/qhddz730-creed.webp' },
-  { name: 'Dolce & Gabbana', logo: 'https://pub-51942afe81314369ba1985f0493bce19.r2.dev/uploads/7b91ejpw-dolce---gabbana.webp' },
-  { name: 'Giorgio Armani', logo: 'https://pub-51942afe81314369ba1985f0493bce19.r2.dev/uploads/dxhpaihh-giorgio-armani.webp' },
-  { name: 'Gucci', logo: 'https://pub-51942afe81314369ba1985f0493bce19.r2.dev/uploads/gwlvqjeb-gucci.webp' },
-  { name: 'Hugo Boss', logo: 'https://pub-51942afe81314369ba1985f0493bce19.r2.dev/uploads/67s71vd4-hugo-boss.webp' },
-  { name: 'Jean Paul Gaultier', logo: 'https://pub-51942afe81314369ba1985f0493bce19.r2.dev/uploads/6jecenfm-jean-paul-gaultier.webp' },
-  { name: 'Jimmy Choo', logo: 'https://pub-51942afe81314369ba1985f0493bce19.r2.dev/uploads/ct7wcion-jimmy-choo.webp' },
-  { name: 'Lancome', logo: 'https://pub-51942afe81314369ba1985f0493bce19.r2.dev/uploads/58fgfo7u-lancome.webp' },
-  { name: 'Marc Jacobs', logo: 'https://pub-51942afe81314369ba1985f0493bce19.r2.dev/uploads/iwlirekh-marc-jacobs.webp' },
-  { name: 'Narciso Rodriguez', logo: 'https://pub-51942afe81314369ba1985f0493bce19.r2.dev/uploads/5v1eg8vv-narciso-rodriguez.webp' },
-  { name: 'Paco Rabanne', logo: 'https://pub-51942afe81314369ba1985f0493bce19.r2.dev/uploads/0mszo6ip-paco-rabanne.webp' },
-  { name: 'Parfums Parour', logo: 'https://pub-51942afe81314369ba1985f0493bce19.r2.dev/uploads/b3z7ak31-parfums-parour.webp' },
-  { name: 'Versace', logo: 'https://pub-51942afe81314369ba1985f0493bce19.r2.dev/uploads/rohv2d8g-versace.webp' },
-  { name: 'Yves Saint Laurent', logo: 'https://pub-51942afe81314369ba1985f0493bce19.r2.dev/uploads/hp2e26t2-yves-saint-laurent.webp' },
-  { name: 'Birkholz Perfume Manufacture', logo: 'https://pub-51942afe81314369ba1985f0493bce19.r2.dev/uploads/k7l0gkeh-birkholz-perfume-manufacture.webp' }
-];
-
 export function BrandsMarquee() {
   const t = useTranslations('Home');
   const [brands, setBrands] = useState<Array<{ name: string; logo: string }>>([]);
@@ -35,21 +13,17 @@ export function BrandsMarquee() {
   useEffect(() => {
     async function loadBrands() {
       const dbBrands = await getBrands();
-      // Filter active brands with valid logo
       const activeBrands = dbBrands
         .filter(b => b.status === 'active' && b.logo)
         .map(b => ({ name: b.name, logo: b.logo! }));
-
-      if (activeBrands.length > 0) {
-        setBrands(activeBrands);
-      } else {
-        setBrands(FALLBACK_BRANDS);
-      }
+      setBrands(activeBrands);
     }
     loadBrands();
   }, []);
 
-  const listToRender = brands.length > 0 ? brands : FALLBACK_BRANDS;
+  if (brands.length === 0) return null;
+
+  const listToRender = brands;
 
   // Build marquee track array: ensure it has at least 10 elements to look smooth, then double for infinite scroll
   let repeatedList = [...listToRender];

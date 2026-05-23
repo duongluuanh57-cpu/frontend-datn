@@ -10,16 +10,38 @@ export interface ProductFilterTag {
   slug: string;
 }
 
+const FILTERS_STORAGE_KEY = 'adminProductFilters';
+
+function loadSavedFilters(): { searchQuery: string; selectedBrand: string; stockFilter: string; selectedTag: string; sortBy: string } {
+  if (typeof window === 'undefined') return { searchQuery: '', selectedBrand: '', stockFilter: 'all', selectedTag: 'all', sortBy: 'bestSeller' };
+  try {
+    const raw = sessionStorage.getItem(FILTERS_STORAGE_KEY);
+    if (!raw) return { searchQuery: '', selectedBrand: '', stockFilter: 'all', selectedTag: 'all', sortBy: 'bestSeller' };
+    const parsed = JSON.parse(raw);
+    return {
+      searchQuery: typeof parsed.searchQuery === 'string' ? parsed.searchQuery : '',
+      selectedBrand: typeof parsed.selectedBrand === 'string' ? parsed.selectedBrand : '',
+      stockFilter: typeof parsed.stockFilter === 'string' ? parsed.stockFilter : 'all',
+      selectedTag: typeof parsed.selectedTag === 'string' ? parsed.selectedTag : 'all',
+      sortBy: typeof parsed.sortBy === 'string' ? parsed.sortBy : 'bestSeller',
+    };
+  } catch {
+    return { searchQuery: '', selectedBrand: '', stockFilter: 'all', selectedTag: 'all', sortBy: 'bestSeller' };
+  }
+}
+
 export function useProductFilters() {
   const t = useTranslations('Admin');
   const locale = useLocale();
   const isVi = locale === 'vi';
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedBrand, setSelectedBrand] = useState('');
-  const [stockFilter, setStockFilter] = useState('all');
-  const [selectedTag, setSelectedTag] = useState('all');
-  const [sortBy, setSortBy] = useState('bestSeller');
+  const saved = loadSavedFilters();
+
+  const [searchQuery, setSearchQuery] = useState(saved.searchQuery);
+  const [selectedBrand, setSelectedBrand] = useState(saved.selectedBrand);
+  const [stockFilter, setStockFilter] = useState(saved.stockFilter);
+  const [selectedTag, setSelectedTag] = useState(saved.selectedTag);
+  const [sortBy, setSortBy] = useState(saved.sortBy);
   const [isBrandDropdownOpen, setIsBrandDropdownOpen] = useState(false);
   const [brandSearchQuery, setBrandSearchQuery] = useState('');
   const brandDropdownRef = useRef<HTMLDivElement>(null);
@@ -71,6 +93,13 @@ export function useProductFilters() {
     );
   }, [brands, brandSearchQuery]);
 
+  useEffect(() => {
+    const state = { searchQuery, selectedBrand, stockFilter, selectedTag, sortBy };
+    try {
+      sessionStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(state));
+    } catch { /* storage full or unavailable */ }
+  }, [searchQuery, selectedBrand, stockFilter, selectedTag, sortBy]);
+
   const handleClearFilters = () => {
     setSearchQuery('');
     setSelectedBrand('');
@@ -78,6 +107,9 @@ export function useProductFilters() {
     setStockFilter('all');
     setSelectedTag('all');
     setSortBy('bestSeller');
+    try {
+      sessionStorage.removeItem(FILTERS_STORAGE_KEY);
+    } catch { /* ignore */ }
   };
 
   useEffect(() => {
