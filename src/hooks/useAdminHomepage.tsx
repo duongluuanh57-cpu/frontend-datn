@@ -15,8 +15,8 @@ import {
   sortableKeyboardCoordinates
 } from '@dnd-kit/sortable';
 import api from '@/lib/api';
-import type { SectionConfig, HomepageConfigData, ProductCardConfig, BlogCardConfig, ProductSessionLayoutConfig } from '@/hooks/useHomepageConfig';
-import { DEFAULT_PRODUCT_CARD_CONFIG, DEFAULT_BLOG_CARD_CONFIG, DEFAULT_PRODUCT_SESSION_LAYOUT } from '@/hooks/useHomepageConfig';
+import type { SectionConfig, HomepageConfigData, ProductCardConfig, BlogCardConfig, ProductSessionLayoutConfig, NavbarConfig } from '@/hooks/useHomepageConfig';
+import { DEFAULT_PRODUCT_CARD_CONFIG, DEFAULT_BLOG_CARD_CONFIG, DEFAULT_PRODUCT_SESSION_LAYOUT, DEFAULT_NAVBAR_CONFIG } from '@/hooks/useHomepageConfig';
 import { useProductSessionPreviewStore } from '@/store/useProductSessionPreviewStore';
 
 // --- Default data ---
@@ -60,7 +60,7 @@ const saveConfig = async (payload: Partial<HomepageConfigData>): Promise<Homepag
 export function useAdminHomepage() {
   const locale = useLocale();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<'banners' | 'gallery' | 'layout' | 'cardCustomizer' | 'blogCard' | 'productSessionLayout'>('layout');
+  const [activeTab, setActiveTab] = useState<'banners' | 'gallery' | 'layout' | 'cardCustomizer' | 'blogCard' | 'productSessionLayout' | 'navbar'>('layout');
   const searchParams = useSearchParams();
   const tabParam = searchParams.get('tab');
   const isBannersMode = tabParam === 'banners';
@@ -69,7 +69,7 @@ export function useAdminHomepage() {
   useEffect(() => {
     if (tabParam === 'banners') {
       setActiveTab('banners');
-    } else if (tabParam === 'gallery' || tabParam === 'layout' || tabParam === 'cardCustomizer' || tabParam === 'blogCard' || tabParam === 'productSessionLayout') {
+    } else if (tabParam === 'gallery' || tabParam === 'layout' || tabParam === 'cardCustomizer' || tabParam === 'blogCard' || tabParam === 'productSessionLayout' || tabParam === 'navbar') {
       setActiveTab(tabParam);
     } else {
       // If we leave banner mode, reset activeTab to 'layout' if it was on banners
@@ -147,6 +147,9 @@ export function useAdminHomepage() {
   const [cardConfig, setCardConfig] = useState<ProductCardConfig>(DEFAULT_PRODUCT_CARD_CONFIG);
   // ── Product Session Layout Config state ──
   const [productSessionLayout, setProductSessionLayout] = useState<ProductSessionLayoutConfig>(DEFAULT_PRODUCT_SESSION_LAYOUT);
+
+  // ── Navbar Config state ──
+  const [navbarConfig, setNavbarConfig] = useState<NavbarConfig>(DEFAULT_NAVBAR_CONFIG);
 
   const [cardElementOrder, setCardElementOrder] = useState<Array<{ id: string; label: string; show: boolean }>>(
     [
@@ -259,6 +262,21 @@ export function useAdminHomepage() {
         );
       }
     }
+
+    // Populate Navbar Config
+    if (dbConfig.navbar) {
+      const cfg = dbConfig.navbar;
+      setNavbarConfig({
+        logo: { ...DEFAULT_NAVBAR_CONFIG.logo, ...cfg.logo },
+        links: cfg.links?.length > 0
+          ? cfg.links.map((l: any) => ({ ...DEFAULT_NAVBAR_CONFIG.links[0], ...l }))
+          : DEFAULT_NAVBAR_CONFIG.links,
+        style: { ...DEFAULT_NAVBAR_CONFIG.style, ...cfg.style },
+        layout: cfg.layout?.left
+          ? { left: cfg.layout.left, center: cfg.layout.center, right: cfg.layout.right }
+          : DEFAULT_NAVBAR_CONFIG.layout
+      });
+    }
   }, [dbConfig]);
 
   // ── Drag & Drop sensors ──
@@ -323,11 +341,12 @@ export function useAdminHomepage() {
       galleryEn,
       productCardConfig: finalCardConfig,
       blogCardConfig: finalBlogCardConfig,
-      productSessionLayout
+      productSessionLayout,
+      navbar: navbarConfig
     };
     console.log('[Save] Sending payload productSessionLayout:', JSON.stringify(productSessionLayout));
     saveMutation.mutate(payload);
-  }, [sections, banners, bannerTitleVi, bannerSubtitleVi, bannerLabelVi, bannerTitleEn, bannerSubtitleEn, bannerLabelEn, galleryVi, galleryEn, cardConfig, cardElementOrder, blogCardConfig, blogElementOrder, productSessionLayout, saveMutation]);
+  }, [sections, banners, bannerTitleVi, bannerSubtitleVi, bannerLabelVi, bannerTitleEn, bannerSubtitleEn, bannerLabelEn, galleryVi, galleryEn, cardConfig, cardElementOrder, blogCardConfig, blogElementOrder, productSessionLayout, navbarConfig, saveMutation]);
 
   // ── Restore defaults ──
   const handleRestoreDefaults = useCallback(() => {
@@ -472,7 +491,9 @@ export function useAdminHomepage() {
     handleGalleryImageUpload,
     displayTitle,
     displaySubtitle,
-    displayLabel
+    displayLabel,
+    navbarConfig,
+    setNavbarConfig
   };
 }
 

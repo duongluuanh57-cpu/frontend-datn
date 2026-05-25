@@ -9,6 +9,7 @@ import { HomepageGalleryTab } from './components/HomepageGalleryTab';
 import { HomepageCardTab } from './components/HomepageCardTab';
 import { HomepageBlogCardTab } from './components/HomepageBlogCardTab';
 import { HomepageProductSessionLayoutTab } from './components/HomepageProductSessionLayoutTab';
+import { HomepageNavbarTab } from './components/HomepageNavbarTab';
 import { ProductSessionPreviewModal } from './components/ProductSessionPreviewModal';
 import { AnimatePresence } from 'framer-motion';
 
@@ -83,6 +84,12 @@ function HomepageConfigContent() {
           <HomepageProductSessionLayoutTab
             config={adminHomepage.productSessionLayout}
             setConfig={adminHomepage.setProductSessionLayout}
+          />
+        )}
+        {activeTab === 'navbar' && (
+          <HomepageNavbarTab
+            navbarConfig={adminHomepage.navbarConfig}
+            setNavbarConfig={adminHomepage.setNavbarConfig}
           />
         )}
       </AnimatePresence>

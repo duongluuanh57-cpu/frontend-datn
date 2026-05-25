@@ -130,6 +130,66 @@ export const DEFAULT_BLOG_CARD_CONFIG: BlogCardConfig = {
   showReadMore: true
 };
 
+export interface NavLink {
+  label: string;
+  href: string;
+  order: number;
+  enabled: boolean;
+  displayMode: 'icon' | 'text' | 'icon-text';
+}
+
+export interface NavbarLayout {
+  left: string[];
+  center: string[];
+  right: string[];
+}
+
+export interface NavbarConfig {
+  logo: {
+    image: string;
+    text: string;
+    width: number;
+    height: number;
+  };
+  links: NavLink[];
+  style: {
+    background: string;
+    textColor: string;
+    accentColor: string;
+    iconSize: number;
+  };
+  layout: NavbarLayout;
+}
+
+export const DEFAULT_NAVBAR_LAYOUT: NavbarLayout = {
+  left: ['logo'],
+  center: ['link-0', 'link-1', 'link-2', 'link-3', 'link-4'],
+  right: ['search', 'cart', 'user'],
+};
+
+export const DEFAULT_NAVBAR_CONFIG: NavbarConfig = {
+  logo: {
+    image: 'https://i.ibb.co/TxzQXcMT/original.png',
+    text: "L'essence",
+    width: 120,
+    height: 35,
+  },
+  links: [
+    { label: 'Trang chủ', href: '/', order: 0, enabled: true, displayMode: 'icon' },
+    { label: 'Cửa hàng', href: '/collections', order: 1, enabled: true, displayMode: 'icon' },
+    { label: 'Bộ sưu tập', href: '/bo-suu-tap', order: 2, enabled: true, displayMode: 'icon' },
+    { label: 'Bài viết', href: '/blog', order: 3, enabled: true, displayMode: 'icon' },
+    { label: 'Hỗ trợ', href: '/tro-giup', order: 4, enabled: true, displayMode: 'icon' },
+  ],
+  style: {
+    background: '#FFF5F5',
+    textColor: '#7A5C5C',
+    accentColor: '#C08497',
+    iconSize: 26,
+  },
+  layout: DEFAULT_NAVBAR_LAYOUT,
+};
+
 export interface ProductCardConfig {
   imageAspect: 'square' | 'portrait' | 'landscape';
   imagePadding: number;
@@ -182,6 +242,7 @@ export interface HomepageConfigData {
   productCardConfig: ProductCardConfig;
   blogCardConfig: BlogCardConfig;
   productSessionLayout?: ProductSessionLayoutConfig;
+  navbar?: NavbarConfig;
 }
 
 const DEFAULT_SECTIONS: SectionConfig[] = [
@@ -221,7 +282,8 @@ const fetchHomepageConfig = async (): Promise<HomepageConfigData> => {
           galleryEn: parsed.gallery_en || [],
           productCardConfig: DEFAULT_PRODUCT_CARD_CONFIG,
           blogCardConfig: DEFAULT_BLOG_CARD_CONFIG,
-          productSessionLayout: DEFAULT_PRODUCT_SESSION_LAYOUT
+          productSessionLayout: DEFAULT_PRODUCT_SESSION_LAYOUT,
+          navbar: DEFAULT_NAVBAR_CONFIG
         };
       }
     }
@@ -241,9 +303,11 @@ const fetchHomepageConfig = async (): Promise<HomepageConfigData> => {
     galleryEn: [],
     productCardConfig: DEFAULT_PRODUCT_CARD_CONFIG,
     blogCardConfig: DEFAULT_BLOG_CARD_CONFIG,
-    productSessionLayout: DEFAULT_PRODUCT_SESSION_LAYOUT
+    productSessionLayout: DEFAULT_PRODUCT_SESSION_LAYOUT,
+    navbar: DEFAULT_NAVBAR_CONFIG
   };
-};
+
+}
 
 export function useHomepageConfig() {
   return useQuery<HomepageConfigData>({

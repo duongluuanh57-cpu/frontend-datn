@@ -64,7 +64,7 @@ export default function AdminDashboard() {
       price: '2.450.000₫',
       status: t('recentProducts.active'),
       statusType: 'ok' as const,
-      image: 'https://i.ibb.co/3yxq0RjX/perfume1.webp',
+      image: '',
     },
     {
       name: 'Velvet Jasmine',
@@ -72,7 +72,7 @@ export default function AdminDashboard() {
       price: '3.100.000₫',
       status: t('recentProducts.lowStock'),
       statusType: 'low' as const,
-      image: 'https://i.ibb.co/C3Y4Vv7Y/perfume2.webp',
+      image: '',
     },
   ];
 
