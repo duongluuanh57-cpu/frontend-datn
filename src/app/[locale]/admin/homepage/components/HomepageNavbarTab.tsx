@@ -546,99 +546,120 @@ export const HomepageNavbarTab = React.memo(function HomepageNavbarTab({
   };
 
   return (
-    <motion.div
-      key="navbar-panel"
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -12 }}
-      transition={{ duration: 0.25 }}
-      className="space-y-8"
-    >
-      {/* ── Live Preview ── */}
-      <div className="admin-panel bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-        <div className="border-b border-gray-100 pb-4 mb-4 flex items-center gap-2">
-          <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
-          <h2 className="text-sm font-semibold text-[#7A5C5C]">Navbar Preview</h2>
-        </div>
-        <NavbarPreview navbarConfig={navbarConfig} />
-      </div>
-
-      {/* ── Layout Builder + Sidebar ── */}
-      <div className="admin-panel bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-        <div className="border-b border-gray-100 pb-4 mb-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <GripVertical size={18} className="text-[#D4A5A5]" />
-            <h2 className="text-sm font-semibold text-[#7A5C5C]">Navbar Layout Builder</h2>
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleLayoutDragEnd}>
+      <motion.div
+        key="navbar-panel"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -12 }}
+        transition={{ duration: 0.25 }}
+        className="space-y-8"
+      >
+        {/* ── Live Preview ── */}
+        <div className="admin-panel bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+          <div className="border-b border-gray-100 pb-4 mb-4 flex items-center gap-2">
+            <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+            <h2 className="text-sm font-semibold text-[#7A5C5C]">Navbar Preview</h2>
           </div>
-          <button onClick={() => setSidebarVisible(!sidebarVisible)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-semibold rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">
-            {sidebarVisible ? '✕' : '☰'} {sidebarVisible ? 'Ẩn' : 'Hiện'} Liên kết
-          </button>
+          <NavbarPreview navbarConfig={navbarConfig} />
         </div>
-        <p className="text-[11px] text-gray-400 mb-4">
-          Kéo thả các item giữa các khu vực hoặc kéo từ danh sách Liên kết bên phải vào khu vực mong muốn.
-        </p>
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleLayoutDragEnd}>
-          <div className="flex gap-4">
-            <div className={`grid grid-cols-3 gap-3 ${sidebarVisible ? 'flex-1' : 'w-full'}`}>
-              {(['left', 'center', 'right'] as ZoneId[]).map(zoneId => (
-                <Zone
-                  key={zoneId}
-                  id={zoneId}
-                  items={navbarConfig.layout[zoneId]}
-                  navbarConfig={navbarConfig}
-                  onRemove={handleRemoveFromZone}
-                  onEdit={handleEditChip}
-                  editingId={editingId}
-                />
-              ))}
+
+        {/* ── Layout Builder ── */}
+        <div className="admin-panel bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+          <div className="border-b border-gray-100 pb-4 mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <GripVertical size={18} className="text-[#D4A5A5]" />
+              <h2 className="text-sm font-semibold text-[#7A5C5C]">Navbar Layout Builder</h2>
             </div>
-
-            {/* ── Sidebar ── */}
-            {sidebarVisible && (
-              <div className="w-72 shrink-0 border-l border-gray-200 pl-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-[11px] font-semibold text-[#7A5C5C] uppercase tracking-wider">
-                    Liên kết
-                  </h3>
-                  <button onClick={addLink}
-                    className="flex items-center gap-1 px-2 py-1 text-[10px] font-semibold rounded-lg bg-[#7A5C5C] text-white hover:bg-[#604444] transition-colors">
-                    <Plus size={10} /> Thêm
-                  </button>
-                </div>
-                <div className="space-y-1.5 max-h-[400px] overflow-y-auto pr-1">
-                  {navbarConfig.links.map((link, i) => (
-                    <div key={i} onClick={() => setSelectedLinkIndex(i)}
-                      className={selectedLinkIndex === i ? 'rounded-lg ring-2 ring-[#D4A5A5]/30' : ''}>
-                      <SidebarLinkRow
-                        index={i}
-                        link={link}
-                        isSelected={selectedLinkIndex === i}
-                        onUpdate={updateLink}
-                        onRemove={removeLink}
-                        onSelect={setSelectedLinkIndex}
-                      />
-                    </div>
-                  ))}
-                  {navbarConfig.links.length === 0 && (
-                    <p className="text-[11px] text-gray-400 italic text-center py-4">Chưa có liên kết nào.</p>
-                  )}
-                </div>
-              </div>
-            )}
+            <button onClick={() => setSidebarVisible(!sidebarVisible)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-semibold rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">
+              {sidebarVisible ? '✕' : '☰'} {sidebarVisible ? 'Ẩn' : 'Hiện'} Liên kết
+            </button>
           </div>
-        </DndContext>
-      </div>
+          <p className="text-[11px] text-gray-400 mb-4">
+            Kéo thả các item giữa các khu vực hoặc kéo từ danh sách Liên kết bên phải vào khu vực mong muốn.
+          </p>
+          <div className="grid grid-cols-3 gap-3">
+            {(['left', 'center', 'right'] as ZoneId[]).map(zoneId => (
+              <Zone
+                key={zoneId}
+                id={zoneId}
+                items={navbarConfig.layout[zoneId]}
+                navbarConfig={navbarConfig}
+                onRemove={handleRemoveFromZone}
+                onEdit={handleEditChip}
+                editingId={editingId}
+              />
+            ))}
+          </div>
+        </div>
 
-      {/* ── Inline Item Editor (logo / search / cart / user only) ── */}
-      {editingId && (
-        <ItemEditor
-          itemId={editingId}
-          navbarConfig={navbarConfig}
-          setNavbarConfig={setNavbarConfig}
-          onClose={() => setEditingId(null)}
+        {/* ── Inline Item Editor (logo / search / cart / user only) ── */}
+        {editingId && (
+          <ItemEditor
+            itemId={editingId}
+            navbarConfig={navbarConfig}
+            setNavbarConfig={setNavbarConfig}
+            onClose={() => setEditingId(null)}
+          />
+        )}
+      </motion.div>
+
+      {/* ── Fixed Drawer – Navbar Links ── */}
+      {sidebarVisible && (
+        <div
+          className="fixed inset-0 z-30 bg-black/20"
+          onClick={() => setSidebarVisible(false)}
         />
       )}
-    </motion.div>
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        right: 0,
+        bottom: 0,
+        width: '320px',
+        transform: sidebarVisible ? 'translateX(0)' : 'translateX(100%)',
+        transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        zIndex: 40,
+        background: '#ffffff',
+        borderLeft: sidebarVisible ? '1px solid #e5e7eb' : 'none',
+        display: 'flex',
+        flexDirection: 'column',
+      }}>
+        <div className="flex items-center justify-between p-4 border-b border-gray-100">
+          <h3 className="text-[11px] font-semibold text-[#7A5C5C] uppercase tracking-wider">
+            Liên kết
+          </h3>
+          <div className="flex items-center gap-2">
+            <button onClick={addLink}
+              className="flex items-center gap-1 px-2 py-1 text-[10px] font-semibold rounded-lg bg-[#7A5C5C] text-white hover:bg-[#604444] transition-colors">
+              <Plus size={10} /> Thêm
+            </button>
+            <button onClick={() => setSidebarVisible(false)}
+              className="p-1 text-gray-400 hover:text-gray-600 rounded transition-colors">
+              ✕
+            </button>
+          </div>
+        </div>
+        <div className="flex-1 overflow-y-auto p-4 space-y-1.5">
+          {navbarConfig.links.map((link, i) => (
+            <div key={i} onClick={() => setSelectedLinkIndex(i)}
+              className={selectedLinkIndex === i ? 'rounded-lg ring-2 ring-[#D4A5A5]/30' : ''}>
+              <SidebarLinkRow
+                index={i}
+                link={link}
+                isSelected={selectedLinkIndex === i}
+                onUpdate={updateLink}
+                onRemove={removeLink}
+                onSelect={setSelectedLinkIndex}
+              />
+            </div>
+          ))}
+          {navbarConfig.links.length === 0 && (
+            <p className="text-[11px] text-gray-400 italic text-center py-4">Chưa có liên kết nào.</p>
+          )}
+        </div>
+      </div>
+    </DndContext>
   );
 });
