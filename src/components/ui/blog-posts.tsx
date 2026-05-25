@@ -23,7 +23,7 @@ export function BlogPosts() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8 }}
-          className="max-w-[1400px] mx-auto relative mb-16 lg:mb-20 flex flex-col items-center lg:items-start text-center lg:text-left border-b border-[#D4A5A5]/10 pb-8"
+          className="max-w-container mx-auto relative mb-16 lg:mb-20 flex flex-col items-center lg:items-start text-center lg:text-left border-b border-[#D4A5A5]/10 pb-8"
         >
           <span className="text-[10px] font-bold uppercase text-[#D4A5A5]">
             {locale === 'vi' ? "NHẬT KÝ L'ESSENCE" : "L'ESSENCE JOURNAL"}
@@ -40,14 +40,14 @@ export function BlogPosts() {
         </motion.div>
 
         {/* Blog Post Grid matching product catalog constraints */}
-        <div className="max-w-[1400px] mx-auto px-[10px] grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="max-w-container mx-auto px-[10px] grid grid-cols-1 md:grid-cols-3 gap-5">
           {BLOG_POSTS.slice(0, 3).map((post, index) => (
             <BlogCard key={post.id} post={post} index={index} />
           ))}
         </div>
 
         {/* View All Button matched exactly with e-commerce look */}
-        <div className="max-w-[1400px] mx-auto mt-12 flex flex-col items-center">
+        <div className="max-w-container mx-auto mt-12 flex flex-col items-center">
           <Link href="/blog">
             <button 
               className="explore-all-btn-luxury flex items-center gap-4 focus:outline-none clickable"

@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { CreditCard, Building2, Lock, ChevronDown, Search } from 'lucide-react';
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import type { UseUserProfileReturn } from '@/hooks/useUserProfile';
 
 interface BankCardsTabProps {
@@ -297,7 +298,7 @@ export function BankCardsTab({ userProfile: _userProfile }: BankCardsTabProps) {
                       onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(212,165,165,0.06)')}
                       onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                     >
-                      <img src={bank.logo} alt={bank.shortName} style={{ width: '28px', height: '28px', borderRadius: '6px', objectFit: 'contain' }} />
+                      <Image src={bank.logo} alt={bank.shortName} width={28} height={28} style={{ borderRadius: '6px', objectFit: 'contain' }} />
                       <div>
                         <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--content)' }}>{bank.shortName}</div>
                         <div style={{ fontSize: '0.7rem', color: 'rgba(122,92,92,0.5)' }}>{bank.name}</div>

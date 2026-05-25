@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { UploadCloud, X, Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import Image from 'next/image';
 import api from '@/lib/api';
 
 interface ImageUploadProps {

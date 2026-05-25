@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Save, Loader2, LayoutTemplate, Images, Package, FileText, ChevronDown } from 'lucide-react';
+import { Save, Loader2, LayoutTemplate, Images, Package, FileText, Grid3X3, ChevronDown } from 'lucide-react';
 
-type ActiveTab = 'banners' | 'gallery' | 'layout' | 'cardCustomizer' | 'blogCard';
+type ActiveTab = 'banners' | 'gallery' | 'layout' | 'cardCustomizer' | 'blogCard' | 'productSessionLayout';
 
 interface HomepageHeaderProps {
   isBannersMode: boolean;
@@ -17,11 +17,12 @@ interface HomepageHeaderProps {
 const LAYOUT_ITEMS = [
   { key: 'layout' as ActiveTab, label: 'Bố cục Trang chủ', icon: LayoutTemplate },
   { key: 'gallery' as ActiveTab, label: 'Album Nghệ Thuật (6 ảnh)', icon: Images },
+  { key: 'productSessionLayout' as ActiveTab, label: 'Layout Product Session', icon: Grid3X3 },
 ];
 
 const CARD_ITEMS = [
   { key: 'cardCustomizer' as ActiveTab, label: 'Tùy biến Product Card', icon: Package },
-  { key: 'blogCard' as ActiveTab, label: 'Tùy biến BlogCard', icon: FileText },
+  { key: 'blogCard' as ActiveTab, label: 'Tùy biến Blog Card', icon: FileText },
 ];
 
 function Dropdown({

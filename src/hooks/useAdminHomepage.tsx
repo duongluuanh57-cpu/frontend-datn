@@ -15,8 +15,9 @@ import {
   sortableKeyboardCoordinates
 } from '@dnd-kit/sortable';
 import api from '@/lib/api';
-import type { SectionConfig, HomepageConfigData, ProductCardConfig, BlogCardConfig } from '@/hooks/useHomepageConfig';
-import { DEFAULT_PRODUCT_CARD_CONFIG, DEFAULT_BLOG_CARD_CONFIG } from '@/hooks/useHomepageConfig';
+import type { SectionConfig, HomepageConfigData, ProductCardConfig, BlogCardConfig, ProductSessionLayoutConfig } from '@/hooks/useHomepageConfig';
+import { DEFAULT_PRODUCT_CARD_CONFIG, DEFAULT_BLOG_CARD_CONFIG, DEFAULT_PRODUCT_SESSION_LAYOUT } from '@/hooks/useHomepageConfig';
+import { useProductSessionPreviewStore } from '@/store/useProductSessionPreviewStore';
 
 // --- Default data ---
 const DEFAULT_BANNERS = [
@@ -59,7 +60,7 @@ const saveConfig = async (payload: Partial<HomepageConfigData>): Promise<Homepag
 export function useAdminHomepage() {
   const locale = useLocale();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<'banners' | 'gallery' | 'layout' | 'cardCustomizer' | 'blogCard'>('layout');
+  const [activeTab, setActiveTab] = useState<'banners' | 'gallery' | 'layout' | 'cardCustomizer' | 'blogCard' | 'productSessionLayout'>('layout');
   const searchParams = useSearchParams();
   const tabParam = searchParams.get('tab');
   const isBannersMode = tabParam === 'banners';
@@ -68,7 +69,7 @@ export function useAdminHomepage() {
   useEffect(() => {
     if (tabParam === 'banners') {
       setActiveTab('banners');
-    } else if (tabParam === 'gallery' || tabParam === 'layout' || tabParam === 'cardCustomizer' || tabParam === 'blogCard') {
+    } else if (tabParam === 'gallery' || tabParam === 'layout' || tabParam === 'cardCustomizer' || tabParam === 'blogCard' || tabParam === 'productSessionLayout') {
       setActiveTab(tabParam);
     } else {
       // If we leave banner mode, reset activeTab to 'layout' if it was on banners
@@ -85,8 +86,27 @@ export function useAdminHomepage() {
   // ── Save mutation ──
   const saveMutation = useMutation({
     mutationFn: saveConfig,
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
+      console.log('[Save] PUT response:', JSON.stringify(data, null, 2));
       queryClient.invalidateQueries({ queryKey: ['homepage-config'] });
+      // Sync saved config từ response, fallback về payload đã gửi nếu backend ko trả về
+      const saved = data.productSessionLayout;
+      const sent = variables?.productSessionLayout;
+      const raw = saved && typeof saved.columnsDesktop === 'number'
+        ? saved
+        : (sent && typeof sent.columnsDesktop === 'number'
+            ? sent
+            : DEFAULT_PRODUCT_SESSION_LAYOUT);
+      const merged = {
+        ...DEFAULT_PRODUCT_SESSION_LAYOUT,
+        ...raw,
+        sessions: {
+          ...DEFAULT_PRODUCT_SESSION_LAYOUT.sessions,
+          ...(raw.sessions || {})
+        }
+      };
+      setProductSessionLayout(merged);
+      useProductSessionPreviewStore.getState().setSavedConfig(merged);
       toast.success('Đã lưu cấu hình trang chủ thành công!', {
         description: 'Thay đổi sẽ có hiệu lực ngay trên trang chủ.',
         duration: 3000
@@ -125,6 +145,9 @@ export function useAdminHomepage() {
 
   // ── Product Card Config state ──
   const [cardConfig, setCardConfig] = useState<ProductCardConfig>(DEFAULT_PRODUCT_CARD_CONFIG);
+  // ── Product Session Layout Config state ──
+  const [productSessionLayout, setProductSessionLayout] = useState<ProductSessionLayoutConfig>(DEFAULT_PRODUCT_SESSION_LAYOUT);
+
   const [cardElementOrder, setCardElementOrder] = useState<Array<{ id: string; label: string; show: boolean }>>(
     [
       { id: 'keywords', label: 'Từ khóa / Keywords', show: true },
@@ -200,6 +223,27 @@ export function useAdminHomepage() {
       }
     }
 
+    // Populate Product Session Layout
+    const sessionLayout = dbConfig.productSessionLayout;
+    const isValidLayout = sessionLayout && typeof sessionLayout.columnsDesktop === 'number';
+    console.log('[dbConfig] productSessionLayout:', JSON.stringify(sessionLayout), 'isValid:', isValidLayout);
+    if (isValidLayout) {
+      // Deep-merge với DEFAULT để đảm bảo không thiếu nested fields (sessions, v.v.)
+      const merged = {
+        ...DEFAULT_PRODUCT_SESSION_LAYOUT,
+        ...sessionLayout,
+        sessions: {
+          ...DEFAULT_PRODUCT_SESSION_LAYOUT.sessions,
+          ...(sessionLayout.sessions || {})
+        }
+      };
+      setProductSessionLayout(merged);
+      useProductSessionPreviewStore.getState().setSavedConfig(merged);
+    } else {
+      setProductSessionLayout(DEFAULT_PRODUCT_SESSION_LAYOUT);
+      useProductSessionPreviewStore.getState().setSavedConfig(DEFAULT_PRODUCT_SESSION_LAYOUT);
+    }
+
     // Populate Product Card Config
     if (dbConfig.productCardConfig) {
       const cfg = dbConfig.productCardConfig;
@@ -266,7 +310,7 @@ export function useAdminHomepage() {
       showSizes: cardElementOrder.find(e => e.id === 'sizes')?.show ?? true,
       showRating: cardElementOrder.find(e => e.id === 'rating')?.show ?? true
     };
-    saveMutation.mutate({
+    const payload = {
       sections,
       bannerImages: banners,
       bannerTitleVi,
@@ -278,9 +322,12 @@ export function useAdminHomepage() {
       galleryVi,
       galleryEn,
       productCardConfig: finalCardConfig,
-      blogCardConfig: finalBlogCardConfig
-    });
-  }, [sections, banners, bannerTitleVi, bannerSubtitleVi, bannerLabelVi, bannerTitleEn, bannerSubtitleEn, bannerLabelEn, galleryVi, galleryEn, cardConfig, cardElementOrder, blogCardConfig, blogElementOrder, saveMutation]);
+      blogCardConfig: finalBlogCardConfig,
+      productSessionLayout
+    };
+    console.log('[Save] Sending payload productSessionLayout:', JSON.stringify(productSessionLayout));
+    saveMutation.mutate(payload);
+  }, [sections, banners, bannerTitleVi, bannerSubtitleVi, bannerLabelVi, bannerTitleEn, bannerSubtitleEn, bannerLabelEn, galleryVi, galleryEn, cardConfig, cardElementOrder, blogCardConfig, blogElementOrder, productSessionLayout, saveMutation]);
 
   // ── Restore defaults ──
   const handleRestoreDefaults = useCallback(() => {
@@ -409,6 +456,8 @@ export function useAdminHomepage() {
     setBlogCardConfig,
     blogElementOrder,
     setBlogElementOrder,
+    productSessionLayout,
+    setProductSessionLayout,
     cardConfig,
     setCardConfig,
     cardElementOrder,

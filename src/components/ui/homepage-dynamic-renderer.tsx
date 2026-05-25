@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { Banner } from '@/components/ui/banner';
 import { BrandUsp } from '@/components/ui/brand-usp';
-import { useHomepageConfig } from '@/hooks/useHomepageConfig';
+import { useHomepageConfig, DEFAULT_PRODUCT_SESSION_LAYOUT } from '@/hooks/useHomepageConfig';
+import { useProductSessionPreviewStore } from '@/store/useProductSessionPreviewStore';
 
 const BrandsMarquee = dynamic(
   () => import('@/components/ui/brands-marquee').then((m) => m.BrandsMarquee),
@@ -19,7 +20,7 @@ const SaleProducts = dynamic(
     ssr: false,
     loading: () => (
       <div className="w-full py-12 lg:py-20 bg-transparent animate-pulse">
-        <div className="max-w-[1400px] mx-auto px-6">
+        <div className="max-w-container mx-auto px-6">
           <div className="h-20 w-1/3 bg-[#7A5C5C]/5 rounded-2xl mb-12" />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {Array.from({ length: 4 }).map((_, i) => (
@@ -44,7 +45,7 @@ const NewProducts = dynamic(
     ssr: false,
     loading: () => (
       <div className="w-full py-12 lg:py-20 bg-transparent animate-pulse">
-        <div className="max-w-[1400px] mx-auto px-6">
+        <div className="max-w-container mx-auto px-6">
           <div className="h-20 w-1/3 bg-[#7A5C5C]/5 rounded-2xl mb-12" />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {Array.from({ length: 4 }).map((_, i) => (
@@ -69,7 +70,7 @@ const LimitedProducts = dynamic(
     ssr: false,
     loading: () => (
       <div className="w-full py-12 lg:py-20 bg-transparent animate-pulse">
-        <div className="max-w-[1400px] mx-auto px-6">
+        <div className="max-w-container mx-auto px-6">
           <div className="h-20 w-1/3 bg-[#7A5C5C]/5 rounded-2xl mb-12" />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {Array.from({ length: 4 }).map((_, i) => (
@@ -94,7 +95,7 @@ const TrendingProducts = dynamic(
     ssr: false,
     loading: () => (
       <div className="w-full py-12 lg:py-20 bg-transparent animate-pulse">
-        <div className="max-w-[1400px] mx-auto px-6">
+        <div className="max-w-container mx-auto px-6">
           <div className="h-20 w-1/3 bg-[#7A5C5C]/5 rounded-2xl mb-12" />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {Array.from({ length: 4 }).map((_, i) => (
@@ -128,8 +129,21 @@ const BlogPosts = dynamic(
   }
 );
 
-import { CustomerReviews } from '@/components/ui/customer-reviews';
-import { NewsletterSubscription } from '@/components/ui/newsletter-subscription';
+const CustomerReviews = dynamic(
+  () => import('@/components/ui/customer-reviews').then((m) => m.CustomerReviews),
+  {
+    ssr: false,
+    loading: () => <div className="h-[200px] w-full bg-transparent" />
+  }
+);
+
+const NewsletterSubscription = dynamic(
+  () => import('@/components/ui/newsletter-subscription').then((m) => m.NewsletterSubscription),
+  {
+    ssr: false,
+    loading: () => <div className="h-[200px] w-full bg-transparent" />
+  }
+);
 
 const DEFAULT_ORDER = [
   'banner',
@@ -151,6 +165,26 @@ export function HomepageDynamicRenderer() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Sync productSessionLayout từ API vào Zustand store
+  // Deep-merge với DEFAULT để đảm bảo không thiếu nested fields (sessions, etc.)
+  useEffect(() => {
+    if (config) {
+      const layout = config.productSessionLayout;
+      const isValid = layout && typeof layout.columnsDesktop === 'number';
+      if (isValid) {
+        const merged = {
+          ...DEFAULT_PRODUCT_SESSION_LAYOUT,
+          ...layout,
+          sessions: {
+            ...DEFAULT_PRODUCT_SESSION_LAYOUT.sessions,
+            ...(layout.sessions || {})
+          }
+        };
+        useProductSessionPreviewStore.getState().setSavedConfig(merged);
+      }
+    }
+  }, [config]);
 
   // Khi đang load, render thứ tự mặc định để không bị layout shift
   // IMPORTANT: useMemo must be called before any conditional returns (Rules of Hooks)

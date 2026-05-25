@@ -17,7 +17,7 @@ const fetchAllBrands = async () => {
   return data.data || [];
 };
 
-export function useTrendingProducts() {
+export function useTrendingProducts(filterTag: string = 'trending') {
   const t = useTranslations('TrendingProducts');
   const locale = useLocale();
 
@@ -89,13 +89,9 @@ export function useTrendingProducts() {
 
   // 4. Filtering Logic
   const filteredProducts = products ? products.filter((product) => {
-    // Base Filter: Must have a trending-related tag
-    const trendingTags = ['trending', 'thinh-hanh', 'thinh hanh', 'ban-chay', 'ban chay', 'hot'];
-    const productTags = product.tag
-      ? product.tag.toLowerCase().split(',').map(t => t.trim())
-      : [];
-    const hasTrendingTag = productTags.some(tag => trendingTags.includes(tag));
-    if (!hasTrendingTag) return false;
+    // Base Filter: Must have filterTag
+    const hasTag = product.tag && product.tag.toLowerCase().split(',').map(t => t.trim()).includes(filterTag);
+    if (!hasTag) return false;
 
     // Filter by Brand
     if (selectedBrand !== 'all') {

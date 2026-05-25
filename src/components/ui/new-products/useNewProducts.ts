@@ -17,7 +17,7 @@ const fetchAllBrands = async () => {
   return data.data || [];
 };
 
-export function useNewProducts() {
+export function useNewProducts(filterTag: string = 'new') {
   const t = useTranslations('NewProducts');
   const locale = useLocale();
 
@@ -89,9 +89,9 @@ export function useNewProducts() {
 
   // 4. Filtering Logic
   const filteredProducts = products ? products.filter((product) => {
-    // Base Filter: Must have 'new' tag
-    const hasNewTag = product.tag && product.tag.toLowerCase().split(',').map(t => t.trim()).includes('new');
-    if (!hasNewTag) return false;
+    // Base Filter: Must have filterTag
+    const hasTag = product.tag && product.tag.toLowerCase().split(',').map(t => t.trim()).includes(filterTag);
+    if (!hasTag) return false;
 
     // Filter by Brand
     if (selectedBrand !== 'all') {

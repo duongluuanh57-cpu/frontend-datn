@@ -4,6 +4,8 @@ import React from 'react';
 import { useAdminVouchers } from '@/hooks/useAdminVouchers';
 import { VoucherHeader } from './components/VoucherHeader';
 import { VoucherTable } from './components/VoucherTable';
+import { VoucherBulkActionBar } from './components/VoucherBulkActionBar';
+import { VoucherModals } from './components/VoucherModals';
 import { AlertCircle } from 'lucide-react';
 
 export default function AdminVouchersPage() {
@@ -26,6 +28,8 @@ export default function AdminVouchersPage() {
     <div className="admin-page">
       <VoucherHeader adminVouchers={adminVouchers} />
       <VoucherTable adminVouchers={adminVouchers} />
+      <VoucherBulkActionBar adminVouchers={adminVouchers} />
+      <VoucherModals adminVouchers={adminVouchers} />
     </div>
   );
 }

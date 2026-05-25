@@ -7,6 +7,8 @@ import { TaxonomyFilterBar } from './components/TaxonomyFilterBar';
 import { TaxonomyTabs } from './components/TaxonomyTabs';
 import { TaxonomyTable } from './components/TaxonomyTable';
 import { TaxonomyPagination } from './components/TaxonomyPagination';
+import { TaxonomyBulkActionBar } from './components/TaxonomyBulkActionBar';
+import { TaxonomyModals } from './components/TaxonomyModals';
 import { AlertCircle } from 'lucide-react';
 
 export default function AdminTaxonomyPage() {
@@ -32,6 +34,8 @@ export default function AdminTaxonomyPage() {
       <TaxonomyTabs adminTaxonomy={adminTaxonomy} />
       <TaxonomyTable adminTaxonomy={adminTaxonomy} />
       <TaxonomyPagination adminTaxonomy={adminTaxonomy} />
+      <TaxonomyBulkActionBar adminTaxonomy={adminTaxonomy} />
+      <TaxonomyModals adminTaxonomy={adminTaxonomy} />
     </div>
   );
 }

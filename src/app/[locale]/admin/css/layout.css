@@ -1,3 +1,18 @@
+/* Hide all scrollbars in admin */
+.admin-shell,
+.admin-shell * {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+.admin-shell::-webkit-scrollbar,
+.admin-shell *::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  -webkit-appearance: none !important;
+}
+
 /* — EMain — E*/
 .admin-main {
   flex: 1;
@@ -14,6 +29,11 @@
 
 .admin-main--collapsed {
   margin-inline-start: var(--admin-sidebar-w-collapsed);
+}
+
+.admin-main--chat-open {
+  margin-inline-end: 360px;
+  transition: margin-inline-end 0.35s var(--admin-ease);
 }
 
 .admin-header {
@@ -230,35 +250,15 @@
   overflow-y: auto;
   overflow-x: hidden;
   padding: 24px 32px 40px;
-  max-width: calc(var(--admin-content-max) + 64px);
+  max-width: var(--admin-content-max);
   width: 100%;
   margin-inline: auto;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(74, 55, 40, 0.12) transparent;
-}
-
-.admin-content::-webkit-scrollbar {
-  width: 6px;
-}
-
-.admin-content::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.admin-content::-webkit-scrollbar-thumb {
-  background: rgba(74, 55, 40, 0.12);
-  border-radius: 99px;
-  transition: background 0.2s;
-}
-
-.admin-content::-webkit-scrollbar-thumb:hover {
-  background: rgba(74, 55, 40, 0.25);
 }
 
 .admin-content:has(.admin-form-page) {
-  padding: 0; /* Let form-page handle its own spacing/padding */
+  padding: 0;
   height: calc(100vh - var(--admin-header-h));
-  overflow: hidden; /* Lock the outer container scroll */
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }

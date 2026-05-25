@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Loader2, Sparkles, Search, Award, Globe, Check, X, Trash2 } from 'lucide-react';
+import { Loader2, Sparkles, Search, Award, Globe, Check, X } from 'lucide-react';
 import Image from 'next/image';
 import { Link } from '@/navigation';
 import type { UseAdminBrandsReturn } from '@/hooks/useAdminBrands';
@@ -54,13 +54,12 @@ export function BrandTable({ adminBrands }: BrandTableProps) {
               <th>{isVi ? 'Xuất xứ' : 'Origin'}</th>
               <th>{isVi ? 'Trạng thái' : 'Status'}</th>
               <th>{isVi ? 'Nổi bật (Homepage)' : 'Featured'}</th>
-              <th style={{ textAlign: 'right' }}>{isVi ? 'Thao tác' : 'Actions'}</th>
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={6}>
+                <td colSpan={5}>
                   <div className="admin-loading">
                     <Loader2 className="admin-loading__spinner animate-spin" />
                     <p>{isVi ? 'Đang tải danh sách thương hiệu...' : 'Loading brands catalog...'}</p>
@@ -69,7 +68,7 @@ export function BrandTable({ adminBrands }: BrandTableProps) {
               </tr>
             ) : total === 0 && !searchTerm && !selectedOrigin ? (
               <tr>
-                <td colSpan={6}>
+                <td colSpan={5}>
                   <div className="admin-empty">
                     <Sparkles className="admin-empty__icon" />
                     <p>{isVi ? 'Chưa có thương hiệu nào được tạo.' : 'No brand entries found.'}</p>
@@ -78,7 +77,7 @@ export function BrandTable({ adminBrands }: BrandTableProps) {
               </tr>
             ) : !brands?.length ? (
               <tr>
-                <td colSpan={6}>
+                <td colSpan={5}>
                   <div className="admin-empty">
                     <Search className="admin-empty__icon" style={{ opacity: 0.5, marginBottom: '8px' }} />
                     <p>{isVi ? 'Không tìm thấy thương hiệu nào khớp với bộ lọc.' : 'No brands matching the filters found.'}</p>
@@ -156,18 +155,6 @@ export function BrandTable({ adminBrands }: BrandTableProps) {
                         {brand.featured ? <Check size={12} /> : <X size={12} />}
                         {brand.featured ? (isVi ? 'Nổi bật' : 'Featured') : (isVi ? 'Thường' : 'Standard')}
                       </button>
-                    </td>
-                    <td>
-                      <div className="admin-table-actions">
-                        <button
-                          type="button"
-                          className="admin-icon-btn admin-icon-btn--danger"
-                          aria-label={`Xóa ${brand.name}`}
-                          onClick={() => setBrandToDelete(brand)}
-                        >
-                          <Trash2 size={17} />
-                        </button>
-                      </div>
                     </td>
                   </tr>
                 );

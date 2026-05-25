@@ -14,6 +14,11 @@ module.exports = {
       },
       fontFamily: {
         inter: ["var(--font-inter)", "sans-serif"],
+        heading: ["var(--font-cormorant)", "serif"],
+        body: ["var(--font-montserrat)", "sans-serif"],
+      },
+      maxWidth: {
+        container: "1400px",
       },
       keyframes: {
         shimmer: {

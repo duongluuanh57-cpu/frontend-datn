@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Image as ImageIcon, Sparkles } from 'lucide-react';
 import { Link } from '@/navigation';
 import { resolveImageUrl } from '@/lib/api';
+import Image from 'next/image';
 import { type ProductData } from '../product-card';
 
 interface ChatProductCardProps {
@@ -49,12 +50,14 @@ export function ChatProductCard({ productId }: ChatProductCardProps) {
       >
         <div className="relative aspect-square overflow-hidden bg-neutral-50 flex items-center justify-center">
           {product.image && product.image.trim() !== "" ? (
-            <img 
-              src={resolveImageUrl(product.image)} 
-              alt={product.name} 
-              className="object-cover w-full h-full transition-transform duration-500 hover:scale-110"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none';
+            <Image
+              src={resolveImageUrl(product.image)}
+              alt={product.name}
+              fill
+              sizes="(max-width: 640px) 100vw, 50vw"
+              className="object-cover transition-transform duration-500 hover:scale-110"
+              onError={() => {
+                // hide on error handled by parent fallback
               }}
             />
           ) : (

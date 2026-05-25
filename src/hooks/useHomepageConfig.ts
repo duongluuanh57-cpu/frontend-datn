@@ -33,6 +33,86 @@ export interface BlogCardConfig {
   showReadMore: boolean;
 }
 
+export interface ProductSessionConfig {
+  titleText: string;
+  subtitleText: string;
+  filterTag: string;
+}
+
+export interface ProductSessionLayoutConfig {
+  layout: 'grid' | 'carousel';
+  columnsDesktop: number;
+  columnsMobile: number;
+  rowsDesktop: number;
+  rowsMobile: number;
+  gap: number;
+  titleFontSize: number;
+  showTitle: boolean;
+  showSubtitle: boolean;
+  subtitleFontSize: number;
+  showFilterBar: boolean;
+  showViewAll: boolean;
+  sectionTitleFontSize: number;
+  showFilterBrand: boolean;
+  showFilterScentGroup: boolean;
+  showFilterConcentration: boolean;
+  showFilterSegment: boolean;
+  showFilterCapacity: boolean;
+  showFilterPrice: boolean;
+  showFilterSort: boolean;
+  sessions: {
+    saleProducts: ProductSessionConfig;
+    newProducts: ProductSessionConfig;
+    limitedProducts: ProductSessionConfig;
+    trendingProducts: ProductSessionConfig;
+  };
+}
+
+export const DEFAULT_PRODUCT_SESSION_LAYOUT: ProductSessionLayoutConfig = {
+  layout: 'grid',
+  columnsDesktop: 4,
+  columnsMobile: 2,
+  rowsDesktop: 2,
+  rowsMobile: 3,
+  gap: 20,
+  titleFontSize: 14,
+  showTitle: true,
+  showSubtitle: true,
+  subtitleFontSize: 13,
+  showFilterBar: true,
+  showViewAll: true,
+  sectionTitleFontSize: 24,
+  showFilterBrand: true,
+  showFilterScentGroup: true,
+  showFilterConcentration: true,
+  showFilterSegment: true,
+  showFilterCapacity: true,
+  showFilterPrice: true,
+  showFilterSort: true,
+  sessions: {
+    saleProducts: {
+      titleText: 'Ưu đãi đặc biệt',
+      subtitleText: 'Trải nghiệm những hương thơm Niche tinh tuyển với ưu đãi đặc quyền giới hạn.',
+      filterTag: 'sale'
+    },
+    newProducts: {
+      titleText: 'Sản phẩm mới',
+      subtitleText: 'Khám phá những kiệt tác mùi hương mới nhất vừa cập bến bộ sưu tập L\'essence.',
+      filterTag: 'new'
+    },
+    limitedProducts: {
+      titleText: 'Sản phẩm giới hạn',
+      subtitleText: 'Khám phá những dòng hương giới hạn được chọn lọc cho bộ sưu tập riêng, số lượng ít và tinh tế.',
+      filterTag: 'limited'
+    },
+    trendingProducts: {
+      titleText: 'Sản phẩm thịnh hành',
+      subtitleText: 'Khám phá các kiệt tác mùi hương thịnh hành nhất và được ưa chuộng tại cửa hàng.',
+      filterTag: 'trending'
+    }
+  }
+};
+
 export const DEFAULT_BLOG_CARD_CONFIG: BlogCardConfig = {
   imageAspect: 'landscape',
   imagePadding: 0,
@@ -101,6 +181,7 @@ export interface HomepageConfigData {
   galleryEn: GalleryImage[];
   productCardConfig: ProductCardConfig;
   blogCardConfig: BlogCardConfig;
+  productSessionLayout?: ProductSessionLayoutConfig;
 }
 
 const DEFAULT_SECTIONS: SectionConfig[] = [
@@ -139,7 +220,8 @@ const fetchHomepageConfig = async (): Promise<HomepageConfigData> => {
           galleryVi: parsed.gallery || [],
           galleryEn: parsed.gallery_en || [],
           productCardConfig: DEFAULT_PRODUCT_CARD_CONFIG,
-          blogCardConfig: DEFAULT_BLOG_CARD_CONFIG
+          blogCardConfig: DEFAULT_BLOG_CARD_CONFIG,
+          productSessionLayout: DEFAULT_PRODUCT_SESSION_LAYOUT
         };
       }
     }
@@ -158,7 +240,8 @@ const fetchHomepageConfig = async (): Promise<HomepageConfigData> => {
     galleryVi: [],
     galleryEn: [],
     productCardConfig: DEFAULT_PRODUCT_CARD_CONFIG,
-    blogCardConfig: DEFAULT_BLOG_CARD_CONFIG
+    blogCardConfig: DEFAULT_BLOG_CARD_CONFIG,
+    productSessionLayout: DEFAULT_PRODUCT_SESSION_LAYOUT
   };
 };
 

@@ -1,7 +1,6 @@
-const BACKENDS = [
-  'https://backend-datn-y78s.onrender.com',
-  'http://127.0.0.1:4000',
-];
+const RENDER_URL = 'https://backend-datn-y78s.onrender.com';
+const LOCAL_URL = 'http://127.0.0.1:4000';
+const BACKENDS = [LOCAL_URL, RENDER_URL];
 
 const STORAGE_KEY = 'backend_active_url';
 const DISCOVERY_INTERVAL = 30_000; // re-check sau 30s
@@ -11,7 +10,7 @@ let cachedUrl: string | null = null;
 /**
  * Ping /ping trên tất cả backend song song.
  * Trả về URL của backend alive đầu tiên (theo thứ tự ưu tiên trong mảng).
- * Render được liệt kê trước → ưu tiên.
+ * Local được ping trước → ưu tiên local khi dev.
  */
 async function pingAll(): Promise<string | null> {
   const results = await Promise.allSettled(
@@ -42,7 +41,7 @@ export function getActiveOriginSync(): string {
     cachedUrl = stored;
     return stored;
   }
-  return BACKENDS[0]; // fallback Render
+  return RENDER_URL; // fallback cho production
 }
 
 /**
@@ -67,7 +66,7 @@ export async function getActiveOrigin(): Promise<string> {
 
   // Ping tất cả
   const alive = await pingAll();
-  const fallback = BACKENDS[0]; // Render mặc định
+  const fallback = RENDER_URL; // Render fallback cho production
 
   cachedUrl = alive || fallback;
   lastDiscovery = now;

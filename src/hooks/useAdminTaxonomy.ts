@@ -47,6 +47,7 @@ export interface UseAdminTaxonomyReturn {
   isLoading: boolean;
   error: any;
   deleteMutation: any;
+  bulkDeleteMutation: any;
   handleAddNewClick: () => void;
   handleEditClick: (item: TaxonomyItem) => void;
   handleFormSubmit: (e: React.FormEvent) => Promise<void>;
@@ -57,6 +58,17 @@ export interface UseAdminTaxonomyReturn {
   ITEMS_PER_PAGE: number;
   total: number;
   totalPages: number;
+  selectedIds: string[];
+  setSelectedIds: React.Dispatch<React.SetStateAction<string[]>>;
+  isAllSelected: boolean;
+  isSomeSelected: boolean;
+  handleSelectAll: () => void;
+  handleSelectRow: (id: string) => void;
+  itemToDelete: TaxonomyItem | null;
+  setItemToDelete: (item: TaxonomyItem | null) => void;
+  showBulkDeleteModal: boolean;
+  setShowBulkDeleteModal: (show: boolean) => void;
+  selectedItemNames: Map<string, string>;
 }
 
 export function useAdminTaxonomy(): UseAdminTaxonomyReturn {
@@ -77,6 +89,10 @@ export function useAdminTaxonomy(): UseAdminTaxonomyReturn {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [selectedItemNames, setSelectedItemNames] = useState<Map<string, string>>(new Map());
+  const [itemToDelete, setItemToDelete] = useState<TaxonomyItem | null>(null);
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
   const ITEMS_PER_PAGE = 25;
 
   const tabs: TabConfig[] = [
@@ -138,6 +154,20 @@ export function useAdminTaxonomy(): UseAdminTaxonomyReturn {
   const total = pageData?.total || 0;
   const totalPages = pageData?.totalPages || 0;
 
+  // Track selected item names for bulk delete modal
+  useEffect(() => {
+    if (!items) return;
+    setSelectedItemNames(prev => {
+      const next = new Map(prev);
+      for (const item of items) {
+        if (selectedIds.includes(item._id)) {
+          next.set(item._id, item.name);
+        }
+      }
+      return next;
+    });
+  }, [items, selectedIds]);
+
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -150,6 +180,8 @@ export function useAdminTaxonomy(): UseAdminTaxonomyReturn {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [currentTabConfig.queryKey] });
+      setItemToDelete(null);
+      setSelectedIds(prev => prev.filter(id => id !== itemToDelete?._id));
     },
     onError: (err: any) => {
       console.error(err);
@@ -160,8 +192,45 @@ export function useAdminTaxonomy(): UseAdminTaxonomyReturn {
       } else {
         alert(err.response?.data?.message || (isVi ? 'Vui lòng kiểm tra lại thông tin.' : 'Please check the information.'));
       }
+      setItemToDelete(null);
     }
   });
+
+  // Bulk delete mutation
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => api.post('/taxonomies/bulk-delete', { ids }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [currentTabConfig.queryKey] });
+      setSelectedIds([]);
+      setSelectedItemNames(new Map());
+      setShowBulkDeleteModal(false);
+    },
+    onError: (err: any) => {
+      console.error(err);
+      alert(err.response?.data?.message || (isVi ? 'Không thể xóa các mục đã chọn.' : 'Failed to delete selected items.'));
+      setShowBulkDeleteModal(false);
+    }
+  });
+
+  const allFilteredIds = items?.map(i => i._id) || [];
+  const isAllSelected = allFilteredIds.length > 0 && allFilteredIds.every(id => selectedIds.includes(id));
+  const isSomeSelected = selectedIds.length > 0 && !isAllSelected;
+
+  const handleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedIds(prev => prev.filter(id => !allFilteredIds.includes(id)));
+    } else {
+      setSelectedIds(prev => Array.from(new Set([...prev, ...allFilteredIds])));
+    }
+  };
+
+  const handleSelectRow = (id: string) => {
+    if (selectedIds.includes(id)) {
+      setSelectedIds(selectedIds.filter(item => item !== id));
+    } else {
+      setSelectedIds([...selectedIds, id]);
+    }
+  };
 
   const handleAddNewClick = () => {
     setEditingItem(null);
@@ -238,6 +307,7 @@ export function useAdminTaxonomy(): UseAdminTaxonomyReturn {
     isLoading,
     error,
     deleteMutation,
+    bulkDeleteMutation,
     handleAddNewClick,
     handleEditClick,
     handleFormSubmit,
@@ -248,5 +318,16 @@ export function useAdminTaxonomy(): UseAdminTaxonomyReturn {
     ITEMS_PER_PAGE,
     total,
     totalPages,
+    selectedIds,
+    setSelectedIds,
+    isAllSelected,
+    isSomeSelected,
+    handleSelectAll,
+    handleSelectRow,
+    itemToDelete,
+    setItemToDelete,
+    showBulkDeleteModal,
+    setShowBulkDeleteModal,
+    selectedItemNames,
   };
 }

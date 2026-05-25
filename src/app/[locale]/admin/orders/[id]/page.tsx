@@ -18,6 +18,7 @@ import {
   Ticket,
 } from 'lucide-react';
 import api from '@/lib/api';
+import Image from 'next/image';
 import type { Order, OrderItem } from '@/hooks/useAdminOrders';
 
 export default function OrderDetailPage() {
@@ -421,10 +422,12 @@ export default function OrderDetailPage() {
                     </td>
                     <td style={{ width: '80px', minWidth: '80px', textAlign: 'center' }}>
                       {item.productImage ? (
-                        <img
+                        <Image
                           src={item.productImage}
                           alt={item.name}
-                          style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #f0e9e4' }}
+                          width={60}
+                          height={60}
+                          style={{ objectFit: 'cover', borderRadius: '8px', border: '1px solid #f0e9e4' }}
                         />
                       ) : (
                         <div style={{ width: '60px', height: '60px', borderRadius: '8px', background: '#faf8f6', border: '1px solid #f0e9e4', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', color: '#9a857c', margin: '0 auto' }}>

@@ -12,7 +12,7 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
     <main className="min-h-screen bg-transparent">
       {/* Hero Section */}
       <section className="w-full pt-16 pb-8 lg:pt-20 lg:pb-12 overflow-hidden border-b border-[#D4A5A5]/10">
-        <div className="max-w-[1400px] mx-auto px-6">
+        <div className="max-w-container mx-auto px-6">
           <FadeIn>
             <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#D4A5A5]">
               L'essence Journal
@@ -31,7 +31,7 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
 
       {/* Blog Grid */}
       <section className="w-full py-12 lg:py-16">
-        <div className="max-w-[1400px] mx-auto px-6">
+        <div className="max-w-container mx-auto px-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
             {BLOG_POSTS.slice(0, 6).map((post, index) => (
               <BlogCard key={post.id} post={post} index={index} />

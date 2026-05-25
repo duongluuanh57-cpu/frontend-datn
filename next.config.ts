@@ -2,12 +2,16 @@ import type { NextConfig } from "next";
 import createNextIntlPlugin from 'next-intl/plugin';
 import { withSentryConfig } from "@sentry/nextjs";
 
+let withBundleAnalyzer = (config: NextConfig) => config;
+if (process.env.ANALYZE === 'true') {
+  withBundleAnalyzer = require('@next/bundle-analyzer')();
+}
+
 const withNextIntl = createNextIntlPlugin('./src/i18n.ts');
 
 const nextConfig: NextConfig = {
-  /* config options here */
   images: {
-    qualities: [70, 75, 80, 90, 95, 100],
+    qualities: [75, 90],
     remotePatterns: [
       {
         protocol: 'https',
@@ -27,6 +31,26 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'www.thegioinuochoa.com.vn',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'i.ibb.co',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'fonts.gstatic.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'i.pravatar.cc',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.imgbb.com',
         pathname: '/**',
       },
     ],
@@ -60,4 +84,4 @@ const sentryConfig = {
   },
 };
 
-export default withSentryConfig(withNextIntl(nextConfig), sentryConfig);
+export default withBundleAnalyzer(withSentryConfig(withNextIntl(nextConfig), sentryConfig));

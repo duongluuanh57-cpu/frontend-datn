@@ -12,7 +12,7 @@ if (typeof window !== 'undefined') {
       person_profiles: 'identified_only',
       capture_pageview: false, // Handle manually for App Router
       disable_session_recording: false, // Bắt buộc bật để dùng Replay
-      enable_recording_console_log: true, // Ghi lại log console để debug
+      enable_recording_console_log: false, // Ghi lại log console để debug
     });
   }
 }

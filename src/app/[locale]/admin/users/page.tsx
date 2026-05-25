@@ -7,6 +7,8 @@ import { UserStats } from './components/UserStats';
 import { UserFilterBar } from './components/UserFilterBar';
 import { UserTable } from './components/UserTable';
 import { UserModals } from './components/UserModals';
+import { UserBulkActionBar } from './components/UserBulkActionBar';
+import { UserDeleteModal } from './components/UserDeleteModal';
 import { AlertCircle } from 'lucide-react';
 
 export default function AdminUsersPage() {
@@ -30,6 +32,8 @@ export default function AdminUsersPage() {
       <UserFilterBar adminUsers={adminUsers} />
       <UserTable adminUsers={adminUsers} />
       <UserModals adminUsers={adminUsers} />
+      <UserBulkActionBar adminUsers={adminUsers} />
+      <UserDeleteModal adminUsers={adminUsers} />
     </div>
   );
 }

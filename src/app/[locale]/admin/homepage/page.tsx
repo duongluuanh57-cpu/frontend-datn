@@ -8,6 +8,8 @@ import { HomepageBannersTab } from './components/HomepageBannersTab';
 import { HomepageGalleryTab } from './components/HomepageGalleryTab';
 import { HomepageCardTab } from './components/HomepageCardTab';
 import { HomepageBlogCardTab } from './components/HomepageBlogCardTab';
+import { HomepageProductSessionLayoutTab } from './components/HomepageProductSessionLayoutTab';
+import { ProductSessionPreviewModal } from './components/ProductSessionPreviewModal';
 import { AnimatePresence } from 'framer-motion';
 
 function HomepageConfigContent() {
@@ -15,7 +17,7 @@ function HomepageConfigContent() {
   const { activeTab, setActiveTab, isBannersMode } = adminHomepage;
 
   return (
-    <div className="admin-dashboard p-6 max-w-[1400px] mx-auto">
+    <div className="admin-dashboard p-6 max-w-container mx-auto">
       <HomepageHeader
         isBannersMode={adminHomepage.isBannersMode}
         isSaving={adminHomepage.isSaving}
@@ -77,7 +79,15 @@ function HomepageConfigContent() {
             cardElementSensors={adminHomepage.cardElementSensors}
           />
         )}
+        {activeTab === 'productSessionLayout' && (
+          <HomepageProductSessionLayoutTab
+            config={adminHomepage.productSessionLayout}
+            setConfig={adminHomepage.setProductSessionLayout}
+          />
+        )}
       </AnimatePresence>
+
+      <ProductSessionPreviewModal />
     </div>
   );
 }

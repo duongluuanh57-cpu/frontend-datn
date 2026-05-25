@@ -4,6 +4,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from '@/navigation';
 import { Mail, Lock, EyeOff, Eye, Loader2, ArrowRight } from 'lucide-react';
+import Image from 'next/image';
 import type { UseLoginReturn } from '@/hooks/useLogin';
 
 interface LoginFormProps {
@@ -124,7 +125,7 @@ export function LoginForm({ loginData }: LoginFormProps) {
             onClick={() => window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/google`}
             className="google-auth-btn flex w-full cursor-pointer items-center justify-center gap-4"
           >
-            <img src="https://fonts.gstatic.com/s/i/productlogos/googleg/v6/24px.svg" alt="Google" className="h-6 w-6" />
+            <Image src="https://fonts.gstatic.com/s/i/productlogos/googleg/v6/24px.svg" alt="Google" width={24} height={24} />
             <span className="text-sm font-bold text-[#7A5C5C]">Tiếp tục với Google</span>
           </motion.button>
         </div>

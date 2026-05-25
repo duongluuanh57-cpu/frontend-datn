@@ -41,7 +41,7 @@ export function LuxuryGallery() {
   return (
     <section className="luxury-gallery-section w-full bg-transparent pt-12 pb-10 lg:pt-20 lg:pb-14 overflow-hidden"
       style={{ contain: 'content', contentVisibility: 'auto' } as React.CSSProperties}>
-      <div className="max-w-[1400px] mx-auto px-6">
+      <div className="max-w-container mx-auto px-6">
         
         {/* Section Header */}
         <motion.div

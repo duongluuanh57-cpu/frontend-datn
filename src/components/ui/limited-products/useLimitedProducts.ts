@@ -17,7 +17,7 @@ const fetchAllBrands = async () => {
   return data.data || [];
 };
 
-export function useLimitedProducts() {
+export function useLimitedProducts(filterTag: string = 'limited') {
   const locale = useLocale();
 
   const { data: products, isLoading, error } = useQuery({
@@ -82,8 +82,8 @@ export function useLimitedProducts() {
   };
 
   const filteredProducts = products ? products.filter((product) => {
-    const hasLimitedTag = product.tag && product.tag.toLowerCase().split(',').map(t => t.trim()).includes('limited');
-    if (!hasLimitedTag) return false;
+    const hasTag = product.tag && product.tag.toLowerCase().split(',').map(t => t.trim()).includes(filterTag);
+    if (!hasTag) return false;
 
     if (selectedBrand !== 'all') {
       const bName = (product.brand as any)?.name || (typeof product.brand === 'string' ? product.brand : '') || (product as any).brandName || '';

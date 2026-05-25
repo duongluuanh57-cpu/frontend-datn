@@ -7,7 +7,7 @@ import { locales } from '@/navigation';
 import { PHProvider } from '@/providers/posthog-provider';
 import type { Metadata } from 'next';
 import Script from 'next/script';
-import { Inter } from 'next/font/google';
+import { Inter, Cormorant, Montserrat } from 'next/font/google';
 import { Topbar } from '@/components/ui/topbar';
 import { Navbar } from '@/components/ui/navbar';
 import { NavigationWrapper } from '@/components/ui/navigation-wrapper';
@@ -21,6 +21,20 @@ const inter = Inter({
   subsets: ['latin', 'vietnamese'],
   display: 'swap',
   variable: '--font-inter',
+});
+
+const cormorant = Cormorant({
+  subsets: ['latin', 'vietnamese'],
+  display: 'swap',
+  variable: '--font-cormorant',
+  weight: ['300', '400', '500', '600', '700'],
+});
+
+const montserrat = Montserrat({
+  subsets: ['latin', 'vietnamese'],
+  display: 'swap',
+  variable: '--font-montserrat',
+  weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900'],
 });
 
 export function generateStaticParams() {
@@ -92,7 +106,7 @@ export default async function LocaleLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className={inter.className}>
+      <body className={`${inter.className} ${cormorant.variable} ${montserrat.variable}`}>
         {isProduction && (
           <Script id="fb-pixel" strategy="afterInteractive">
             {`

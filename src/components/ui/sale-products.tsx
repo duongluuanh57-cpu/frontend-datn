@@ -8,6 +8,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import api from '@/lib/api';
 import { Link } from '@/navigation';
 import { ProductCard, type ProductData } from './product-card';
+import { useProductSessionLayout } from '@/store/useProductSessionPreviewStore';
 import './new-products.css';
 
 const fetchSaleProducts = async (): Promise<ProductData[]> => {
@@ -113,54 +114,81 @@ const ProductSkeleton = () => (
 export function SaleProducts() {
   const t = useTranslations('SaleProducts');
   const locale = useLocale();
+  const layoutConfig = useProductSessionLayout();
   const { data: products, isLoading, error } = useQuery({
     queryKey: ['sale-products'],
     queryFn: fetchSaleProducts,
   });
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   if (error || !products || products.length === 0) return null;
 
   const targetDate = products?.[0]?.discountEndDate;
+  const cols = isMobile ? layoutConfig.columnsMobile : layoutConfig.columnsDesktop;
+  const rows = isMobile ? layoutConfig.rowsMobile : layoutConfig.rowsDesktop;
+  const totalToShow = cols * rows;
 
   return (
     <section className="new-products-section w-full bg-transparent pt-[56px] pb-10 lg:pt-[96px] lg:pb-14 overflow-hidden"
       style={{ contain: 'content', contentVisibility: 'auto' } as React.CSSProperties}>
-      <div className="max-w-[1400px] mx-auto px-6">
+      <div className="max-w-container mx-auto px-6">
 
         {/* Header Section */}
         <div className="relative mb-16 lg:mb-20 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 border-b border-[#D4A5A5]/10 pb-8">
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-            className="flex flex-col items-center lg:items-start text-center lg:text-left"
-          >
-            <span className="text-[10px] font-bold uppercase text-[#D4A5A5]">
-              L'essence Promotions
-            </span>
-            <h2 className="mt-4 text-3xl font-medium text-[#7A5C5C] md:text-4xl lg:text-5xl">
-              {t('title')}
-            </h2>
-            <p className="mt-3 text-[11px] md:text-xs text-[#7A5C5C] max-w-[480px] font-medium leading-relaxed">
-              {locale === 'vi' 
-                ? 'Trải nghiệm những hương thơm Niche tinh tuyển với ưu đãi đặc quyền giới hạn.' 
-                : 'Curated selection of exquisite Niche fragrances with limited luxury offers.'}
-            </p>
-          </motion.div>
+          {layoutConfig.showTitle && (
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8 }}
+              className="flex flex-col items-center lg:items-start text-center lg:text-left"
+            >
+              <span className="text-[10px] font-bold uppercase text-[#D4A5A5]">
+                L'essence Promotions
+              </span>
+              <h2
+                className="mt-4 font-medium text-[#7A5C5C]"
+                style={{ fontSize: `${layoutConfig.sectionTitleFontSize}px` }}
+              >
+                {layoutConfig.sessions.saleProducts.titleText}
+              </h2>
+              {layoutConfig.showSubtitle && (
+                <p
+                  className="mt-3 text-[#7A5C5C] max-w-[480px] font-medium leading-relaxed"
+                  style={{ fontSize: `${layoutConfig.subtitleFontSize}px` }}
+                >
+                  {layoutConfig.sessions.saleProducts.subtitleText}
+                </p>
+              )}
+            </motion.div>
+          )}
 
           {/* Active Campaign Countdown */}
-          <div className="flex justify-center lg:justify-end">
-            <CountdownTimer targetDate={targetDate} locale={locale} />
-          </div>
+          {layoutConfig.showFilterBar && (
+            <div className="flex justify-center lg:justify-end">
+              <CountdownTimer targetDate={targetDate} locale={locale} />
+            </div>
+          )}
         </div>
 
         {/* Product Grid */}
-        <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4 auto-rows-fr">
+        <div
+          className="grid auto-rows-fr"
+          style={{
+            gridTemplateColumns: `repeat(${cols}, 1fr)`,
+            gap: `${layoutConfig.gap}px`
+          }}
+        >
           {isLoading ? (
-            Array.from({ length: 4 }).map((_, i) => <ProductSkeleton key={i} />)
+            Array.from({ length: totalToShow }).map((_, i) => <ProductSkeleton key={i} />)
           ) : (
-            products?.slice(0, 4).map((product, index) => (
+            products?.slice(0, totalToShow).map((product, index) => (
               <ProductCard
                 key={product._id}
                 product={product}
@@ -171,16 +199,18 @@ export function SaleProducts() {
         </div>
 
         {/* Action Footer */}
-        <div className="mt-24 flex flex-col items-center">
-          <Link href="/collections">
-            <button className="explore-all-btn-luxury flex items-center gap-4 focus:outline-none">
-              <span>{t('viewAll')}</span>
-              <div className="arrow-circle flex h-10 w-10 items-center justify-center rounded-full">
-                <ArrowRight size={15} />
-              </div>
-            </button>
-          </Link>
-        </div>
+        {layoutConfig.showViewAll && (
+          <div className="mt-24 flex flex-col items-center">
+            <Link href="/collections">
+              <button className="explore-all-btn-luxury flex items-center gap-4 focus:outline-none">
+                <span>{t('viewAll')}</span>
+                <div className="arrow-circle flex h-10 w-10 items-center justify-center rounded-full">
+                  <ArrowRight size={15} />
+                </div>
+              </button>
+            </Link>
+          </div>
+        )}
 
       </div>
     </section>

@@ -15,7 +15,7 @@ export default async function HelpCenterPage({
   return (
     <main className="min-h-screen bg-transparent">
       <section className="w-full pt-16 pb-8 lg:pt-20 lg:pb-12 overflow-hidden border-b border-[#D4A5A5]/10">
-        <div className="max-w-[1400px] mx-auto px-6">
+        <div className="max-w-container mx-auto px-6">
           <FadeIn>
             <div className="flex flex-col items-center text-center">
               <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#D4A5A5]">

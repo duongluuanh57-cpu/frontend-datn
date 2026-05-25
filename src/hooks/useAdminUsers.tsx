@@ -29,12 +29,24 @@ export interface UseAdminUsersReturn {
     regularUsers: number;
   };
   deleteMutation: any;
+  bulkDeleteMutation: any;
   updateRoleMutation: any;
   createUserMutation: any;
   updateUserMutation: any;
   handleOpenModal: (user?: User) => void;
   handleCloseModal: () => void;
   handleToggleRole: (user: User) => void;
+  selectedIds: string[];
+  setSelectedIds: React.Dispatch<React.SetStateAction<string[]>>;
+  isAllSelected: boolean;
+  isSomeSelected: boolean;
+  handleSelectAll: () => void;
+  handleSelectRow: (id: string) => void;
+  userToDelete: User | null;
+  setUserToDelete: (user: User | null) => void;
+  showBulkDeleteModal: boolean;
+  setShowBulkDeleteModal: (show: boolean) => void;
+  selectedUserNames: Map<string, string>;
 }
 
 
@@ -45,6 +57,10 @@ export function useAdminUsers(): UseAdminUsersReturn {
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [selectedUserNames, setSelectedUserNames] = useState<Map<string, string>>(new Map());
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
   const itemsPerPage = 10;
 
   // Build query params
@@ -77,14 +93,46 @@ export function useAdminUsers(): UseAdminUsersReturn {
     setCurrentPage(1);
   }, [searchTerm, roleFilter]);
 
+  // Track selected user names for bulk delete modal
+  useEffect(() => {
+    if (!users) return;
+    setSelectedUserNames(prev => {
+      const next = new Map(prev);
+      for (const u of users) {
+        if (selectedIds.includes(u._id)) {
+          next.set(u._id, u.username);
+        }
+      }
+      return next;
+    });
+  }, [users, selectedIds]);
+
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => api.delete(`/users/${id}`),
-    onSuccess: () => {
+    onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
       toast.success('Đã xóa người dùng thành công');
+      setUserToDelete(null);
+      setSelectedIds(prev => prev.filter(item => item !== id));
     },
     onError: (err: any) => {
       toast.error(err.response?.data?.message || 'Không thể xóa người dùng');
+      setUserToDelete(null);
+    }
+  });
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => api.post('/users/bulk-delete', { ids }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      toast.success('Đã xóa hàng loạt người dùng thành công');
+      setSelectedIds([]);
+      setSelectedUserNames(new Map());
+      setShowBulkDeleteModal(false);
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || 'Không thể xóa người dùng đã chọn');
+      setShowBulkDeleteModal(false);
     }
   });
 
@@ -161,7 +209,7 @@ export function useAdminUsers(): UseAdminUsersReturn {
     toast.custom((tId) => (
       <div className="bg-white rounded-xl border border-gray-200 shadow-lg p-4 flex flex-col gap-3 min-w-[280px]">
         <p className="text-sm font-semibold text-[#7A5C5C]">Xác nhận đổi vai trò</p>
-        <p className="text-xs text-[#7A5C5C]/70">Bạn có chắc muốn thay đổi vai trò của &quot;{user.username}&quot; thành {newRole}?</p>
+        <p className="text-xs text-[#7A5C5C]/70">Bạn có chắc muốn thay đổi vai trò của "{user.username}" thành {newRole}?</p>
         <div className="flex gap-2 justify-end pt-1">
           <button
             onClick={() => toast.dismiss(tId)}
@@ -183,6 +231,26 @@ export function useAdminUsers(): UseAdminUsersReturn {
     ), { duration: Infinity });
   };
 
+  const allFilteredIds = users?.map(u => u._id) || [];
+  const isAllSelected = allFilteredIds.length > 0 && allFilteredIds.every(id => selectedIds.includes(id));
+  const isSomeSelected = selectedIds.length > 0 && !isAllSelected;
+
+  const handleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedIds(prev => prev.filter(id => !allFilteredIds.includes(id)));
+    } else {
+      setSelectedIds(prev => Array.from(new Set([...prev, ...allFilteredIds])));
+    }
+  };
+
+  const handleSelectRow = (id: string) => {
+    if (selectedIds.includes(id)) {
+      setSelectedIds(selectedIds.filter(item => item !== id));
+    } else {
+      setSelectedIds([...selectedIds, id]);
+    }
+  };
+
   return {
     searchTerm,
     setSearchTerm,
@@ -202,11 +270,23 @@ export function useAdminUsers(): UseAdminUsersReturn {
     totalPages,
     stats,
     deleteMutation,
+    bulkDeleteMutation,
     updateRoleMutation,
     createUserMutation,
     updateUserMutation,
     handleOpenModal,
     handleCloseModal,
-    handleToggleRole
+    handleToggleRole,
+    selectedIds,
+    setSelectedIds,
+    isAllSelected,
+    isSomeSelected,
+    handleSelectAll,
+    handleSelectRow,
+    userToDelete,
+    setUserToDelete,
+    showBulkDeleteModal,
+    setShowBulkDeleteModal,
+    selectedUserNames,
   };
 }

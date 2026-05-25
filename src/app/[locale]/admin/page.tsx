@@ -6,9 +6,17 @@ import {
   AlertTriangle,
   DollarSign,
   Sparkles,
+  Users,
+  ShoppingBag,
+  ArrowUpRight,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
-import { Link } from '@/navigation';
 import { useTranslations } from 'next-intl';
+import { useQuery } from '@tanstack/react-query';
+import api from '@/lib/api';
+import { Link } from '@/navigation';
+import Image from 'next/image';
 
 import { AdminGreetingHeader } from './components/AdminGreetingHeader';
 import { AdminHeaderAside } from './components/AdminHeaderAside';
@@ -107,7 +115,7 @@ export default function AdminDashboard() {
               <div key={product.name} className="admin-product-row">
                 <div className="admin-product-row__left">
                   <div className="admin-product-row__thumb">
-                    {product.image && <img src={product.image} alt="" />}
+                    {product.image && <Image src={product.image} alt="" fill sizes="48px" />}
                   </div>
                   <div>
                     <p className="admin-product-row__name">{product.name}</p>

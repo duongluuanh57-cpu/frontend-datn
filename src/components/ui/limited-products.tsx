@@ -11,9 +11,11 @@ import { useLimitedProducts } from './limited-products/useLimitedProducts';
 import { ProductSkeleton } from './new-products/ProductSkeleton';
 import { LimitedProductsFilterBar } from './limited-products/LimitedProductsFilterBar';
 import { useHomepageTags } from '@/hooks/useHomepageTags';
+import { useProductSessionLayout } from '@/store/useProductSessionPreviewStore';
 
 export function LimitedProducts() {
-  const formHelpers = useLimitedProducts();
+  const layoutConfig = useProductSessionLayout();
+  const formHelpers = useLimitedProducts(layoutConfig.sessions.limitedProducts.filterTag);
   const { getTagName } = useHomepageTags();
   const {
     locale,
@@ -22,44 +24,69 @@ export function LimitedProducts() {
     products,
     sortedProducts
   } = formHelpers;
+  const [isMobile, setIsMobile] = React.useState(false);
+  React.useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   if (error) return null;
+
+  const cols = isMobile ? layoutConfig.columnsMobile : layoutConfig.columnsDesktop;
+  const rows = isMobile ? layoutConfig.rowsMobile : layoutConfig.rowsDesktop;
+  const totalToShow = cols * rows;
 
   return (
     <section className="new-products-section w-full bg-transparent pt-12 pb-10 lg:pt-20 lg:pb-14 overflow-hidden"
       style={{ contain: 'content', contentVisibility: 'auto' } as React.CSSProperties}>
-      <div className="max-w-[1400px] mx-auto px-6">
+      <div className="max-w-container mx-auto px-6">
         <div className="relative mb-16 lg:mb-20 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 border-b border-[#D4A5A5]/10 pb-8">
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-            className="flex flex-col items-center lg:items-start text-center lg:text-left"
-          >
-            <span className="text-[10px] font-bold uppercase text-[#D4A5A5]">
-              Sản phẩm giới hạn
-            </span>
-            <h2 className="mt-4 text-3xl font-medium text-[#7A5C5C] md:text-4xl lg:text-5xl">
-              Sản phẩm giới hạn
-            </h2>
-            <p className="mt-3 text-[11px] md:text-xs text-[#7A5C5C] max-w-[480px] font-medium leading-relaxed">
-              {locale === 'vi'
-                ? 'Khám phá những dòng hương giới hạn được chọn lọc cho bộ sưu tập riêng, số lượng ít và tinh tế.'
-                : 'Discover a limited selection of rare fragrances curated for a more exclusive collection.'}
-            </p>
-          </motion.div>
+          {layoutConfig.showTitle && (
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8 }}
+              className="flex flex-col items-center lg:items-start text-center lg:text-left"
+            >
+              <span className="text-[10px] font-bold uppercase text-[#D4A5A5]">
+                Sản phẩm giới hạn
+              </span>
+              <h2
+                className="mt-4 font-medium text-[#7A5C5C]"
+                style={{ fontSize: `${layoutConfig.sectionTitleFontSize}px` }}
+              >
+                {layoutConfig.sessions.limitedProducts.titleText}
+              </h2>
+              {layoutConfig.showSubtitle && (
+                <p
+                  className="mt-3 text-[#7A5C5C] max-w-[480px] font-medium leading-relaxed"
+                  style={{ fontSize: `${layoutConfig.subtitleFontSize}px` }}
+                >
+                  {layoutConfig.sessions.limitedProducts.subtitleText}
+                </p>
+              )}
+            </motion.div>
+          )}
 
-          {!isLoading && products && products.length > 0 && (
+          {layoutConfig.showFilterBar && !isLoading && products && products.length > 0 && (
             <LimitedProductsFilterBar formHelpers={formHelpers} />
           )}
         </div>
 
-        <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4 auto-rows-fr">
+        <div
+          className="grid auto-rows-fr"
+          style={{
+            gridTemplateColumns: `repeat(${cols}, 1fr)`,
+            gap: `${layoutConfig.gap}px`
+          }}
+        >
           {isLoading ? (
-            Array.from({ length: 8 }).map((_, i) => <ProductSkeleton key={i} />)
+            Array.from({ length: totalToShow }).map((_, i) => <ProductSkeleton key={i} />)
           ) : sortedProducts.length > 0 ? (
-            sortedProducts.slice(0, 8).map((product, index) => (
+            sortedProducts.slice(0, totalToShow).map((product, index) => (
               <ProductCard
                 key={product._id}
                 product={product}
@@ -78,16 +105,18 @@ export function LimitedProducts() {
           )}
         </div>
 
-        <div className="mt-24 flex flex-col items-center">
-          <Link href="/collections">
-            <button className="explore-all-btn-luxury flex items-center gap-4 focus:outline-none">
-              <span>{locale === 'vi' ? 'Khám phá bộ sưu tập' : 'Explore All Collections'}</span>
-              <div className="arrow-circle flex h-10 w-10 items-center justify-center rounded-full">
-                <ArrowRight size={15} />
-              </div>
-            </button>
-          </Link>
-        </div>
+        {layoutConfig.showViewAll && (
+          <div className="mt-24 flex flex-col items-center">
+            <Link href="/collections">
+              <button className="explore-all-btn-luxury flex items-center gap-4 focus:outline-none">
+                <span>{locale === 'vi' ? 'Khám phá bộ sưu tập' : 'Explore All Collections'}</span>
+                <div className="arrow-circle flex h-10 w-10 items-center justify-center rounded-full">
+                  <ArrowRight size={15} />
+                </div>
+              </button>
+            </Link>
+          </div>
+        )}
       </div>
     </section>
   );

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Loader2, Sparkles, Search, Edit3, Trash2, Copy, CheckCircle, XCircle } from 'lucide-react';
+import { Loader2, Sparkles, Search, Edit3, Copy, CheckCircle, XCircle } from 'lucide-react';
 import { Link } from '@/navigation';
 import type { UseAdminVouchersReturn, Voucher } from '@/hooks/useAdminVouchers';
 
@@ -27,7 +27,7 @@ function formatDate(dateStr: string, locale: string) {
 export function VoucherTable({ adminVouchers }: VoucherTableProps) {
   const {
     locale, isVi, vouchers, isLoading, searchTerm, setSearchTerm,
-    deleteMutation,
+    selectedIds, isAllSelected, isSomeSelected, handleSelectAll, handleSelectRow,
   } = adminVouchers;
 
   return (
@@ -70,6 +70,23 @@ export function VoucherTable({ adminVouchers }: VoucherTableProps) {
           <table className="admin-table">
             <thead>
               <tr>
+                <th style={{ width: '48px', textAlign: 'center', verticalAlign: 'middle' }}>
+                  <input
+                    type="checkbox"
+                    checked={isAllSelected}
+                    ref={(el) => {
+                      if (el) el.indeterminate = isSomeSelected;
+                    }}
+                    onChange={handleSelectAll}
+                    style={{
+                      cursor: 'pointer',
+                      accentColor: 'var(--admin-accent, #3d2e24)',
+                      borderRadius: '4px',
+                      width: '16px',
+                      height: '16px',
+                    }}
+                  />
+                </th>
                 <th>{isVi ? 'Mã' : 'Code'}</th>
                 <th>{isVi ? 'Loại' : 'Type'}</th>
                 <th>{isVi ? 'Giá trị' : 'Value'}</th>
@@ -77,13 +94,13 @@ export function VoucherTable({ adminVouchers }: VoucherTableProps) {
                 <th>{isVi ? 'Đã dùng' : 'Used'}</th>
                 <th>{isVi ? 'Hiệu lực' : 'Valid'}</th>
                 <th>{isVi ? 'Trạng thái' : 'Status'}</th>
-                <th></th>
+                <th>{isVi ? 'Thao tác' : 'Actions'}</th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={8}>
+                  <td colSpan={9}>
                     <div className="admin-loading" style={{ padding: '60px 0' }}>
                       <Loader2 className="admin-loading__spinner animate-spin" />
                       <p>{isVi ? 'Đang tải danh sách...' : 'Loading vouchers...'}</p>
@@ -92,7 +109,7 @@ export function VoucherTable({ adminVouchers }: VoucherTableProps) {
                 </tr>
               ) : !vouchers || vouchers.length === 0 ? (
                 <tr>
-                  <td colSpan={8}>
+                  <td colSpan={9}>
                     <div className="admin-empty" style={{ padding: '60px 0' }}>
                       <Sparkles className="admin-empty__icon" />
                       <p>{isVi ? 'Chưa có mã giảm giá nào.' : 'No vouchers found.'}</p>
@@ -105,9 +122,24 @@ export function VoucherTable({ adminVouchers }: VoucherTableProps) {
                   const start = new Date(v.startDate);
                   const end = new Date(v.endDate);
                   const isValid = v.status === 'active' && start <= now && end >= now;
+                  const isChecked = selectedIds.includes(v._id);
 
                   return (
-                    <tr key={v._id}>
+                    <tr key={v._id} style={isChecked ? { background: 'rgba(212, 165, 165, 0.05)' } : undefined}>
+                      <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => handleSelectRow(v._id)}
+                          style={{
+                            cursor: 'pointer',
+                            accentColor: 'var(--admin-accent, #3d2e24)',
+                            borderRadius: '4px',
+                            width: '16px',
+                            height: '16px',
+                          }}
+                        />
+                      </td>
                       <td>
                         <span
                           style={{
@@ -181,18 +213,6 @@ export function VoucherTable({ adminVouchers }: VoucherTableProps) {
                           >
                             <Edit3 size={16} />
                           </Link>
-                          <button
-                            type="button"
-                            className="admin-icon-btn admin-icon-btn--danger"
-                            onClick={() => {
-                              if (confirm(isVi ? `Xoá mã ${v.code}?` : `Delete voucher ${v.code}?`)) {
-                                deleteMutation.mutate(v._id);
-                              }
-                            }}
-                            title={isVi ? 'Xoá' : 'Delete'}
-                          >
-                            <Trash2 size={16} />
-                          </button>
                         </div>
                       </td>
                     </tr>

@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { Link } from '@/navigation';
 import { formatSizeString } from '@/components/admin/ProductForm';
 import { resolveImageUrl } from '@/lib/api';
-import { Loader2, Sparkles, Trash2 } from 'lucide-react';
+import { Loader2, Sparkles } from 'lucide-react';
 import { Product } from '@/types/admin';
 
 interface ProductTableProps {
@@ -65,13 +65,12 @@ export const ProductTable = React.memo(function ProductTable({
               <th>{t('table.stock')}</th>
               <th>{t('table.price')}</th>
               <th>{t('table.rating')}</th>
-              <th style={{ textAlign: 'right' }}>{t('table.actions')}</th>
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={7}>
+                <td colSpan={6}>
                   <div className="admin-loading">
                     <Loader2 className="admin-loading__spinner animate-spin" />
                     <p>{t('loading')}</p>
@@ -80,7 +79,7 @@ export const ProductTable = React.memo(function ProductTable({
               </tr>
             ) : total === 0 ? (
               <tr>
-                <td colSpan={7}>
+                <td colSpan={6}>
                   <div className="admin-empty">
                     <Sparkles className="admin-empty__icon" />
                     <p>{t('empty')}</p>
@@ -387,18 +386,6 @@ export const ProductTable = React.memo(function ProductTable({
                       <p className="admin-table-rating">
                         {product.rating} <span>({product.reviewsCount})</span>
                       </p>
-                    </td>
-                    <td>
-                      <div className="admin-table-actions">
-                        <button
-                          type="button"
-                          className="admin-icon-btn admin-icon-btn--danger"
-                          aria-label={`Xóa ${product.name}`}
-                          onClick={() => setProductToDelete(product)}
-                        >
-                          <Trash2 size={17} />
-                        </button>
-                      </div>
                     </td>
                   </tr>
                 );

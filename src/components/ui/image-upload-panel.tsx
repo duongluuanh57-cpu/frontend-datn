@@ -4,6 +4,7 @@ import { useCallback, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { ImagePlus, Loader2, Copy, Check, Trash2 } from 'lucide-react';
 import { uploadImageToImgBB, type ImgBBUploadResponseData } from '@/lib/api';
+import Image from 'next/image';
 
 function formatKb(bytes: number): string {
   return `${(bytes / 1024).toFixed(1)} KB`;
@@ -207,8 +208,7 @@ export function ImageUploadPanel() {
           </p>
           {result.thumbUrl ? (
             <div className="pt-2">
-              {/* eslint-disable-next-line @next/next/no-img-element -- remote ImgBB */}
-              <img src={result.thumbUrl} alt="" className="max-h-24 rounded-md border border-[var(--accent)]" />
+              <Image src={result.thumbUrl} alt="" width={160} height={96} className="max-h-24 w-auto rounded-md border border-[var(--accent)]" />
             </div>
           ) : null}
         </div>

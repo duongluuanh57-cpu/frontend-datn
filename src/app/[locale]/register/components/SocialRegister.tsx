@@ -4,6 +4,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from '@/navigation';
 import { ArrowRight } from 'lucide-react';
+import Image from 'next/image';
 import type { UseRegisterReturn } from '@/hooks/useRegister';
 
 interface SocialRegisterProps {
@@ -32,7 +33,7 @@ export function SocialRegister({ registerData }: SocialRegisterProps) {
             onClick={() => window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/google`}
             className="google-auth-btn flex w-full cursor-pointer items-center justify-center gap-3"
           >
-            <img src="https://fonts.gstatic.com/s/i/productlogos/googleg/v6/24px.svg" alt="Google" className="h-5 w-5" />
+            <Image src="https://fonts.gstatic.com/s/i/productlogos/googleg/v6/24px.svg" alt="Google" width={20} height={20} />
             <span className="text-sm font-bold text-[#7A5C5C]">Tiếp tục với Google</span>
           </motion.button>
         </div>

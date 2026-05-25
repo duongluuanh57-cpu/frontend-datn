@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 import type { UseUserProfileReturn } from '@/hooks/useUserProfile';
 
 const currencyFmt = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
@@ -132,9 +133,11 @@ export function OrderDetailModal({ userProfile }: OrderDetailModalProps) {
                       
                       return (
                           <div key={idx} className="profile-modal-item-row">
-                            <img 
-                              src={itemImage} 
-                              alt={itemName} 
+                            <Image
+                              src={itemImage}
+                              alt={itemName}
+                              width={60}
+                              height={60}
                               className="profile-modal-item-img"
                             />
                             <div className="profile-modal-item-details" style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>

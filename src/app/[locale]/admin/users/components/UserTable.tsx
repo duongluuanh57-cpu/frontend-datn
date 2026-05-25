@@ -3,7 +3,6 @@
 import React from 'react';
 import { 
   Users, 
-  Trash2, 
   Shield, 
   Mail, 
   Calendar, 
@@ -15,7 +14,6 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import { Link } from '@/navigation';
-import { toast } from 'sonner';
 import type { UseAdminUsersReturn } from '@/hooks/useAdminUsers';
 
 interface UserTableProps {
@@ -29,12 +27,16 @@ export function UserTable({ adminUsers }: UserTableProps) {
     updateRoleMutation,
     handleToggleRole,
     handleOpenModal,
-    deleteMutation,
     totalPages,
     currentPage,
     setCurrentPage,
     itemsPerPage,
-    total
+    total,
+    selectedIds,
+    isAllSelected,
+    isSomeSelected,
+    handleSelectAll,
+    handleSelectRow
   } = adminUsers;
 
   return (
@@ -43,6 +45,23 @@ export function UserTable({ adminUsers }: UserTableProps) {
         <table className="admin-table">
           <thead>
             <tr>
+              <th style={{ width: '48px', textAlign: 'center', verticalAlign: 'middle' }}>
+                <input
+                  type="checkbox"
+                  checked={isAllSelected}
+                  ref={(el) => {
+                    if (el) el.indeterminate = isSomeSelected;
+                  }}
+                  onChange={handleSelectAll}
+                  style={{
+                    cursor: 'pointer',
+                    accentColor: 'var(--admin-accent, #3d2e24)',
+                    borderRadius: '4px',
+                    width: '16px',
+                    height: '16px',
+                  }}
+                />
+              </th>
               <th>Thành viên</th>
               <th>Vai trò</th>
               <th>Ngày gia nhập</th>
@@ -52,16 +71,16 @@ export function UserTable({ adminUsers }: UserTableProps) {
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={4}>
+                <td colSpan={6}>
                   <div className="admin-loading py-20">
-                    <Loader2 className="admin-loading__spinner" />
+                    <Loader2 className="admin-loading__spinner animate-spin" />
                     <p>Đang đồng bộ dữ liệu người dùng...</p>
                   </div>
                 </td>
               </tr>
             ) : !users?.length ? (
               <tr>
-                <td colSpan={4}>
+                <td colSpan={6}>
                   <div className="admin-empty py-20">
                     <Users className="admin-empty__icon" />
                     <p>Không tìm thấy người dùng nào phù hợp.</p>
@@ -69,8 +88,24 @@ export function UserTable({ adminUsers }: UserTableProps) {
                 </td>
               </tr>
             ) : (
-              users.map((user) => (
-                <tr key={user._id}>
+              users.map((user) => {
+                const isChecked = selectedIds.includes(user._id);
+                return (
+                  <tr key={user._id} style={isChecked ? { background: 'rgba(212, 165, 165, 0.05)' } : undefined}>
+                    <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => handleSelectRow(user._id)}
+                        style={{
+                          cursor: 'pointer',
+                          accentColor: 'var(--admin-accent, #3d2e24)',
+                          borderRadius: '4px',
+                          width: '16px',
+                          height: '16px',
+                        }}
+                      />
+                    </td>
                     <td>
                       <div className="flex items-center gap-4">
                         <div className="relative h-10 w-10 rounded-full bg-[#F9F6F3] overflow-hidden border-2 border-white shadow-sm">
@@ -133,42 +168,11 @@ export function UserTable({ adminUsers }: UserTableProps) {
                         >
                           <Edit2 size={16} />
                         </Link>
-                        <button 
-                          className="admin-icon-btn admin-icon-btn--danger"
-                          onClick={() => {
-                            const t = toast.custom((tId) => (
-                              <div className="bg-white rounded-xl border border-gray-200 shadow-lg p-4 flex flex-col gap-3 min-w-[280px]">
-                                <p className="text-sm font-semibold text-[#7A5C5C]">Xác nhận xóa</p>
-                                <p className="text-xs text-[#7A5C5C]/70">Bạn có chắc muốn xóa người dùng &quot;{user.username}&quot;?</p>
-                                <div className="flex gap-2 justify-end pt-1">
-                                  <button
-                                    onClick={() => toast.dismiss(tId)}
-                                    className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 text-[#7A5C5C] hover:bg-gray-50 transition-colors"
-                                  >
-                                    Hủy
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      deleteMutation.mutate(user._id);
-                                      toast.dismiss(tId);
-                                    }}
-                                    className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors"
-                                  >
-                                    Xóa
-                                  </button>
-                                </div>
-                              </div>
-                            ), { duration: Infinity });
-                          }}
-                          disabled={deleteMutation.isPending}
-                          title="Xóa người dùng"
-                        >
-                          <Trash2 size={16} />
-                        </button>
                       </div>
                     </td>
-                </tr>
-              ))
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>

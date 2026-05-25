@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { ImageUpload } from '@/components/admin/ImageUpload';
+import Image from 'next/image';
 
 interface ImageEditorModalProps {
   images: string[];
@@ -172,13 +173,13 @@ export function ImageEditorModal({
                   justifyContent: 'center',
                 }}>
                   {img ? (
-                    <img 
-                      src={img} 
-                      alt={`Slide ${idx + 1}`} 
-                      className="object-cover h-full w-full"
+                    <Image
+                      src={img}
+                      alt={`Slide ${idx + 1}`}
+                      fill
+                      sizes="200px"
+                      className="object-cover"
                       style={{ transition: 'transform 0.3s' }}
-                      onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.03)'}
-                      onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
                     />
                   ) : (
                     <div className="text-[11px] text-[#A68F81] font-medium flex flex-col items-center gap-2 select-none">

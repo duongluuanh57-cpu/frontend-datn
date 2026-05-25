@@ -110,15 +110,15 @@ export function Navbar() {
           alignItems: 'center',
           gap: '0.6rem'
         }}>
-          <img 
-            src="https://i.ibb.co/TxzQXcMT/original.png" 
-            alt="L'essence Logo" 
-            style={{ 
-              height: '35px', 
-              width: 'auto',
+          <Image
+            src="https://i.ibb.co/TxzQXcMT/original.png"
+            alt="L'essence Logo"
+            width={120}
+            height={35}
+            style={{
               objectFit: 'contain',
               filter: 'invert(79%) sepia(16%) saturate(601%) hue-rotate(315deg) brightness(91%) contrast(84%)'
-            }} 
+            }}
           />
           <span style={{ letterSpacing: '0.05em' }}>L'essence</span>
         </div>
@@ -291,7 +291,7 @@ export function Navbar() {
                 src={resolveImageUrl(user.avatar)}
                 alt={user.username || 'Avatar'}
                 fill
-                unoptimized
+                sizes="40px"
                 style={{ objectFit: 'cover', borderRadius: '12px' }}
               />
             ) : (
@@ -332,7 +332,7 @@ export function Navbar() {
                         src={resolveImageUrl(user.avatar)}
                         alt={user.username}
                         fill
-                        unoptimized
+                        sizes="48px"
                         style={{ objectFit: 'cover' }}
                       />
                     ) : (

@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { UploadCloud, X, Loader2, Plus, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import Image from 'next/image';
 
 interface MultipleImageUploadProps {
   value: string[]; // Array of image URLs hoặc base64 strings (base64 bắt đầu bằng "data:image")
@@ -159,12 +160,13 @@ export function MultipleImageUpload({
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => handleDrop(e, 0)}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               src={images[0]}
               alt="Ảnh chính sản phẩm"
-              className="w-full h-full object-cover"
-              style={{ width: '100%', height: '100%', maxHeight: 'none', objectFit: 'cover' }}
+              fill
+              sizes="300px"
+              className="object-cover"
+              style={{ maxHeight: 'none' }}
             />
 
             {uploadingIndex === 0 ? (
@@ -215,12 +217,12 @@ export function MultipleImageUpload({
                       onDragOver={(e) => e.preventDefault()}
                       onDrop={(e) => handleDrop(e, actualIndex)}
                     >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
+                      <Image
                         src={url}
                         alt={`Ảnh phụ ${actualIndex}`}
-                        className="w-full h-full object-cover"
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        fill
+                        sizes="150px"
+                        className="object-cover"
                       />
 
                       {uploadingIndex === actualIndex ? (
