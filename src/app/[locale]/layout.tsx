@@ -14,6 +14,7 @@ import { NavigationWrapper } from '@/components/ui/navigation-wrapper';
 import { BackendWarmup } from '@/providers/BackendWarmup';
 import { Toaster } from 'sonner';
 import { VisitTracker } from '@/providers/VisitTracker';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 import QueryProvider from '@/providers/QueryProvider';
 
@@ -136,6 +137,7 @@ export default async function LocaleLayout({
             </NextIntlClientProvider>
           </QueryProvider>
         </PHProvider>
+        <SpeedInsights />
       </body>
     </html>
   );
