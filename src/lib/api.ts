@@ -118,7 +118,7 @@ async function request<T = any>(
   method: string,
   url: string,
   data?: any,
-  customConfig?: { skipAuth?: boolean; timeout?: number; baseURL?: string }
+  customConfig?: { skipAuth?: boolean; timeout?: number; baseURL?: string; headers?: Record<string, string> }
 ): Promise<{ data: T; status: number }> {
   const origin = getActiveOriginSync();
   const base = customConfig?.baseURL ?? `${origin.replace(/\/+$/, '')}/api`;
@@ -138,9 +138,14 @@ async function request<T = any>(
   }
 
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
     ...(customConfig?.skipAuth ? {} : getAuthHeaders()),
+    ...(customConfig?.headers || {}),
   };
+
+  // For FormData, let browser set Content-Type (includes boundary)
+  if (!(data instanceof FormData) && !headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json';
+  }
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
@@ -149,7 +154,7 @@ async function request<T = any>(
     const res = await fetch(fullUrl, {
       method,
       headers,
-      body: data ? JSON.stringify(data) : undefined,
+      body: data ? (data instanceof FormData ? data : JSON.stringify(data)) : undefined,
       signal: controller.signal,
     });
     clearTimeout(timeoutId);
@@ -208,17 +213,17 @@ export const api = {
     }
     return request<T>('GET', url, undefined, config);
   },
-  post<T = any>(url: string, data?: any, config?: { skipAuth?: boolean; timeout?: number }) {
+  post<T = any>(url: string, data?: any, config?: { skipAuth?: boolean; timeout?: number; headers?: Record<string, string> }) {
     return request<T>('POST', url, data, config);
   },
-  put<T = any>(url: string, data?: any, config?: { skipAuth?: boolean; timeout?: number }) {
+  put<T = any>(url: string, data?: any, config?: { skipAuth?: boolean; timeout?: number; headers?: Record<string, string> }) {
     return request<T>('PUT', url, data, config);
   },
-  patch<T = any>(url: string, data?: any, config?: { skipAuth?: boolean; timeout?: number }) {
+  patch<T = any>(url: string, data?: any, config?: { skipAuth?: boolean; timeout?: number; headers?: Record<string, string> }) {
     return request<T>('PATCH', url, data, config);
   },
-  delete<T = any>(url: string, config?: { skipAuth?: boolean; timeout?: number }) {
-    return request<T>('DELETE', url, undefined, config);
+  delete<T = any>(url: string, config?: { skipAuth?: boolean; timeout?: number; headers?: Record<string, string>; data?: any }) {
+    return request<T>('DELETE', url, config?.data, config);
   },
 };
 

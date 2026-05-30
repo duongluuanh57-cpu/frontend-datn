@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useAdminTaxonomy } from '@/hooks/useAdminTaxonomy';
+import { useAdminTaxonomy, type UseAdminTaxonomyReturn } from '@/hooks/useAdminTaxonomy';
 import { TaxonomyHeader } from './components/TaxonomyHeader';
 import { TaxonomyFilterBar } from './components/TaxonomyFilterBar';
 import { TaxonomyTabs } from './components/TaxonomyTabs';
@@ -42,20 +42,10 @@ export default function AdminTaxonomyPage() {
     });
   }, [items]);
 
-  const animatedDeleteMutation = {
-    mutate: handleDeleteWithAnimation,
-    isPending: adminTaxonomy.deleteMutation.isPending,
-  };
-
-  const animatedBulkDeleteMutation = {
-    mutate: handleBulkDeleteWithAnimation,
-    isPending: adminTaxonomy.bulkDeleteMutation.isPending,
-  };
-
-  const modifiedAdminTaxonomy = {
+  const modifiedAdminTaxonomy: UseAdminTaxonomyReturn = {
     ...adminTaxonomy,
-    deleteMutation: animatedDeleteMutation,
-    bulkDeleteMutation: animatedBulkDeleteMutation,
+    deleteMutation: { ...adminTaxonomy.deleteMutation, mutate: handleDeleteWithAnimation } as UseAdminTaxonomyReturn['deleteMutation'],
+    bulkDeleteMutation: { ...adminTaxonomy.bulkDeleteMutation, mutate: handleBulkDeleteWithAnimation } as UseAdminTaxonomyReturn['bulkDeleteMutation'],
   };
 
   if (error) {

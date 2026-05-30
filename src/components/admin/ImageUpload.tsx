@@ -34,7 +34,7 @@ export function ImageUpload({ value, onChange, onUploadStateChange, hideUrlInput
       formData.append('maxWidth', String(maxWidth ?? 1920));
       formData.append('quality', String(quality ?? 90));
       if (folder) formData.append('folder', folder);
-      const { data } = await api.post('/media/upload-r2', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      const { data } = await api.post('/media/upload-r2', formData);
       if (data.success && data.data.url) { onChange(data.data.url); setPreview(data.data.url); }
     } catch (err) {
       console.error('Upload failed:', err);
