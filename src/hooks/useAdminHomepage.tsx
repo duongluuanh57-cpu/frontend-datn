@@ -5,46 +5,25 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import { toast } from 'sonner';
+import api from '@/lib/api';
+import type { HomepageConfigData, ProductSessionLayoutConfig } from '@/hooks/useHomepageConfig';
+import { DEFAULT_PRODUCT_SESSION_LAYOUT } from '@/hooks/useHomepageConfig';
+import { useProductSessionPreviewStore } from '@/store/useProductSessionPreviewStore';
+import { useAdminHomepageSections } from '@/hooks/admin/useAdminHomepageSections';
+import { useAdminHomepageBanners } from '@/hooks/admin/useAdminHomepageBanners';
+import { useAdminHomepageGallery } from '@/hooks/admin/useAdminHomepageGallery';
+import { useAdminHomepageCards } from '@/hooks/admin/useAdminHomepageCards';
+import { useAdminHomepageLayout } from '@/hooks/admin/useAdminHomepageLayout';
+import { useAdminHomepageNavbarFooter } from '@/hooks/admin/useAdminHomepageNavbarFooter';
+
+// ── Button-style sensors (kept here for convenience) ──
 import {
   PointerSensor,
   KeyboardSensor,
-  DragEndEvent
 } from '@dnd-kit/core';
 import {
-  arrayMove,
   sortableKeyboardCoordinates
 } from '@dnd-kit/sortable';
-import api from '@/lib/api';
-import type { SectionConfig, HomepageConfigData, ProductCardConfig, BlogCardConfig, ProductSessionLayoutConfig, NavbarConfig } from '@/hooks/useHomepageConfig';
-import { DEFAULT_PRODUCT_CARD_CONFIG, DEFAULT_BLOG_CARD_CONFIG, DEFAULT_PRODUCT_SESSION_LAYOUT, DEFAULT_NAVBAR_CONFIG } from '@/hooks/useHomepageConfig';
-import { useProductSessionPreviewStore } from '@/store/useProductSessionPreviewStore';
-
-// --- Default data ---
-const DEFAULT_BANNERS = [
-  '/images/banner-1.webp',
-  '/images/banner-2.webp',
-  '/images/banner-3.webp',
-  '/images/banner-4.webp'
-];
-
-const DEFAULT_SECTIONS: SectionConfig[] = [
-  { id: 'banner', enabled: true, order: 0 },
-  { id: 'brandsMarquee', enabled: true, order: 1 },
-  { id: 'saleProducts', enabled: true, order: 2 },
-  { id: 'newProducts', enabled: true, order: 3 },
-  { id: 'limitedProducts', enabled: true, order: 4 },
-  { id: 'trendingProducts', enabled: true, order: 5 },
-  { id: 'brandUsp', enabled: true, order: 6 },
-  { id: 'luxuryGallery', enabled: true, order: 7 },
-  { id: 'blogPosts', enabled: true, order: 8 }
-];
-
-const DEFAULT_GALLERY = Array.from({ length: 6 }, () => ({
-  url: '',
-  aspect: 'aspect-[3/4]',
-  title: '',
-  quote: ''
-}));
 
 // --- Fetch + Save API ---
 const fetchConfig = async (): Promise<HomepageConfigData> => {
@@ -60,7 +39,7 @@ const saveConfig = async (payload: Partial<HomepageConfigData>): Promise<Homepag
 export function useAdminHomepage() {
   const locale = useLocale();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<'banners' | 'gallery' | 'layout' | 'cardCustomizer' | 'blogCard' | 'productSessionLayout' | 'navbar'>('layout');
+  const [activeTab, setActiveTab] = useState<'banners' | 'gallery' | 'layout' | 'cardCustomizer' | 'blogCard' | 'productSessionLayout' | 'navbar' | 'footer'>('layout');
   const searchParams = useSearchParams();
   const tabParam = searchParams.get('tab');
   const isBannersMode = tabParam === 'banners';
@@ -69,27 +48,44 @@ export function useAdminHomepage() {
   useEffect(() => {
     if (tabParam === 'banners') {
       setActiveTab('banners');
-    } else if (tabParam === 'gallery' || tabParam === 'layout' || tabParam === 'cardCustomizer' || tabParam === 'blogCard' || tabParam === 'productSessionLayout' || tabParam === 'navbar') {
+    } else if (tabParam === 'gallery' || tabParam === 'layout' || tabParam === 'cardCustomizer' || tabParam === 'blogCard' || tabParam === 'productSessionLayout' || tabParam === 'navbar' || tabParam === 'footer') {
       setActiveTab(tabParam);
     } else {
-      // If we leave banner mode, reset activeTab to 'layout' if it was on banners
       setActiveTab(prev => prev === 'banners' ? 'layout' : prev);
     }
   }, [tabParam]);
 
-  // ── Fetch config từ DB ──
+  // ── Sub-hooks ──
+  const sectionsHook = useAdminHomepageSections();
+  const bannersHook = useAdminHomepageBanners();
+  const galleryHook = useAdminHomepageGallery();
+  const cardsHook = useAdminHomepageCards();
+  const layoutHook = useAdminHomepageLayout();
+  const navbarFooterHook = useAdminHomepageNavbarFooter();
+
+  // ── Fetch config from DB ──
   const { data: dbConfig, isLoading: isLoadingConfig } = useQuery({
     queryKey: ['homepage-config'],
     queryFn: fetchConfig
   });
 
+  // Populate sub-hook states from DB
+  useEffect(() => {
+    if (!dbConfig) return;
+    sectionsHook.initSections(dbConfig.sections);
+    bannersHook.initBanners(dbConfig);
+    galleryHook.initGallery(dbConfig);
+    cardsHook.initCards(dbConfig);
+    layoutHook.initLayout(dbConfig);
+    navbarFooterHook.initNavbarFooter(dbConfig);
+  }, [dbConfig]);
+
   // ── Save mutation ──
   const saveMutation = useMutation({
     mutationFn: saveConfig,
     onSuccess: (data, variables) => {
-      console.log('[Save] PUT response:', JSON.stringify(data, null, 2));
       queryClient.invalidateQueries({ queryKey: ['homepage-config'] });
-      // Sync saved config từ response, fallback về payload đã gửi nếu backend ko trả về
+      // Sync productSessionLayout from response
       const saved = data.productSessionLayout;
       const sent = variables?.productSessionLayout;
       const raw = saved && typeof saved.columnsDesktop === 'number'
@@ -105,7 +101,7 @@ export function useAdminHomepage() {
           ...(raw.sessions || {})
         }
       };
-      setProductSessionLayout(merged);
+      layoutHook.setProductSessionLayout(merged);
       useProductSessionPreviewStore.getState().setSavedConfig(merged);
       toast.success('Đã lưu cấu hình trang chủ thành công!', {
         description: 'Thay đổi sẽ có hiệu lực ngay trên trang chủ.',
@@ -120,233 +116,53 @@ export function useAdminHomepage() {
     }
   });
 
-  // ── Local state (init từ DB) ──
-  const [sections, setSections] = useState<SectionConfig[]>(DEFAULT_SECTIONS);
-  const [banners, setBanners] = useState<string[]>(DEFAULT_BANNERS);
-  const [bannerTitleVi, setBannerTitleVi] = useState('Độc bản hương thơm Niche');
-  const [bannerSubtitleVi, setBannerSubtitleVi] = useState('Khám phá tinh hoa mùi hương quý tộc mang đậm phong vị cá nhân từ những nhà điều chế hàng đầu thế giới.');
-  const [bannerLabelVi, setBannerLabelVi] = useState('BST NƯỚC HOA CAO CẤP');
-  const [bannerTitleEn, setBannerTitleEn] = useState('Bespoke Niche Perfumery');
-  const [bannerSubtitleEn, setBannerSubtitleEn] = useState('Explore the elite essence of royal perfumery, crafted for individual distinction by master scent designers.');
-  const [bannerLabelEn, setBannerLabelEn] = useState('PREMIUM FRAGRANCE HOUSE');
-  const [galleryVi, setGalleryVi] = useState(DEFAULT_GALLERY);
-  const [galleryEn, setGalleryEn] = useState(DEFAULT_GALLERY);
-  const [galleryAiLoading, setGalleryAiLoading] = useState<Record<number, boolean>>({});
-
-  // ── Blog Card Config state ──
-  const [blogCardConfig, setBlogCardConfig] = useState<BlogCardConfig>(DEFAULT_BLOG_CARD_CONFIG);
-  const [blogElementOrder, setBlogElementOrder] = useState<Array<{ id: string; label: string; show: boolean }>>([
-    { id: 'category', label: 'Danh mục / Category', show: true },
-    { id: 'date', label: 'Ngày đăng + Giờ đọc', show: true },
-    { id: 'title', label: 'Tiêu đề bài viết', show: true },
-    { id: 'excerpt', label: 'Đoạn trích', show: true },
-    { id: 'readMore', label: 'Nút Đọc tiếp', show: true }
-  ]);
-
-  // ── Product Card Config state ──
-  const [cardConfig, setCardConfig] = useState<ProductCardConfig>(DEFAULT_PRODUCT_CARD_CONFIG);
-  // ── Product Session Layout Config state ──
-  const [productSessionLayout, setProductSessionLayout] = useState<ProductSessionLayoutConfig>(DEFAULT_PRODUCT_SESSION_LAYOUT);
-
-  // ── Navbar Config state ──
-  const [navbarConfig, setNavbarConfig] = useState<NavbarConfig>(DEFAULT_NAVBAR_CONFIG);
-
-  const [cardElementOrder, setCardElementOrder] = useState<Array<{ id: string; label: string; show: boolean }>>(
-    [
-      { id: 'keywords', label: 'Từ khóa / Keywords', show: true },
-      { id: 'brand', label: 'Thương hiệu', show: true },
-      { id: 'name', label: 'Tên sản phẩm', show: true },
-      { id: 'sizes', label: 'Dung tích / Sizes', show: true },
-      { id: 'rating', label: 'Đánh giá & Sao', show: true },
-      { id: 'price', label: 'Giá bán', show: true }
-    ]
-  );
-
-  // Populate state từ DB khi load xong, fallback localStorage nếu DB rỗng
-  useEffect(() => {
-    if (!dbConfig) return;
-    if (dbConfig.sections?.length > 0) {
-      const sorted = [...dbConfig.sections].sort((a, b) => a.order - b.order);
-      const merged = DEFAULT_SECTIONS.map((section, index) =>
-        sorted.find((item) => item.id === section.id) ?? { ...section, order: index }
-      );
-      const extras = sorted.filter((section) => !DEFAULT_SECTIONS.some((item) => item.id === section.id));
-      setSections([...merged, ...extras].sort((a, b) => a.order - b.order));
-    }
-    if (dbConfig.bannerImages?.length > 0) setBanners(dbConfig.bannerImages);
-    if (dbConfig.bannerTitleVi) setBannerTitleVi(dbConfig.bannerTitleVi);
-    if (dbConfig.bannerSubtitleVi) setBannerSubtitleVi(dbConfig.bannerSubtitleVi);
-    if (dbConfig.bannerLabelVi) setBannerLabelVi(dbConfig.bannerLabelVi);
-    if (dbConfig.bannerTitleEn) setBannerTitleEn(dbConfig.bannerTitleEn);
-    if (dbConfig.bannerSubtitleEn) setBannerSubtitleEn(dbConfig.bannerSubtitleEn);
-    if (dbConfig.bannerLabelEn) setBannerLabelEn(dbConfig.bannerLabelEn);
-
-    // Gallery: ưu tiên DB, fallback về localStorage nếu DB chưa có ảnh hợp lệ
-    const dbHasGalleryVi = dbConfig.galleryVi?.some((img: any) => img?.url?.trim());
-    const dbHasGalleryEn = dbConfig.galleryEn?.some((img: any) => img?.url?.trim());
-
-    if (dbHasGalleryVi) {
-      setGalleryVi(dbConfig.galleryVi);
-    } else {
-      // Migrate từ localStorage lần đầu
-      try {
-        const saved = localStorage.getItem('lessence_custom_homepage_data');
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (parsed.gallery?.length > 0) setGalleryVi(parsed.gallery);
-        }
-      } catch { }
-    }
-
-    if (dbHasGalleryEn) {
-      setGalleryEn(dbConfig.galleryEn);
-    } else {
-      try {
-        const saved = localStorage.getItem('lessence_custom_homepage_data');
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (parsed.gallery_en?.length > 0) setGalleryEn(parsed.gallery_en);
-        }
-      } catch { }
-    }
-
-    // Populate Blog Card Config
-    if (dbConfig.blogCardConfig) {
-      const cfg = dbConfig.blogCardConfig;
-      setBlogCardConfig(cfg);
-      if (cfg.elementOrder?.length > 0) {
-        setBlogElementOrder(prev =>
-          cfg.elementOrder.map(id => {
-            const existing = prev.find(e => e.id === id);
-            return existing
-              ? { ...existing, show: id === 'category' ? (cfg.showCategory ?? true) : id === 'date' ? true : id === 'readTime' ? (cfg.showReadTime ?? true) : id === 'excerpt' ? (cfg.showExcerpt ?? true) : id === 'readMore' ? (cfg.showReadMore ?? true) : true }
-              : { id, label: id, show: true };
-          })
-        );
-      }
-    }
-
-    // Populate Product Session Layout
-    const sessionLayout = dbConfig.productSessionLayout;
-    const isValidLayout = sessionLayout && typeof sessionLayout.columnsDesktop === 'number';
-    console.log('[dbConfig] productSessionLayout:', JSON.stringify(sessionLayout), 'isValid:', isValidLayout);
-    if (isValidLayout) {
-      // Deep-merge với DEFAULT để đảm bảo không thiếu nested fields (sessions, v.v.)
-      const merged = {
-        ...DEFAULT_PRODUCT_SESSION_LAYOUT,
-        ...sessionLayout,
-        sessions: {
-          ...DEFAULT_PRODUCT_SESSION_LAYOUT.sessions,
-          ...(sessionLayout.sessions || {})
-        }
-      };
-      setProductSessionLayout(merged);
-      useProductSessionPreviewStore.getState().setSavedConfig(merged);
-    } else {
-      setProductSessionLayout(DEFAULT_PRODUCT_SESSION_LAYOUT);
-      useProductSessionPreviewStore.getState().setSavedConfig(DEFAULT_PRODUCT_SESSION_LAYOUT);
-    }
-
-    // Populate Product Card Config
-    if (dbConfig.productCardConfig) {
-      const cfg = dbConfig.productCardConfig;
-      setCardConfig(cfg);
-      if (cfg.elementOrder?.length > 0) {
-        setCardElementOrder(prev =>
-          cfg.elementOrder.map(id => {
-            const existing = prev.find(e => e.id === id);
-            return existing
-              ? { ...existing, show: id === 'keywords' ? (cfg.showKeywords ?? true) : id === 'sizes' ? (cfg.showSizes ?? true) : id === 'rating' ? (cfg.showRating ?? true) : true }
-              : { id, label: id, show: true };
-          })
-        );
-      }
-    }
-
-    // Populate Navbar Config
-    if (dbConfig.navbar) {
-      const cfg = dbConfig.navbar;
-      setNavbarConfig({
-        logo: { ...DEFAULT_NAVBAR_CONFIG.logo, ...cfg.logo },
-        links: cfg.links?.length > 0
-          ? cfg.links.map((l: any) => ({ ...DEFAULT_NAVBAR_CONFIG.links[0], ...l }))
-          : DEFAULT_NAVBAR_CONFIG.links,
-        style: { ...DEFAULT_NAVBAR_CONFIG.style, ...cfg.style },
-        layout: cfg.layout?.left
-          ? { left: cfg.layout.left, center: cfg.layout.center, right: cfg.layout.right }
-          : DEFAULT_NAVBAR_CONFIG.layout
-      });
-    }
-  }, [dbConfig]);
-
-  // ── Drag & Drop sensors ──
-  const sensors = useMemo(() => [
-    { sensor: PointerSensor, options: { activationConstraint: { distance: 5 } } },
-    { sensor: KeyboardSensor, options: { coordinateGetter: sortableKeyboardCoordinates } }
-  ], []);
-
-  // ── Drag & Drop sensors for card element ordering ──
-  const cardElementSensors = useMemo(() => [
-    { sensor: PointerSensor, options: { activationConstraint: { distance: 5 } } },
-    { sensor: KeyboardSensor, options: { coordinateGetter: sortableKeyboardCoordinates } }
-  ], []);
-
-  const handleDragEnd = useCallback((event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-
-    setSections((prev) => {
-      const oldIndex = prev.findIndex((s) => s.id === active.id);
-      const newIndex = prev.findIndex((s) => s.id === over.id);
-      const reordered = arrayMove(prev, oldIndex, newIndex);
-      return reordered.map((s, idx) => ({ ...s, order: idx }));
-    });
-  }, []);
-
-  const handleToggleSection = useCallback((id: string) => {
-    setSections((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, enabled: !s.enabled } : s))
-    );
-  }, []);
-
   // ── Save all ──
   const handleSave = useCallback(() => {
-    const finalBlogCardConfig: BlogCardConfig = {
-      ...blogCardConfig,
-      elementOrder: blogElementOrder.map(e => e.id),
-      showCategory: blogElementOrder.find(e => e.id === 'category')?.show ?? true,
-      showDate: blogElementOrder.find(e => e.id === 'date')?.show ?? true,
-      showReadTime: blogElementOrder.find(e => e.id === 'date')?.show ?? true,
-      showExcerpt: blogElementOrder.find(e => e.id === 'excerpt')?.show ?? true,
-      showReadMore: blogElementOrder.find(e => e.id === 'readMore')?.show ?? true
+    const finalBlogCardConfig = {
+      ...cardsHook.blogCardConfig,
+      elementOrder: cardsHook.blogElementOrder.map(e => e.id),
+      showCategory: cardsHook.blogElementOrder.find(e => e.id === 'category')?.show ?? true,
+      showDate: cardsHook.blogElementOrder.find(e => e.id === 'date')?.show ?? true,
+      showReadTime: cardsHook.blogElementOrder.find(e => e.id === 'date')?.show ?? true,
+      showExcerpt: cardsHook.blogElementOrder.find(e => e.id === 'excerpt')?.show ?? true,
+      showReadMore: cardsHook.blogElementOrder.find(e => e.id === 'readMore')?.show ?? true
     };
 
-    const finalCardConfig: ProductCardConfig = {
-      ...cardConfig,
-      elementOrder: cardElementOrder.map(e => e.id),
-      showKeywords: cardElementOrder.find(e => e.id === 'keywords')?.show ?? true,
-      showSizes: cardElementOrder.find(e => e.id === 'sizes')?.show ?? true,
-      showRating: cardElementOrder.find(e => e.id === 'rating')?.show ?? true
+    const finalCardConfig = {
+      ...cardsHook.cardConfig,
+      elementOrder: cardsHook.cardElementOrder.map(e => e.id),
+      showKeywords: cardsHook.cardElementOrder.find(e => e.id === 'keywords')?.show ?? true,
+      showSizes: cardsHook.cardElementOrder.find(e => e.id === 'sizes')?.show ?? true,
+      showRating: cardsHook.cardElementOrder.find(e => e.id === 'rating')?.show ?? true
     };
     const payload = {
-      sections,
-      bannerImages: banners,
-      bannerTitleVi,
-      bannerSubtitleVi,
-      bannerLabelVi,
-      bannerTitleEn,
-      bannerSubtitleEn,
-      bannerLabelEn,
-      galleryVi,
-      galleryEn,
+      sections: sectionsHook.sections,
+      bannerImages: bannersHook.banners,
+      bannerTitleVi: bannersHook.bannerTitleVi,
+      bannerSubtitleVi: bannersHook.bannerSubtitleVi,
+      bannerLabelVi: bannersHook.bannerLabelVi,
+      bannerTitleEn: bannersHook.bannerTitleEn,
+      bannerSubtitleEn: bannersHook.bannerSubtitleEn,
+      bannerLabelEn: bannersHook.bannerLabelEn,
+      galleryVi: galleryHook.galleryVi,
+      galleryEn: galleryHook.galleryEn,
       productCardConfig: finalCardConfig,
       blogCardConfig: finalBlogCardConfig,
-      productSessionLayout,
-      navbar: navbarConfig
+      productSessionLayout: layoutHook.productSessionLayout,
+      navbar: navbarFooterHook.navbarConfig,
+      footer: navbarFooterHook.footerConfig
     };
-    console.log('[Save] Sending payload productSessionLayout:', JSON.stringify(productSessionLayout));
     saveMutation.mutate(payload);
-  }, [sections, banners, bannerTitleVi, bannerSubtitleVi, bannerLabelVi, bannerTitleEn, bannerSubtitleEn, bannerLabelEn, galleryVi, galleryEn, cardConfig, cardElementOrder, blogCardConfig, blogElementOrder, productSessionLayout, navbarConfig, saveMutation]);
+  }, [
+    sectionsHook.sections,
+    bannersHook.banners, bannersHook.bannerTitleVi, bannersHook.bannerSubtitleVi, bannersHook.bannerLabelVi,
+    bannersHook.bannerTitleEn, bannersHook.bannerSubtitleEn, bannersHook.bannerLabelEn,
+    galleryHook.galleryVi, galleryHook.galleryEn,
+    cardsHook.cardConfig, cardsHook.cardElementOrder, cardsHook.blogCardConfig, cardsHook.blogElementOrder,
+    layoutHook.productSessionLayout,
+    navbarFooterHook.navbarConfig, navbarFooterHook.footerConfig,
+    saveMutation
+  ]);
 
   // ── Restore defaults ──
   const handleRestoreDefaults = useCallback(() => {
@@ -364,16 +180,9 @@ export function useAdminHomepage() {
           <button
             onClick={() => {
               toast.dismiss(tId);
-              setSections(DEFAULT_SECTIONS);
-              setBanners(DEFAULT_BANNERS);
-              setBannerTitleVi('Độc bản hương thơm Niche');
-              setBannerSubtitleVi('Khám phá tinh hoa mùi hương quý tộc mang đậm phong vị cá nhân từ những nhà điều chế hàng đầu thế giới.');
-              setBannerLabelVi('BST NƯỚC HOA CAO CẤP');
-              setBannerTitleEn('Bespoke Niche Perfumery');
-              setBannerSubtitleEn('Explore the elite essence of royal perfumery, crafted for individual distinction by master scent designers.');
-              setBannerLabelEn('PREMIUM FRAGRANCE HOUSE');
-              setGalleryVi(DEFAULT_GALLERY);
-              setGalleryEn(DEFAULT_GALLERY);
+              sectionsHook.resetSections();
+              bannersHook.resetBanners();
+              galleryHook.resetGallery();
               toast.info('Đã khôi phục cài đặt mặc định. Bấm Lưu để áp dụng.');
             }}
             className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#7A5C5C] text-white hover:bg-[#604444] transition-colors"
@@ -385,62 +194,10 @@ export function useAdminHomepage() {
     ), { duration: Infinity });
   }, []);
 
-  // ── Gallery helpers ──
-  const handleGalleryFieldChange = useCallback((
-    lang: 'vi' | 'en',
-    index: number,
-    field: 'url' | 'aspect' | 'title' | 'quote',
-    value: string
-  ) => {
-    if (lang === 'vi') {
-      setGalleryVi((prev) => {
-        const next = [...prev];
-        next[index] = { ...next[index], [field]: value };
-        return next;
-      });
-    } else {
-      setGalleryEn((prev) => {
-        const next = [...prev];
-        next[index] = { ...next[index], [field]: value };
-        return next;
-      });
-    }
-  }, []);
-
-  const handleGalleryImageUpload = useCallback(async (idx: number, newUrl: string) => {
-    handleGalleryFieldChange('vi', idx, 'url', newUrl);
-    handleGalleryFieldChange('en', idx, 'url', newUrl);
-    if (!newUrl) return;
-
-    setGalleryAiLoading((prev) => ({ ...prev, [idx]: true }));
-    const loadingToast = toast.loading('AI đang quét và phân tích hình ảnh nghệ thuật...');
-    try {
-      const response = await api.post('/ai/scan-gallery-image', { imageUrl: newUrl });
-      if (response.data?.success && response.data?.data) {
-        const { titleVi, quoteVi, titleEn, quoteEn } = response.data.data;
-        setGalleryVi((prev) => {
-          const next = [...prev];
-          next[idx] = { ...next[idx], title: titleVi || next[idx].title, quote: quoteVi || next[idx].quote };
-          return next;
-        });
-        setGalleryEn((prev) => {
-          const next = [...prev];
-          next[idx] = { ...next[idx], title: titleEn || next[idx].title, quote: quoteEn || next[idx].quote };
-          return next;
-        });
-        toast.success('AI phân tích ảnh thành công!', { id: loadingToast, duration: 3000 });
-      }
-    } catch {
-      toast.error('Không thể quét ảnh bằng AI.', { id: loadingToast, duration: 4000 });
-    } finally {
-      setGalleryAiLoading((prev) => ({ ...prev, [idx]: false }));
-    }
-  }, []);
-
   // ── Derived display values for banner preview ──
-  const displayTitle = locale === 'vi' ? bannerTitleVi : bannerTitleEn;
-  const displaySubtitle = locale === 'vi' ? bannerSubtitleVi : bannerSubtitleEn;
-  const displayLabel = locale === 'vi' ? bannerLabelVi : bannerLabelEn;
+  const displayTitle = locale === 'vi' ? bannersHook.bannerTitleVi : bannersHook.bannerTitleEn;
+  const displaySubtitle = locale === 'vi' ? bannersHook.bannerSubtitleVi : bannersHook.bannerSubtitleEn;
+  const displayLabel = locale === 'vi' ? bannersHook.bannerLabelVi : bannersHook.bannerLabelEn;
   const isSaving = saveMutation.isPending;
 
   return {
@@ -450,50 +207,52 @@ export function useAdminHomepage() {
     isBannersMode,
     isLoadingConfig,
     isSaving,
-    sections,
-    setSections,
-    banners,
-    setBanners,
-    bannerTitleVi,
-    setBannerTitleVi,
-    bannerSubtitleVi,
-    setBannerSubtitleVi,
-    bannerLabelVi,
-    setBannerLabelVi,
-    bannerTitleEn,
-    setBannerTitleEn,
-    bannerSubtitleEn,
-    setBannerSubtitleEn,
-    bannerLabelEn,
-    setBannerLabelEn,
-    galleryVi,
-    setGalleryVi,
-    galleryEn,
-    setGalleryEn,
-    galleryAiLoading,
-    blogCardConfig,
-    setBlogCardConfig,
-    blogElementOrder,
-    setBlogElementOrder,
-    productSessionLayout,
-    setProductSessionLayout,
-    cardConfig,
-    setCardConfig,
-    cardElementOrder,
-    setCardElementOrder,
-    sensors,
-    cardElementSensors,
-    handleDragEnd,
-    handleToggleSection,
+    sections: sectionsHook.sections,
+    setSections: sectionsHook.setSections,
+    banners: bannersHook.banners,
+    setBanners: bannersHook.setBanners,
+    bannerTitleVi: bannersHook.bannerTitleVi,
+    setBannerTitleVi: bannersHook.setBannerTitleVi,
+    bannerSubtitleVi: bannersHook.bannerSubtitleVi,
+    setBannerSubtitleVi: bannersHook.setBannerSubtitleVi,
+    bannerLabelVi: bannersHook.bannerLabelVi,
+    setBannerLabelVi: bannersHook.setBannerLabelVi,
+    bannerTitleEn: bannersHook.bannerTitleEn,
+    setBannerTitleEn: bannersHook.setBannerTitleEn,
+    bannerSubtitleEn: bannersHook.bannerSubtitleEn,
+    setBannerSubtitleEn: bannersHook.setBannerSubtitleEn,
+    bannerLabelEn: bannersHook.bannerLabelEn,
+    setBannerLabelEn: bannersHook.setBannerLabelEn,
+    galleryVi: galleryHook.galleryVi,
+    setGalleryVi: galleryHook.setGalleryVi,
+    galleryEn: galleryHook.galleryEn,
+    setGalleryEn: galleryHook.setGalleryEn,
+    galleryAiLoading: galleryHook.galleryAiLoading,
+    blogCardConfig: cardsHook.blogCardConfig,
+    setBlogCardConfig: cardsHook.setBlogCardConfig,
+    blogElementOrder: cardsHook.blogElementOrder,
+    setBlogElementOrder: cardsHook.setBlogElementOrder,
+    productSessionLayout: layoutHook.productSessionLayout,
+    setProductSessionLayout: layoutHook.setProductSessionLayout,
+    cardConfig: cardsHook.cardConfig,
+    setCardConfig: cardsHook.setCardConfig,
+    cardElementOrder: cardsHook.cardElementOrder,
+    setCardElementOrder: cardsHook.setCardElementOrder,
+    sensors: sectionsHook.sensors,
+    cardElementSensors: cardsHook.cardElementSensors,
+    handleDragEnd: sectionsHook.handleDragEnd,
+    handleToggleSection: sectionsHook.handleToggleSection,
     handleSave,
     handleRestoreDefaults,
-    handleGalleryFieldChange,
-    handleGalleryImageUpload,
+    handleGalleryFieldChange: galleryHook.handleGalleryFieldChange,
+    handleGalleryImageUpload: galleryHook.handleGalleryImageUpload,
     displayTitle,
     displaySubtitle,
     displayLabel,
-    navbarConfig,
-    setNavbarConfig
+    navbarConfig: navbarFooterHook.navbarConfig,
+    setNavbarConfig: navbarFooterHook.setNavbarConfig,
+    footerConfig: navbarFooterHook.footerConfig,
+    setFooterConfig: navbarFooterHook.setFooterConfig,
   };
 }
 

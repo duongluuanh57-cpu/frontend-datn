@@ -26,6 +26,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const [authChecked, setAuthChecked] = React.useState(false);
   const router = useRouter();
   const logout = useAuthStore((state) => state.logout);
+  const contentRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     if (isMinimal) {
@@ -148,7 +149,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           </header>
         )}
 
-        <div className="admin-content">{children}</div>
+        <div ref={contentRef} className="admin-content">{children}</div>
       </main>
 
       <AIChatPanel isOpen={showAIChat} onClose={() => { setShowAIChat(false); setIsCollapsed(false); }} />

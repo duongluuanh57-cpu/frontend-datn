@@ -3,8 +3,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { useLocale } from 'next-intl';
-import React, { useState, useEffect, useMemo } from 'react';
 import { toast } from 'sonner';
+import { useOrderFilters } from '@/hooks/admin-orders/useOrderFilters';
 
 export interface OrderItem {
   _id: string;
@@ -78,33 +78,13 @@ export function useAdminOrders(): UseAdminOrdersReturn {
   const queryClient = useQueryClient();
   const isVi = locale === 'vi';
 
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('all');
-  const [selectedPaymentStatus, setSelectedPaymentStatus] = useState('all');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 25;
-
-  // Build query params
-  const queryParams = useMemo(() => {
-    const params: Record<string, string | number> = {
-      page: currentPage,
-      limit: ITEMS_PER_PAGE,
-    };
-    if (searchTerm) params.search = searchTerm;
-    if (selectedStatus && selectedStatus !== 'all') params.status = selectedStatus;
-    if (selectedPaymentStatus && selectedPaymentStatus !== 'all') params.paymentStatus = selectedPaymentStatus;
-    if (startDate) params.startDate = startDate;
-    if (endDate) params.endDate = endDate;
-    return params;
-  }, [currentPage, searchTerm, selectedStatus, selectedPaymentStatus, startDate, endDate]);
+  const filter = useOrderFilters();
 
   // Fetch orders with server-side pagination
   const { data: pageData, isLoading, error } = useQuery({
-    queryKey: ['admin-orders', queryParams],
+    queryKey: ['admin-orders', filter.queryParams],
     queryFn: async () => {
-      const { data } = await api.get('/orders/admin/orders', { params: queryParams });
+      const { data } = await api.get('/orders/admin/orders', { params: filter.queryParams });
       return data.data as { orders: Order[]; pagination: { total: number; totalPages: number } };
     },
     staleTime: 15_000,
@@ -113,11 +93,6 @@ export function useAdminOrders(): UseAdminOrdersReturn {
   const orders = pageData?.orders;
   const total = pageData?.pagination?.total || 0;
   const totalPages = pageData?.pagination?.totalPages || 0;
-
-  // Reset page when filter changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, selectedStatus, selectedPaymentStatus, startDate, endDate]);
 
   // Mutation: Update order status
   const updateStatusMutation = useMutation({
@@ -178,52 +153,25 @@ export function useAdminOrders(): UseAdminOrdersReturn {
     }
   });
 
-  const handleUpdateStatus = (orderId: string, status: string) => {
-    updateStatusMutation.mutate({ id: orderId, status });
-  };
-
-  const handleUpdatePaymentStatus = (orderId: string, paymentStatus: string) => {
-    updatePaymentStatusMutation.mutate({ id: orderId, paymentStatus });
-  };
-
+  const handleUpdateStatus = (orderId: string, status: string) => updateStatusMutation.mutate({ id: orderId, status });
+  const handleUpdatePaymentStatus = (orderId: string, paymentStatus: string) => updatePaymentStatusMutation.mutate({ id: orderId, paymentStatus });
   const handleDeleteOrder = (orderId: string) => {
-    if (isVi) {
-      if (confirm('Bạn có chắc chắn muốn xóa đơn hàng này? Hành động này không thể hoàn tác.')) {
-        deleteMutation.mutate(orderId);
-      }
-    } else {
-      if (confirm('Are you sure you want to delete this order? This action cannot be undone.')) {
-        deleteMutation.mutate(orderId);
-      }
+    if (confirm(isVi ? 'Bạn có chắc chắn muốn xóa đơn hàng này? Hành động này không thể hoàn tác.' : 'Are you sure you want to delete this order? This action cannot be undone.')) {
+      deleteMutation.mutate(orderId);
     }
   };
 
   return {
-    locale,
-    isVi,
-    searchTerm,
-    setSearchTerm,
-    selectedStatus,
-    setSelectedStatus,
-    selectedPaymentStatus,
-    setSelectedPaymentStatus,
-    startDate,
-    setStartDate,
-    endDate,
-    setEndDate,
-    currentPage,
-    setCurrentPage,
-    ITEMS_PER_PAGE,
-    orders,
-    isLoading,
-    error,
-    total,
-    totalPages,
-    updateStatusMutation,
-    updatePaymentStatusMutation,
-    deleteMutation,
-    handleUpdateStatus,
-    handleUpdatePaymentStatus,
-    handleDeleteOrder,
+    locale, isVi,
+    searchTerm: filter.searchTerm, setSearchTerm: filter.setSearchTerm,
+    selectedStatus: filter.selectedStatus, setSelectedStatus: filter.setSelectedStatus,
+    selectedPaymentStatus: filter.selectedPaymentStatus, setSelectedPaymentStatus: filter.setSelectedPaymentStatus,
+    startDate: filter.startDate, setStartDate: filter.setStartDate,
+    endDate: filter.endDate, setEndDate: filter.setEndDate,
+    currentPage: filter.currentPage, setCurrentPage: filter.setCurrentPage,
+    ITEMS_PER_PAGE: filter.ITEMS_PER_PAGE,
+    orders, isLoading, error, total, totalPages,
+    updateStatusMutation, updatePaymentStatusMutation, deleteMutation,
+    handleUpdateStatus, handleUpdatePaymentStatus, handleDeleteOrder,
   };
 }

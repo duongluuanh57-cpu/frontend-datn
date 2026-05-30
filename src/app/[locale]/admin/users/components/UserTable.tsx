@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Users, 
   Shield, 
@@ -18,9 +18,10 @@ import type { UseAdminUsersReturn } from '@/hooks/useAdminUsers';
 
 interface UserTableProps {
   adminUsers: UseAdminUsersReturn;
+  deletingIds?: string[];
 }
 
-export function UserTable({ adminUsers }: UserTableProps) {
+export function UserTable({ adminUsers, deletingIds = [] }: UserTableProps) {
   const {
     users,
     isLoading,
@@ -39,8 +40,29 @@ export function UserTable({ adminUsers }: UserTableProps) {
     handleSelectRow
   } = adminUsers;
 
+  const [filterVersion, setFilterVersion] = useState(0);
+  const prevUsersKeyRef = useRef('');
+
+  useEffect(() => {
+    const key = (users || []).map(u => u._id).join(',');
+    if (prevUsersKeyRef.current !== key) {
+      setFilterVersion((v) => v + 1);
+      prevUsersKeyRef.current = key;
+    }
+  }, [users]);
+
   return (
     <div className="admin-table-wrap">
+      <style>{`
+        @keyframes userRowEnter {
+          from { opacity: 0; transform: translateY(8px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes userRowExit {
+          from { opacity: 1; transform: translateX(0); }
+          to   { opacity: 0; transform: translateX(70px); }
+        }
+      `}</style>
       <div className="admin-table-scroll">
         <table className="admin-table">
           <thead>
@@ -88,10 +110,22 @@ export function UserTable({ adminUsers }: UserTableProps) {
                 </td>
               </tr>
             ) : (
-              users.map((user) => {
+              users.map((user, index) => {
                 const isChecked = selectedIds.includes(user._id);
+                const isDeleting = deletingIds.includes(user._id);
+                const animDelay = `${index * 0.04}s`;
                 return (
-                  <tr key={user._id} style={isChecked ? { background: 'rgba(212, 165, 165, 0.05)' } : undefined}>
+                  <tr
+                    key={`${filterVersion}-${user._id}`}
+                    style={{
+                      animationName: isDeleting ? 'userRowExit' : 'userRowEnter',
+                      animationDuration: '0.35s',
+                      animationTimingFunction: 'ease',
+                      animationFillMode: isDeleting ? 'forwards' : 'both',
+                      animationDelay: isDeleting ? '0s' : animDelay,
+                      ...(isChecked && !isDeleting ? { background: 'rgba(212, 165, 165, 0.05)' } : {}),
+                    }}
+                  >
                     <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
                       <input
                         type="checkbox"

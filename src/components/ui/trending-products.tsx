@@ -15,14 +15,15 @@ import { useProductSessionLayout } from '@/store/useProductSessionPreviewStore';
 
 export function TrendingProducts() {
   const layoutConfig = useProductSessionLayout();
-  const formHelpers = useTrendingProducts(layoutConfig.sessions.trendingProducts.filterTag);
+  const filterTag = layoutConfig.sessions.trendingProducts.filterTag || 'trending';
+  const formHelpers = useTrendingProducts(filterTag);
   const { getTagName } = useHomepageTags();
   const {
     locale,
     isLoading,
     error,
     products,
-    sortedProducts
+    isFiltering
   } = formHelpers;
   const [isMobile, setIsMobile] = React.useState(false);
   React.useEffect(() => {
@@ -41,7 +42,7 @@ export function TrendingProducts() {
   return (
     <section className="trending-products-section w-full bg-transparent pt-12 pb-10 lg:pt-20 lg:pb-14 overflow-hidden"
       style={{ contain: 'content', contentVisibility: 'auto' } as React.CSSProperties}>
-      <div className="max-w-container mx-auto px-6">
+      <div className="px-6">
         <div className="relative mb-16 lg:mb-20 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 border-b border-[#D4A5A5]/10 pb-8">
           {layoutConfig.showTitle && (
             <motion.div
@@ -76,31 +77,37 @@ export function TrendingProducts() {
           )}
         </div>
 
-        <div
-          className="grid auto-rows-fr"
-          style={{
-            gridTemplateColumns: `repeat(${cols}, 1fr)`,
-            gap: `${layoutConfig.gap}px`
-          }}
-        >
-          {isLoading ? (
-            Array.from({ length: totalToShow }).map((_, i) => <ProductSkeleton key={i} />)
-          ) : sortedProducts.length > 0 ? (
-            sortedProducts.slice(0, totalToShow).map((product, index) => (
-              <ProductCard
-                key={product._id}
-                product={product}
-                index={index}
-                forceTag="Trending"
-              />
-            ))
-          ) : (
-            <div className="col-span-full py-16 flex flex-col items-center justify-center text-center">
-              <span className="text-xs font-medium text-[#7A5C5C]/60 bg-white/60 border border-[#7A5C5C]/10 rounded-2xl px-8 py-6 shadow-sm">
-                {locale === 'vi'
-                  ? 'Chưa có sản phẩm thịnh hành nào phù hợp với bộ lọc.'
-                  : 'No trending products found matching the filters.'}
-              </span>
+        <div style={{ position: 'relative' }}>
+          <div
+            className="grid auto-rows-fr"
+            style={{
+              gridTemplateColumns: `repeat(${cols}, 1fr)`,
+              gap: `${layoutConfig.gap}px`
+            }}
+          >
+            {isLoading ? (
+              Array.from({ length: totalToShow }).map((_, i) => <ProductSkeleton key={i} />)
+            ) : products.length > 0 ? (
+              products.slice(0, totalToShow).map((product, index) => (
+                <ProductCard
+                  key={product._id}
+                  product={product}
+                  index={index}
+                />
+              ))
+            ) : (
+              <div className="col-span-full py-16 flex flex-col items-center justify-center text-center">
+                <span className="text-xs font-medium text-[#7A5C5C]/60 bg-white/60 border border-[#7A5C5C]/10 rounded-2xl px-8 py-6 shadow-sm">
+                  {locale === 'vi'
+                    ? 'Chưa có sản phẩm thịnh hành nào phù hợp với bộ lọc.'
+                    : 'No trending products found matching the filters.'}
+                </span>
+              </div>
+            )}
+          </div>
+          {isFiltering && (
+            <div className="absolute inset-0 flex items-center justify-center bg-white/40 backdrop-blur-sm rounded-xl z-10">
+              <div className="w-6 h-6 border-2 border-[#D4A5A5] border-t-transparent rounded-full animate-spin" />
             </div>
           )}
         </div>

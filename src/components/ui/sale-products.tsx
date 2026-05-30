@@ -137,7 +137,7 @@ export function SaleProducts() {
   return (
     <section className="new-products-section w-full bg-transparent pt-[56px] pb-10 lg:pt-[96px] lg:pb-14 overflow-hidden"
       style={{ contain: 'content', contentVisibility: 'auto' } as React.CSSProperties}>
-      <div className="max-w-container mx-auto px-6">
+      <div className="px-6">
 
         {/* Header Section */}
         <div className="relative mb-16 lg:mb-20 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 border-b border-[#D4A5A5]/10 pb-8">

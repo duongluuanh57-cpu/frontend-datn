@@ -10,6 +10,9 @@ if (process.env.ANALYZE === 'true') {
 const withNextIntl = createNextIntlPlugin('./src/i18n.ts');
 
 const nextConfig: NextConfig = {
+  turbopack: {
+    root: __dirname,
+  },
   images: {
     qualities: [75, 90],
     remotePatterns: [
@@ -35,11 +38,6 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'i.ibb.co',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
         hostname: 'fonts.gstatic.com',
         pathname: '/**',
       },
@@ -50,7 +48,17 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: '*.imgbb.com',
+        hostname: 'i.ibb.co',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'cdn.vietqr.io',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'vietqr.net',
         pathname: '/**',
       },
     ],
@@ -70,7 +78,10 @@ const nextConfig: NextConfig = {
   },
 };
 
-const sentryConfig = {
+// Chỉ chạy Sentry khi build production, bỏ qua hoàn toàn khi dev
+const isDev = process.env.NODE_ENV === 'development';
+
+const sentryConfig = isDev ? {} : {
   org: "elite-saas",
   project: "frontend",
   silent: true,
@@ -84,4 +95,8 @@ const sentryConfig = {
   },
 };
 
-export default withBundleAnalyzer(withSentryConfig(withNextIntl(nextConfig), sentryConfig));
+const finalConfig = isDev
+  ? withBundleAnalyzer(withNextIntl(nextConfig))
+  : withBundleAnalyzer(withSentryConfig(withNextIntl(nextConfig), sentryConfig));
+
+export default finalConfig;

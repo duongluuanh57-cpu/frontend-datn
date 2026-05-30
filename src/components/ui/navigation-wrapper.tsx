@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import { Topbar } from '@/components/ui/topbar';
 import { Navbar } from '@/components/ui/navbar';
 import { ChatWidget } from '@/components/ui/chat-widget';
+import { ScrollToTopButton } from '@/components/ui/scroll-to-top';
 import { Footer } from '@/components/ui/footer';
 
 export function NavigationWrapper({ children }: { children: React.ReactNode }) {
@@ -26,6 +27,7 @@ export function NavigationWrapper({ children }: { children: React.ReactNode }) {
         {children}
       </main>
       {!isProfile && <Footer />}
+      {!isProfile && <ScrollToTopButton />}
       {!isProfile && <ChatWidget />}
     </div>
   );

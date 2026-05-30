@@ -165,7 +165,7 @@ export function ImageEditorModal({
                   width: '100%',
                   position: 'relative',
                   borderRadius: '12px',
-                  overflow: 'hidden',
+        overflowY: 'auto',
                   background: 'rgba(255, 255, 255, 0.4)',
                   border: '1px solid var(--admin-border-subtle, #f0e9e4)',
                   display: 'flex',

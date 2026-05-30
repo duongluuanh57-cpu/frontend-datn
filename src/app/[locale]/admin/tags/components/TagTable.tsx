@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Loader2, Sparkles, Search, Hash, Pencil, Lock, Trash2 } from 'lucide-react';
 import { Link } from '@/navigation';
 import { toast } from 'sonner';
@@ -8,9 +8,10 @@ import type { UseAdminTagsReturn } from '@/hooks/useAdminTags';
 
 interface TagTableProps {
   adminTags: UseAdminTagsReturn;
+  deletingIds?: string[];
 }
 
-export function TagTable({ adminTags }: TagTableProps) {
+export function TagTable({ adminTags, deletingIds = [] }: TagTableProps) {
   const {
     tags,
     isLoading,
@@ -20,8 +21,29 @@ export function TagTable({ adminTags }: TagTableProps) {
     searchTerm,
   } = adminTags;
 
+  const [filterVersion, setFilterVersion] = useState(0);
+  const prevTagsKeyRef = useRef('');
+
+  useEffect(() => {
+    const key = (tags || []).map(t => t._id).join(',');
+    if (prevTagsKeyRef.current !== key) {
+      setFilterVersion((v) => v + 1);
+      prevTagsKeyRef.current = key;
+    }
+  }, [tags]);
+
   return (
     <div className="admin-table-wrap">
+      <style>{`
+        @keyframes tagRowEnter {
+          from { opacity: 0; transform: translateY(8px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes tagRowExit {
+          from { opacity: 1; transform: translateX(0); }
+          to   { opacity: 0; transform: translateX(70px); }
+        }
+      `}</style>
       <div className="admin-table-scroll">
         <table className="admin-table">
           <thead>
@@ -62,8 +84,20 @@ export function TagTable({ adminTags }: TagTableProps) {
                 </td>
               </tr>
             ) : (
-              tags.map((tag) => (
-                <tr key={tag._id}>
+              tags.map((tag, index) => {
+                const isDeleting = deletingIds.includes(tag._id);
+                const animDelay = `${index * 0.04}s`;
+                return (
+                <tr
+                  key={`${filterVersion}-${tag._id}`}
+                  style={{
+                    animationName: isDeleting ? 'tagRowExit' : 'tagRowEnter',
+                    animationDuration: '0.35s',
+                    animationTimingFunction: 'ease',
+                    animationFillMode: isDeleting ? 'forwards' : 'both',
+                    animationDelay: isDeleting ? '0s' : animDelay,
+                  }}
+                >
                   <td>
                     <div className="flex items-center justify-center text-[#D4A5A5]">
                       <Hash size={18} />
@@ -146,7 +180,7 @@ export function TagTable({ adminTags }: TagTableProps) {
                     </div>
                   </td>
                 </tr>
-              ))
+              )})
             )}
           </tbody>
         </table>

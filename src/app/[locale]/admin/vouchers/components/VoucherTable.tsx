@@ -1,12 +1,13 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Loader2, Sparkles, Search, Edit3, Copy, CheckCircle, XCircle } from 'lucide-react';
 import { Link } from '@/navigation';
 import type { UseAdminVouchersReturn, Voucher } from '@/hooks/useAdminVouchers';
 
 interface VoucherTableProps {
   adminVouchers: UseAdminVouchersReturn;
+  deletingIds?: string[];
 }
 
 function formatCurrency(amount: number, locale: string) {
@@ -24,14 +25,35 @@ function formatDate(dateStr: string, locale: string) {
   });
 }
 
-export function VoucherTable({ adminVouchers }: VoucherTableProps) {
+export function VoucherTable({ adminVouchers, deletingIds = [] }: VoucherTableProps) {
   const {
     locale, isVi, vouchers, isLoading, searchTerm, setSearchTerm,
     selectedIds, isAllSelected, isSomeSelected, handleSelectAll, handleSelectRow,
   } = adminVouchers;
 
+  const [filterVersion, setFilterVersion] = useState(0);
+  const prevVouchersKeyRef = useRef('');
+
+  useEffect(() => {
+    const key = (vouchers || []).map(v => v._id).join(',');
+    if (prevVouchersKeyRef.current !== key) {
+      setFilterVersion((v) => v + 1);
+      prevVouchersKeyRef.current = key;
+    }
+  }, [vouchers]);
+
   return (
     <div>
+      <style>{`
+        @keyframes voucherRowEnter {
+          from { opacity: 0; transform: translateY(8px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes voucherRowExit {
+          from { opacity: 1; transform: translateX(0); }
+          to   { opacity: 0; transform: translateX(70px); }
+        }
+      `}</style>
       {/* Search bar */}
       <div style={{ marginBottom: '16px' }}>
         <div
@@ -117,15 +139,27 @@ export function VoucherTable({ adminVouchers }: VoucherTableProps) {
                   </td>
                 </tr>
               ) : (
-                vouchers.map((v: Voucher) => {
+                vouchers.map((v: Voucher, index) => {
                   const now = new Date();
                   const start = new Date(v.startDate);
                   const end = new Date(v.endDate);
                   const isValid = v.status === 'active' && start <= now && end >= now;
                   const isChecked = selectedIds.includes(v._id);
+                  const isDeleting = deletingIds.includes(v._id);
+                  const animDelay = `${index * 0.04}s`;
 
                   return (
-                    <tr key={v._id} style={isChecked ? { background: 'rgba(212, 165, 165, 0.05)' } : undefined}>
+                    <tr
+                      key={`${filterVersion}-${v._id}`}
+                      style={{
+                        animationName: isDeleting ? 'voucherRowExit' : 'voucherRowEnter',
+                        animationDuration: '0.35s',
+                        animationTimingFunction: 'ease',
+                        animationFillMode: isDeleting ? 'forwards' : 'both',
+                        animationDelay: isDeleting ? '0s' : animDelay,
+                        ...(isChecked && !isDeleting ? { background: 'rgba(212, 165, 165, 0.05)' } : {}),
+                      }}
+                    >
                       <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
                         <input
                           type="checkbox"

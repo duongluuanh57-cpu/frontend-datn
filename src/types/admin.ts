@@ -75,7 +75,14 @@ export interface TaxonomyItem {
   name: string;
   slug: string;
   status: 'active' | 'inactive';
-  description?: string;
+}
+
+export interface Category {
+  _id: string;
+  name: string;
+  slug: string;
+  status: 'active' | 'inactive';
+  sortOrder?: number;
 }
 
 export type TabType = 'tags' | 'notes' | 'concentrations' | 'segments';

@@ -10,15 +10,21 @@ import { HomepageCardTab } from './components/HomepageCardTab';
 import { HomepageBlogCardTab } from './components/HomepageBlogCardTab';
 import { HomepageProductSessionLayoutTab } from './components/HomepageProductSessionLayoutTab';
 import { HomepageNavbarTab } from './components/HomepageNavbarTab';
+import { HomepageFooterTab } from './components/HomepageFooterTab';
 import { ProductSessionPreviewModal } from './components/ProductSessionPreviewModal';
 import { AnimatePresence } from 'framer-motion';
 
 function HomepageConfigContent() {
   const adminHomepage = useAdminHomepage();
   const { activeTab, setActiveTab, isBannersMode } = adminHomepage;
+  const [sidebarOpen, setSidebarOpen] = React.useState(false);
 
   return (
-    <div className="admin-dashboard p-6 max-w-container mx-auto">
+    <div className="admin-dashboard p-6 max-w-container mx-auto"
+      style={{
+        marginRight: sidebarOpen ? '200px' : '0',
+        transition: 'margin-right 0.25s ease',
+      }}>
       <HomepageHeader
         isBannersMode={adminHomepage.isBannersMode}
         isSaving={adminHomepage.isSaving}
@@ -84,12 +90,21 @@ function HomepageConfigContent() {
           <HomepageProductSessionLayoutTab
             config={adminHomepage.productSessionLayout}
             setConfig={adminHomepage.setProductSessionLayout}
+            onSidebarChange={setSidebarOpen}
           />
         )}
         {activeTab === 'navbar' && (
           <HomepageNavbarTab
             navbarConfig={adminHomepage.navbarConfig}
             setNavbarConfig={adminHomepage.setNavbarConfig}
+            onSidebarChange={setSidebarOpen}
+          />
+        )}
+        {activeTab === 'footer' && (
+          <HomepageFooterTab
+            footerConfig={adminHomepage.footerConfig}
+            setFooterConfig={adminHomepage.setFooterConfig}
+            onSidebarChange={setSidebarOpen}
           />
         )}
       </AnimatePresence>

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { AlertCircle } from 'lucide-react';
 import { useAdminOrders } from '@/hooks/useAdminOrders';
 import { OrderHeader } from './components/OrderHeader';
@@ -11,7 +11,32 @@ import './orders.css';
 
 export default function AdminOrdersPage() {
   const adminOrders = useAdminOrders();
-  const { error, isVi } = adminOrders;
+  const { error, isVi, orders } = adminOrders;
+
+  const [deletingIds, setDeletingIds] = useState<string[]>([]);
+
+  const handleDeleteOrderWithAnimation = (orderId: string) => {
+    setDeletingIds(prev => [...prev, orderId]);
+    setTimeout(() => adminOrders.deleteMutation.mutate(orderId), 400);
+  };
+
+  const prevOrdersKeyRef = useRef('');
+
+  useEffect(() => {
+    const key = (orders || []).map(o => o._id).join(',');
+    if (prevOrdersKeyRef.current === key) return;
+    prevOrdersKeyRef.current = key;
+    setDeletingIds(prev => {
+      const ids = new Set((orders || []).map(o => o._id));
+      const next = prev.filter(id => ids.has(id));
+      return next.length === prev.length && next.every((id, i) => id === prev[i]) ? prev : next;
+    });
+  }, [orders]);
+
+  const modifiedAdminOrders = {
+    ...adminOrders,
+    handleDeleteOrder: handleDeleteOrderWithAnimation,
+  };
 
   if (error) {
     return (
@@ -33,7 +58,7 @@ export default function AdminOrdersPage() {
     <div className="admin-page">
       <OrderHeader />
       <OrderFilterBar adminOrders={adminOrders} />
-      <OrderTable adminOrders={adminOrders} />
+      <OrderTable adminOrders={modifiedAdminOrders} deletingIds={deletingIds} />
       <OrderPagination adminOrders={adminOrders} />
     </div>
   );

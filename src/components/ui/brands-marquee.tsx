@@ -34,7 +34,7 @@ export function BrandsMarquee() {
 
   return (
     <section
-      className="w-full bg-transparent pt-[88px] pb-8 lg:pt-[136px] lg:pb-10 overflow-hidden border-b border-[#7A5C5C]/5"
+      className="w-[calc(100%-4rem)] mx-auto bg-transparent pt-[88px] pb-8 lg:pt-[136px] lg:pb-10 overflow-hidden border-b border-[#7A5C5C]/5"
       style={{
         contain: 'content',
         contentVisibility: 'auto',

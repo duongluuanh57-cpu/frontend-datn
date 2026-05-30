@@ -138,10 +138,13 @@ Frontend-client/
 │   │
 │   ├── components/                        # Reusable UI components
 │   │   ├── ui/                            # Public section components
-│   │   │   ├── banner.tsx, banner.css     # Hero banner (responsive)
-│   │   │   ├── banner/                    # Banner sub-components
-│   │   │   ├── product-card.tsx           # Product card (brand, name, price, sizes)
-│   │   │   ├── navbar.tsx                 # Main navigation
+│   │   │   ├── banner.tsx, banner.css     # Hero banner (responsive) — composer
+│   │   │   ├── banner/                    # BannerBackground, BannerTitle, BannerDescription,
+│   │   │   │                              # EditableBannerLabel, BannerActions, ImageEditorModal, useBannerData
+│   │   │   ├── product-card.tsx           # Re-export from product-card/
+│   │   │   ├── product-card/              # ProductImage, ProductInfo, types, index
+│   │   │   ├── navbar.tsx                 # Main navigation — composer
+│   │   │   ├── navbar/                    # NavbarLogo, NavbarNavLink, NavbarSearch, NavbarCart, NavbarUser
 │   │   │   ├── topbar.tsx                 # Top bar (promo, language)
 │   │   │   ├── footer.tsx, footer.css     # Site footer
 │   │   │   ├── navigation-wrapper.tsx     # Client wrapper for navbar
@@ -163,14 +166,18 @@ Frontend-client/
 │   │   │   ├── chat-widget.css
 │   │   │   ├── chat-widget/               # InputArea, MessageList, ProductCard
 │   │   │   ├── chat-feedback.tsx          # Feedback form (rating)
-│   │   │   ├── homepage-dynamic-renderer.tsx # Dynamic section renderer
+│   │   │   ├── homepage-dynamic-renderer.tsx # Re-export from homepage-dynamic-renderer/
+│   │   │   ├── homepage-dynamic-renderer/ # SectionFallback, useSectionOrder, index
 │   │   │   └── image-upload-panel.tsx     # Image upload UI
 │   │   │
 │   │   ├── admin/                         # Admin components
 │   │   │   ├── ProductForm.tsx            # Full product form
 │   │   │   ├── product-form/              # Sub-sections (Details, Media, SEO)
 │   │   │   ├── ImageUpload.tsx            # Single image upload
-│   │   │   └── MultipleImageUpload.tsx    # Bulk image upload
+│   │   │   ├── AIChatPanel.tsx            # AI chat panel — composer
+│   │   │   ├── ai-chat-panel/             # ChatHeader, ChatMessage, ChatInput
+│   │   │   ├── MultipleImageUpload.tsx    # Bulk image upload — composer
+│   │   │   └── multiple-image-upload/     # ImagePreview, UploadArea
 │   │   │
 │   │   └── animations/
 │   │       └── FadeIn.tsx                 # Framer Motion fade animation
@@ -179,15 +186,22 @@ Frontend-client/
 │   │   ├── useLogin.ts                    # Login logic + token storage
 │   │   ├── useRegister.ts                 # Register logic
 │   │   ├── useProductCatalog.ts           # Product collections (new, trending, etc.)
-│   │   ├── useHomepageConfig.ts           # Fetch homepage config
+│   │   ├── useHomepageConfig.ts           # Fetch homepage config — composer
+│   │   ├── homepage-config/               # types.ts, constants.ts
 │   │   ├── useHomepageTags.ts             # Fetch tags for homepage
 │   │   ├── useHomepageTaxonomies.ts       # Fetch taxonomies
 │   │   ├── useAdminBrands.ts              # Admin brand CRUD
 │   │   ├── useAdminTags.ts                # Admin tag CRUD
-│   │   ├── useAdminTaxonomy.ts            # Admin taxonomy CRUD
-│   │   ├── useAdminUsers.ts               # Admin user management
-│   │   ├── useAdminHomepage.ts            # Admin homepage config
-│   │   └── useUserProfile.ts              # User profile management
+│   │   ├── useAdminTaxonomy.ts            # Admin taxonomy CRUD — composer
+│   │   ├── admin-taxonomy/                # useTaxonomyQuery, useTaxonomyMutations, useTaxonomySelection
+│   │   ├── useAdminOrders.ts              # Admin order management — composer
+│   │   ├── admin-orders/                  # useOrderFilters
+│   │   ├── useAdminUsers.ts               # Admin user management — composer
+│   │   ├── admin-users/                   # useUserFilters, useUserSelection
+│   │   ├── useAdminHomepage.ts            # Admin homepage config — composer
+│   │   ├── admin/                         # useAdminHomepage{Banners,Gallery,Cards,Layout,NavbarFooter,Sections}
+│   │   ├── useUserProfile.ts              # User profile management — composer
+│   │   └── profile/                       # useProfileDetails, useProfilePassword, useProfileAddresses, useProfileOrders
 │   │
 │   ├── lib/
 │   │   ├── api.ts                         # Axios instance, interceptors, helpers

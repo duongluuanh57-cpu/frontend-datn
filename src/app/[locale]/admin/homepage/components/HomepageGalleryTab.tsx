@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Loader2, Globe } from 'lucide-react';
 import { ImageUpload } from '@/components/admin/ImageUpload';
@@ -28,6 +28,9 @@ export const HomepageGalleryTab = React.memo(function HomepageGalleryTab({
   handleGalleryImageUpload
 }: HomepageGalleryTabProps) {
 
+  const [idx, setIdx] = useState(0);
+  const total = 6;
+
   return (
     <motion.div
       key="gallery-panel"
@@ -37,26 +40,66 @@ export const HomepageGalleryTab = React.memo(function HomepageGalleryTab({
       transition={{ duration: 0.25 }}
       className="space-y-6"
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {Array.from({ length: 6 }).map((_, idx) => (
-          <div
-            key={idx}
-            className="admin-panel bg-white rounded-2xl border border-gray-100 p-5 shadow-sm space-y-4 hover:border-[#D4A5A5]/35 transition-all duration-300"
-          >
-            {/* Card Header */}
-            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-              <span className="h-6 w-6 rounded-full bg-[#FFF5F5] text-[#7A5C5C] font-bold text-xs flex items-center justify-center">
-                #{idx + 1}
-              </span>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold text-gray-400 uppercase">Tỷ lệ lưới:</span>
+      <div className="admin-panel bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+        <div className="border-b border-gray-100 pb-4 mb-4 flex items-center gap-2">
+          <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+          <h2 className="text-sm font-semibold text-[#7A5C5C]">Album Nghệ Thuật</h2>
+        </div>
+
+        {/* Tab selector */}
+        <div className="flex items-center gap-1.5 mb-5">
+          {Array.from({ length: total }).map((_, i) => (
+            <button key={i} onClick={() => setIdx(i)}
+              className={`px-3 py-1.5 text-[10px] font-bold rounded-lg border transition-all ${
+                i === idx
+                  ? 'bg-[#7A5C5C] text-white border-[#7A5C5C] shadow-sm'
+                  : 'bg-white text-gray-500 border-gray-200 hover:border-[#7A5C5C]/30 hover:text-[#7A5C5C]'
+              }`}>
+              #{i + 1}
+            </button>
+          ))}
+        </div>
+
+        {/* Thumbnail + Editing — same row */}
+        <div className="flex gap-5 items-stretch">
+          {/* Thumbnail */}
+          <div className="shrink-0 w-[160px] sm:w-[200px] flex">
+            <div className={`relative flex-1 min-h-[240px] rounded-xl overflow-hidden border border-gray-100 bg-gray-50 ${
+              galleryVi[idx]?.url ? 'shadow-sm' : ''
+            }`}>
+              {galleryVi[idx]?.url ? (
+                <img src={galleryVi[idx].url} alt=""
+                  className="absolute inset-0 w-full h-full object-cover" />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center text-[10px] text-gray-300 p-4 text-center">
+                  Chưa có ảnh
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Fields */}
+          <div className="flex-1 min-w-0 space-y-4">
+            <div className="flex items-end gap-3">
+              <div className="flex-1">
+                <span className="text-[9px] font-bold text-[#7A5C5C] uppercase tracking-wider block mb-1.5">
+                  Hình ảnh Ảnh #{idx + 1}
+                </span>
+                <ImageUpload
+                  value={galleryVi[idx]?.url ?? ''}
+                  onChange={(newUrl) => handleGalleryImageUpload(idx, newUrl)}
+                  hideUrlInput={true}
+                />
+              </div>
+              <div className="shrink-0">
+                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider block mb-1.5">Tỷ lệ</span>
                 <select
                   value={galleryVi[idx]?.aspect ?? 'aspect-[3/4]'}
                   onChange={(e) => {
                     handleGalleryFieldChange('vi', idx, 'aspect', e.target.value);
                     handleGalleryFieldChange('en', idx, 'aspect', e.target.value);
                   }}
-                  className="text-xs px-2 py-1 bg-gray-50 border border-gray-200 rounded-md text-[#7A5C5C] font-medium"
+                  className="text-xs px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-[#7A5C5C] font-medium focus:outline-none focus:border-[#7A5C5C]"
                 >
                   <option value="aspect-[1/1]">1:1 (Square)</option>
                   <option value="aspect-[2/3]">2:3 (Portrait)</option>
@@ -66,20 +109,7 @@ export const HomepageGalleryTab = React.memo(function HomepageGalleryTab({
               </div>
             </div>
 
-            {/* Image Upload */}
-            <div className="space-y-1.5">
-              <span className="text-[9px] font-bold text-[#7A5C5C] uppercase tracking-wider block">
-                Hình ảnh Khoảnh Khắc #{idx + 1}
-              </span>
-              <ImageUpload
-                value={galleryVi[idx]?.url ?? ''}
-                onChange={(newUrl) => handleGalleryImageUpload(idx, newUrl)}
-                hideUrlInput={true}
-              />
-            </div>
-
-            {/* Bilingual fields */}
-            <div className="relative space-y-3 bg-gray-50/50 p-3.5 rounded-xl border border-gray-100 overflow-hidden">
+            <div className="relative space-y-3 bg-gray-50/50 p-4 rounded-xl border border-gray-100 overflow-hidden">
               {galleryAiLoading[idx] && (
                 <div className="absolute inset-0 bg-white/75 backdrop-blur-sm z-10 flex flex-col items-center justify-center gap-2">
                   <Loader2 className="animate-spin text-[#7A5C5C]" size={20} />
@@ -88,50 +118,47 @@ export const HomepageGalleryTab = React.memo(function HomepageGalleryTab({
                   </span>
                 </div>
               )}
-              {/* Vietnamese */}
-              <div className="space-y-2">
-                <span className="text-[9px] font-bold uppercase text-[#D4A5A5] flex items-center gap-1">
+
+              <div>
+                <span className="text-[9px] font-bold uppercase text-[#D4A5A5] flex items-center gap-1 mb-1.5">
                   <Globe size={9} /> Tiếng Việt
                 </span>
-                <input
-                  type="text"
-                  value={galleryVi[idx]?.title ?? ''}
-                  onChange={(e) => handleGalleryFieldChange('vi', idx, 'title', e.target.value)}
-                  className="w-full px-3 py-1 rounded-md border border-gray-200 focus:outline-none focus:border-[#7A5C5C] text-xs text-[#7A5C5C] font-semibold"
-                  placeholder="Tên dòng nước hoa..."
-                />
-                <input
-                  type="text"
-                  value={galleryVi[idx]?.quote ?? ''}
-                  onChange={(e) => handleGalleryFieldChange('vi', idx, 'quote', e.target.value)}
-                  className="w-full px-3 py-1 rounded-md border border-gray-200 focus:outline-none focus:border-[#7A5C5C] text-xs text-[#7A5C5C] italic"
-                  placeholder="Câu châm ngôn tình yêu..."
-                />
+                <div className="flex gap-2">
+                  <input type="text"
+                    value={galleryVi[idx]?.title ?? ''}
+                    onChange={(e) => handleGalleryFieldChange('vi', idx, 'title', e.target.value)}
+                    className="flex-1 px-3 py-1.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#7A5C5C] text-xs text-[#7A5C5C] font-semibold"
+                    placeholder="Tên dòng nước hoa..." />
+                  <input type="text"
+                    value={galleryVi[idx]?.quote ?? ''}
+                    onChange={(e) => handleGalleryFieldChange('vi', idx, 'quote', e.target.value)}
+                    className="flex-1 px-3 py-1.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#7A5C5C] text-xs text-[#7A5C5C] italic"
+                    placeholder="Câu châm ngôn tình yêu..." />
+                </div>
               </div>
-              <div className="border-t border-gray-200/50 my-2" />
-              {/* English */}
-              <div className="space-y-2">
-                <span className="text-[9px] font-bold uppercase text-[#D4A5A5] flex items-center gap-1">
+
+              <div className="border-t border-gray-200/50" />
+
+              <div>
+                <span className="text-[9px] font-bold uppercase text-[#D4A5A5] flex items-center gap-1 mb-1.5">
                   <Globe size={9} /> English
                 </span>
-                <input
-                  type="text"
-                  value={galleryEn[idx]?.title ?? ''}
-                  onChange={(e) => handleGalleryFieldChange('en', idx, 'title', e.target.value)}
-                  className="w-full px-3 py-1 rounded-md border border-gray-200 focus:outline-none focus:border-[#7A5C5C] text-xs text-[#7A5C5C] font-semibold"
-                  placeholder="Perfume title..."
-                />
-                <input
-                  type="text"
-                  value={galleryEn[idx]?.quote ?? ''}
-                  onChange={(e) => handleGalleryFieldChange('en', idx, 'quote', e.target.value)}
-                  className="w-full px-3 py-1 rounded-md border border-gray-200 focus:outline-none focus:border-[#7A5C5C] text-xs text-[#7A5C5C] italic"
-                  placeholder="Scent story quote..."
-                />
+                <div className="flex gap-2">
+                  <input type="text"
+                    value={galleryEn[idx]?.title ?? ''}
+                    onChange={(e) => handleGalleryFieldChange('en', idx, 'title', e.target.value)}
+                    className="flex-1 px-3 py-1.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#7A5C5C] text-xs text-[#7A5C5C] font-semibold"
+                    placeholder="Perfume title..." />
+                  <input type="text"
+                    value={galleryEn[idx]?.quote ?? ''}
+                    onChange={(e) => handleGalleryFieldChange('en', idx, 'quote', e.target.value)}
+                    className="flex-1 px-3 py-1.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#7A5C5C] text-xs text-[#7A5C5C] italic"
+                    placeholder="Scent story quote..." />
+                </div>
               </div>
             </div>
           </div>
-        ))}
+        </div>
       </div>
     </motion.div>
   );

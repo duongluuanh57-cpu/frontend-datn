@@ -1,10 +1,14 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useRouter } from '@/navigation';
 import { useSearchParams } from 'next/navigation';
 import api, { uploadImageToR2 } from '@/lib/api';
+import { useProfileDetails } from '@/hooks/profile/useProfileDetails';
+import { useProfilePassword } from '@/hooks/profile/useProfilePassword';
+import { useProfileAddresses } from '@/hooks/profile/useProfileAddresses';
+import { useProfileOrders } from '@/hooks/profile/useProfileOrders';
 
 export type ActiveTab = 'profile' | 'orders' | 'security' | 'settings' | 'bankcards';
 
@@ -127,229 +131,25 @@ export function useUserProfile(): UseUserProfileReturn {
   const searchParams = useSearchParams();
   const tabParam = searchParams ? searchParams.get('tab') as ActiveTab | null : null;
 
+  // ── Tab state ──
   const [activeTab, setActiveTab] = useState<ActiveTab>('profile');
-
   useEffect(() => {
     if (tabParam && ['profile', 'orders', 'security', 'settings'].includes(tabParam)) {
       setActiveTab(tabParam);
     }
   }, [tabParam]);
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [statusMessage, setStatusMessage] = useState<{ text: string; type: 'success' | 'danger' } | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [copiedId, setCopiedId] = useState(false);
-  const [copiedTenant, setCopiedTenant] = useState(false);
 
-  // States for editing name
-  const [isEditingName, setIsEditingName] = useState(false);
-  const [editedName, setEditedName] = useState('');
-  const [editingSubmitting, setEditingSubmitting] = useState(false);
-  const [editingError, setEditingError] = useState<string | null>(null);
-  const [editingSuccess, setEditingSuccess] = useState<string | null>(null);
-
-  // States for editing email
-  const [isEditingEmail, setIsEditingEmail] = useState(false);
-  const [editedEmail, setEditedEmail] = useState('');
-  const [emailSubmitting, setEmailSubmitting] = useState(false);
-  const [emailError, setEmailError] = useState<string | null>(null);
-  const [emailSuccess, setEmailSuccess] = useState<string | null>(null);
-
-  // States for editing personal details (fullName, phone, gender)
-  const [isEditingDetails, setIsEditingDetails] = useState(false);
-  const [editedFullName, setEditedFullName] = useState('');
-  const [editedPhone, setEditedPhone] = useState('');
-  const [editedGender, setEditedGender] = useState<'MALE' | 'FEMALE' | 'OTHER' | ''>('');
-  const [detailsSubmitting, setDetailsSubmitting] = useState(false);
-  const [detailsError, setDetailsError] = useState<string | null>(null);
-  const [detailsSuccess, setDetailsSuccess] = useState<string | null>(null);
-
-  // States for UserAddress
-  const [addresses, setAddresses] = useState<any[]>([]);
-  const [loadingAddresses, setLoadingAddresses] = useState(false);
-  const [isEditingAddress, setIsEditingAddress] = useState(false);
-  const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
-  const [addrLabel, setAddrLabel] = useState('');
-  const [addrFullName, setAddrFullName] = useState('');
-  const [addrGender, setAddrGender] = useState<'MALE' | 'FEMALE' | 'OTHER' | ''>('');
-  const [addrPhoneNumber, setAddrPhoneNumber] = useState('');
-  const [addrStreet, setAddrStreet] = useState('');
-  const [addrProvince, setAddrProvince] = useState('');
-  const [addrDistrict, setAddrDistrict] = useState('');
-  const [addrSubmitting, setAddrSubmitting] = useState(false);
-  const [addrError, setAddrError] = useState<string | null>(null);
-
-  const [provinces, setProvinces] = useState<Array<{ name: string; code: number }>>([]);
-  const [districts, setDistricts] = useState<Array<{ name: string; code: number }>>([]);
-  const [loadingProvinces, setLoadingProvinces] = useState(false);
-  const [loadingDistricts, setLoadingDistricts] = useState(false);
-
-  const [orders, setOrders] = useState<any[]>([]);
-  const [loadingOrders, setLoadingOrders] = useState(false);
-  const [ordersError, setOrdersError] = useState<string | null>(null);
-  const [filterStartDate, setFilterStartDate] = useState('');
-  const [filterEndDate, setFilterEndDate] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
-
-  const [mounted, setMounted] = useState(false);
+  // ── Avatar upload ──
   const [avatarUploading, setAvatarUploading] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
-  const fetchDistricts = useCallback((provinceCode: number) => {
-    setLoadingDistricts(true);
-    fetch(`https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`)
-      .then((res) => res.json())
-      .then((data) => {
-        setDistricts(data.districts || []);
-        setLoadingDistricts(false);
-      })
-      .catch((err) => {
-        console.error('Failed to fetch districts:', err);
-        setLoadingDistricts(false);
-      });
-  }, []);
+  // ── Copy state ──
+  const [copiedId, setCopiedId] = useState(false);
+  const [copiedTenant, setCopiedTenant] = useState(false);
 
-  const fetchAddresses = useCallback(async () => {
-    setLoadingAddresses(true);
-    try {
-      const res = await api.get('/user-addresses');
-      if (res.data?.success) setAddresses(res.data.data);
-    } catch (e) {
-      console.error('Failed to fetch addresses:', e);
-    } finally {
-      setLoadingAddresses(false);
-    }
-  }, []);
-
-  const openNewAddressForm = useCallback(() => {
-    setEditingAddressId(null);
-    setAddrLabel('Địa chỉ của tôi');
-    setAddrFullName('');
-    setAddrGender('');
-    setAddrPhoneNumber('');
-    setAddrStreet('');
-    setAddrProvince('');
-    setAddrDistrict('');
-    setAddrError(null);
-    setIsEditingAddress(true);
-  }, []);
-
-  const openEditAddressForm = useCallback((addr: any) => {
-    setEditingAddressId(addr._id);
-    setAddrLabel(addr.label || '');
-    setAddrFullName(addr.fullName || '');
-    setAddrGender(addr.gender || '');
-    setAddrPhoneNumber(addr.phoneNumber || '');
-    setAddrStreet(addr.address || '');
-    setAddrProvince(addr.province || '');
-    setAddrDistrict(addr.district || '');
-    setAddrError(null);
-    setIsEditingAddress(true);
-    // Pre-load districts
-    if (addr.province && provinces.length > 0) {
-      const found = provinces.find((p) => p.name === addr.province);
-      if (found) fetchDistricts(found.code);
-    }
-  }, [provinces, fetchDistricts]);
-
-  const handleSaveAddress = async () => {
-    setAddrSubmitting(true);
-    setAddrError(null);
-    try {
-      const payload = {
-        label: addrLabel,
-        fullName: addrFullName,
-        gender: addrGender,
-        phoneNumber: addrPhoneNumber,
-        address: addrStreet,
-        province: addrProvince,
-        district: addrDistrict,
-      };
-      if (editingAddressId) {
-        await api.patch(`/user-addresses/${editingAddressId}`, payload);
-      } else {
-        await api.post('/user-addresses', payload);
-      }
-      await fetchAddresses();
-      setIsEditingAddress(false);
-    } catch (err: any) {
-      setAddrError(err.response?.data?.message || err.message || 'Lỗi khi lưu địa chỉ');
-    } finally {
-      setAddrSubmitting(false);
-    }
-  };
-
-  const handleDeleteAddress = async (id: string) => {
-    if (!confirm('Bạn có chắc muốn xóa địa chỉ này?')) return;
-    try {
-      await api.delete(`/user-addresses/${id}`);
-      await fetchAddresses();
-    } catch (err: any) {
-      console.error('Failed to delete address:', err);
-    }
-  };
-
-  const handleSetDefault = async (id: string) => {
-    try {
-      await api.patch(`/user-addresses/${id}/set-default`);
-      await fetchAddresses();
-    } catch (err: any) {
-      console.error('Failed to set default:', err);
-    }
-  };
-
-  const fetchOrders = useCallback(async (start?: string, end?: string, st?: string) => {
-    setLoadingOrders(true);
-    setOrdersError(null);
-    try {
-      let url = '/orders/my-orders';
-      const params: string[] = [];
-      if (start) params.push(`startDate=${start}`);
-      if (end) params.push(`endDate=${end}`);
-      if (st && st !== 'all') params.push(`status=${st}`);
-      if (params.length > 0) {
-        url += `?${params.join('&')}`;
-      }
-      
-      const res = await api.get(url);
-      if (res.data && res.data.success) {
-        setOrders(res.data.data);
-      } else {
-        setOrdersError(res.data?.message || 'Không thể lấy dữ liệu đơn hàng');
-      }
-    } catch (err: any) {
-      console.error('Failed to fetch orders:', err);
-      setOrdersError(err.response?.data?.message || err.message || 'Lỗi kết nối đến máy chủ');
-    } finally {
-      setLoadingOrders(false);
-    }
-  }, []);
-
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setAvatarUploading(true);
-    try {
-      const imgData = await uploadImageToR2(file, { maxWidth: 400, quality: 88, folder: 'avatars' });
-      const avatarUrl = imgData.url;
-      // Save to backend
-      await api.patch('/auth/update-profile', { avatar: avatarUrl });
-      // Update Zustand store
-      updateUser({ avatar: avatarUrl } as any);
-    } catch (err: any) {
-      console.error('Avatar upload failed:', err);
-    } finally {
-      setAvatarUploading(false);
-      // Reset file input
-      if (avatarInputRef.current) avatarInputRef.current.value = '';
-    }
-  };
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  // ── Mount guard ──
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     if (mounted && !isAuthenticated) {
@@ -357,16 +157,26 @@ export function useUserProfile(): UseUserProfileReturn {
     }
   }, [mounted, isAuthenticated, router]);
 
+  // ── Sub-hooks ──
+  const profileDetails = useProfileDetails(user, updateUser);
+  const profilePassword = useProfilePassword(accessToken);
+  const profileAddresses = useProfileAddresses();
+  const profileOrders = useProfileOrders();
+
+  // ── Sync user data into sub-hook states ──
   useEffect(() => {
     if (user) {
-      setEditedName(user.username);
-      setEditedEmail(user.email);
-      setEditedFullName((user as any).fullName || '');
-      setEditedPhone((user as any).phoneNumber || '');
-      setEditedGender(((user as any).gender as any) || '');
+      if (!profileDetails.isEditingName) profileDetails.setEditedName(user.username);
+      if (!profileDetails.isEditingEmail) profileDetails.setEditedEmail(user.email);
+      if (!profileDetails.isEditingDetails) {
+        profileDetails.setEditedFullName((user as any).fullName || '');
+        profileDetails.setEditedPhone((user as any).phoneNumber || '');
+        profileDetails.setEditedGender(((user as any).gender as any) || '');
+      }
     }
   }, [user]);
 
+  // ── Fetch latest profile from DB ──
   useEffect(() => {
     const fetchLatestProfile = async () => {
       try {
@@ -378,20 +188,20 @@ export function useUserProfile(): UseUserProfileReturn {
         console.error('Failed to sync profile with database:', err);
       }
     };
-
     if (mounted && isAuthenticated) {
       fetchLatestProfile();
     }
   }, [mounted, isAuthenticated, updateUser]);
 
+  // ── Fetch orders/addresses on tab change ──
   useEffect(() => {
     if (activeTab === 'orders' && mounted && isAuthenticated) {
-      fetchOrders(filterStartDate, filterEndDate, filterStatus);
+      profileOrders.fetchOrders(profileOrders.filterStartDate, profileOrders.filterEndDate, profileOrders.filterStatus);
     }
     if (activeTab === 'profile' && mounted && isAuthenticated) {
-      fetchAddresses();
+      profileAddresses.fetchAddresses();
     }
-  }, [activeTab, mounted, isAuthenticated, fetchOrders, fetchAddresses, filterStartDate, filterEndDate, filterStatus]);
+  }, [activeTab, mounted, isAuthenticated]);
 
   const handleLogout = () => {
     logout();
@@ -409,126 +219,19 @@ export function useUserProfile(): UseUserProfileReturn {
     }
   };
 
-  const handleUpdateName = async () => {
-    setEditingError(null);
-    setEditingSuccess(null);
-
-    if (!editedName || editedName.trim().length < 3) {
-      setEditingError('Tên người dùng phải có ít nhất 3 ký tự');
-      return;
-    }
-
-    setEditingSubmitting(true);
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAvatarUploading(true);
     try {
-      const res = await api.patch('/auth/update-profile', { username: editedName.trim() });
-      if (res.data && res.data.success) {
-        updateUser({ username: editedName.trim() });
-        setEditingSuccess('Cập nhật tên tài khoản thành công!');
-        setIsEditingName(false);
-        setTimeout(() => setEditingSuccess(null), 3000);
-      } else {
-        setEditingError(res.data?.message || 'Lỗi khi cập nhật tên');
-      }
+      const imgData = await uploadImageToR2(file, { maxWidth: 400, quality: 88, folder: 'avatars' });
+      await api.patch('/auth/update-profile', { avatar: imgData.url });
+      updateUser({ avatar: imgData.url } as any);
     } catch (err: any) {
-      const errMsg = err.response?.data?.message || err.message || 'Lỗi kết nối';
-      setEditingError(errMsg);
+      console.error('Avatar upload failed:', err);
     } finally {
-      setEditingSubmitting(false);
-    }
-  };
-
-  const handleUpdateEmail = async () => {
-    setEmailError(null);
-    setEmailSuccess(null);
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!editedEmail || !emailRegex.test(editedEmail.trim())) {
-      setEmailError('Email không đúng định dạng');
-      return;
-    }
-
-    setEmailSubmitting(true);
-    try {
-      const res = await api.patch('/auth/update-profile', { email: editedEmail.trim() });
-      if (res.data && res.data.success) {
-        updateUser({ email: editedEmail.trim() });
-        setEmailSuccess('Cập nhật địa chỉ email thành công!');
-        setIsEditingEmail(false);
-        setTimeout(() => setEmailSuccess(null), 3000);
-      } else {
-        setEmailError(res.data?.message || 'Lỗi khi cập nhật email');
-      }
-    } catch (err: any) {
-      const errMsg = err.response?.data?.message || err.message || 'Lỗi kết nối';
-      setEmailError(errMsg);
-    } finally {
-      setEmailSubmitting(false);
-    }
-  };
-
-  const handleChangePassword = async () => {
-    setStatusMessage(null);
-    if (!accessToken) {
-      setStatusMessage({ text: 'Bạn cần đăng nhập lại để đổi mật khẩu.', type: 'danger' });
-      return;
-    }
-    if (newPassword.length < 6) {
-      setStatusMessage({ text: 'Mật khẩu mới phải có ít nhất 6 ký tự.', type: 'danger' });
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setStatusMessage({ text: 'Mật khẩu xác nhận không khớp.', type: 'danger' });
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      const res = await api.post('/auth/change-password', { currentPassword, newPassword });
-      if (res.data && res.data.success) {
-        setStatusMessage({ text: 'Đổi mật khẩu thành công!', type: 'success' });
-        setCurrentPassword(''); 
-        setNewPassword(''); 
-        setConfirmPassword('');
-      } else {
-        setStatusMessage({ text: res.data?.message || 'Lỗi khi đổi mật khẩu', type: 'danger' });
-      }
-    } catch (err: any) {
-      const errMsg = err.response?.data?.message || err.message || 'Lỗi mạng';
-      setStatusMessage({ text: errMsg, type: 'danger' });
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleUpdateDetails = async () => {
-    setDetailsError(null);
-    setDetailsSuccess(null);
-    setDetailsSubmitting(true);
-
-    try {
-      const res = await api.patch('/auth/update-profile', {
-        fullName: editedFullName.trim(),
-        phoneNumber: editedPhone.trim(),
-        gender: editedGender,
-      });
-
-      if (res.data && res.data.success) {
-        updateUser({
-          fullName: editedFullName.trim(),
-          phoneNumber: editedPhone.trim(),
-          gender: editedGender,
-        } as any);
-        setDetailsSuccess('Cập nhật thông tin cá nhân thành công!');
-        setIsEditingDetails(false);
-        setTimeout(() => setDetailsSuccess(null), 3000);
-      } else {
-        setDetailsError(res.data?.message || 'Lỗi khi cập nhật thông tin');
-      }
-    } catch (err: any) {
-      const errMsg = err.response?.data?.message || err.message || 'Lỗi kết nối';
-      setDetailsError(errMsg);
-    } finally {
-      setDetailsSubmitting(false);
+      setAvatarUploading(false);
+      if (avatarInputRef.current) avatarInputRef.current.value = '';
     }
   };
 
@@ -553,107 +256,107 @@ export function useUserProfile(): UseUserProfileReturn {
     router,
     activeTab,
     setActiveTab,
-    currentPassword,
-    setCurrentPassword,
-    newPassword,
-    setNewPassword,
-    confirmPassword,
-    setConfirmPassword,
-    statusMessage,
-    setStatusMessage,
-    submitting,
+    currentPassword: profilePassword.currentPassword,
+    setCurrentPassword: profilePassword.setCurrentPassword,
+    newPassword: profilePassword.newPassword,
+    setNewPassword: profilePassword.setNewPassword,
+    confirmPassword: profilePassword.confirmPassword,
+    setConfirmPassword: profilePassword.setConfirmPassword,
+    statusMessage: profilePassword.statusMessage,
+    setStatusMessage: profilePassword.setStatusMessage,
+    submitting: profilePassword.submitting,
     copiedId,
     copiedTenant,
-    isEditingName,
-    setIsEditingName,
-    editedName,
-    setEditedName,
-    editingSubmitting,
-    editingError,
-    setEditingError,
-    editingSuccess,
-    setEditingSuccess,
-    isEditingEmail,
-    setIsEditingEmail,
-    editedEmail,
-    setEditedEmail,
-    emailSubmitting,
-    emailError,
-    setEmailError,
-    emailSuccess,
-    setEmailSuccess,
-    isEditingDetails,
-    setIsEditingDetails,
-    editedFullName,
-    setEditedFullName,
-    editedPhone,
-    setEditedPhone,
-    editedGender,
-    setEditedGender,
-    detailsSubmitting,
-    detailsError,
-    detailsSuccess,
-    addresses,
-    setAddresses,
-    loadingAddresses,
-    isEditingAddress,
-    setIsEditingAddress,
-    editingAddressId,
-    addrLabel,
-    setAddrLabel,
-    addrFullName,
-    setAddrFullName,
-    addrGender,
-    setAddrGender,
-    addrPhoneNumber,
-    setAddrPhoneNumber,
-    addrStreet,
-    setAddrStreet,
-    addrProvince,
-    setAddrProvince,
-    addrDistrict,
-    setAddrDistrict,
-    addrSubmitting,
-    addrError,
-    setAddrError,
-    provinces,
-    setProvinces,
-    districts,
-    setDistricts,
-    loadingProvinces,
-    setLoadingProvinces,
-    loadingDistricts,
-    setLoadingDistricts,
-    orders,
-    loadingOrders,
-    ordersError,
-    filterStartDate,
-    setFilterStartDate,
-    filterEndDate,
-    setFilterEndDate,
-    filterStatus,
-    setFilterStatus,
-    selectedOrder,
-    setSelectedOrder,
+    isEditingName: profileDetails.isEditingName,
+    setIsEditingName: profileDetails.setIsEditingName,
+    editedName: profileDetails.editedName,
+    setEditedName: profileDetails.setEditedName,
+    editingSubmitting: profileDetails.editingSubmitting,
+    editingError: profileDetails.editingError,
+    setEditingError: profileDetails.setEditingError,
+    editingSuccess: profileDetails.editingSuccess,
+    setEditingSuccess: profileDetails.setEditingSuccess,
+    isEditingEmail: profileDetails.isEditingEmail,
+    setIsEditingEmail: profileDetails.setIsEditingEmail,
+    editedEmail: profileDetails.editedEmail,
+    setEditedEmail: profileDetails.setEditedEmail,
+    emailSubmitting: profileDetails.emailSubmitting,
+    emailError: profileDetails.emailError,
+    setEmailError: profileDetails.setEmailError,
+    emailSuccess: profileDetails.emailSuccess,
+    setEmailSuccess: profileDetails.setEmailSuccess,
+    isEditingDetails: profileDetails.isEditingDetails,
+    setIsEditingDetails: profileDetails.setIsEditingDetails,
+    editedFullName: profileDetails.editedFullName,
+    setEditedFullName: profileDetails.setEditedFullName,
+    editedPhone: profileDetails.editedPhone,
+    setEditedPhone: profileDetails.setEditedPhone,
+    editedGender: profileDetails.editedGender,
+    setEditedGender: profileDetails.setEditedGender,
+    detailsSubmitting: profileDetails.detailsSubmitting,
+    detailsError: profileDetails.detailsError,
+    detailsSuccess: profileDetails.detailsSuccess,
+    addresses: profileAddresses.addresses,
+    setAddresses: profileAddresses.setAddresses,
+    loadingAddresses: profileAddresses.loadingAddresses,
+    isEditingAddress: profileAddresses.isEditingAddress,
+    setIsEditingAddress: profileAddresses.setIsEditingAddress,
+    editingAddressId: profileAddresses.editingAddressId,
+    addrLabel: profileAddresses.addrLabel,
+    setAddrLabel: profileAddresses.setAddrLabel,
+    addrFullName: profileAddresses.addrFullName,
+    setAddrFullName: profileAddresses.setAddrFullName,
+    addrGender: profileAddresses.addrGender,
+    setAddrGender: profileAddresses.setAddrGender,
+    addrPhoneNumber: profileAddresses.addrPhoneNumber,
+    setAddrPhoneNumber: profileAddresses.setAddrPhoneNumber,
+    addrStreet: profileAddresses.addrStreet,
+    setAddrStreet: profileAddresses.setAddrStreet,
+    addrProvince: profileAddresses.addrProvince,
+    setAddrProvince: profileAddresses.setAddrProvince,
+    addrDistrict: profileAddresses.addrDistrict,
+    setAddrDistrict: profileAddresses.setAddrDistrict,
+    addrSubmitting: profileAddresses.addrSubmitting,
+    addrError: profileAddresses.addrError,
+    setAddrError: profileAddresses.setAddrError,
+    provinces: profileAddresses.provinces,
+    setProvinces: profileAddresses.setProvinces,
+    districts: profileAddresses.districts,
+    setDistricts: profileAddresses.setDistricts,
+    loadingProvinces: profileAddresses.loadingProvinces,
+    setLoadingProvinces: profileAddresses.setLoadingProvinces,
+    loadingDistricts: profileAddresses.loadingDistricts,
+    setLoadingDistricts: profileAddresses.setLoadingDistricts,
+    orders: profileOrders.orders,
+    loadingOrders: profileOrders.loadingOrders,
+    ordersError: profileOrders.ordersError,
+    filterStartDate: profileOrders.filterStartDate,
+    setFilterStartDate: profileOrders.setFilterStartDate,
+    filterEndDate: profileOrders.filterEndDate,
+    setFilterEndDate: profileOrders.setFilterEndDate,
+    filterStatus: profileOrders.filterStatus,
+    setFilterStatus: profileOrders.setFilterStatus,
+    selectedOrder: profileOrders.selectedOrder,
+    setSelectedOrder: profileOrders.setSelectedOrder,
     mounted,
     avatarUploading,
     avatarInputRef,
     isAdmin,
-    fetchAddresses,
-    openNewAddressForm,
-    openEditAddressForm,
-    handleSaveAddress,
-    handleDeleteAddress,
-    handleSetDefault,
-    fetchOrders,
+    fetchAddresses: profileAddresses.fetchAddresses,
+    openNewAddressForm: profileAddresses.openNewAddressForm,
+    openEditAddressForm: profileAddresses.openEditAddressForm,
+    handleSaveAddress: profileAddresses.handleSaveAddress,
+    handleDeleteAddress: profileAddresses.handleDeleteAddress,
+    handleSetDefault: profileAddresses.handleSetDefault,
+    fetchOrders: profileOrders.fetchOrders,
     handleAvatarUpload,
-    fetchDistricts,
+    fetchDistricts: profileAddresses.fetchDistricts,
     handleLogout,
     handleCopy,
-    handleUpdateName,
-    handleUpdateEmail,
-    handleChangePassword,
-    handleUpdateDetails,
-    formatJoinDate
+    handleUpdateName: profileDetails.handleUpdateName,
+    handleUpdateEmail: profileDetails.handleUpdateEmail,
+    handleChangePassword: profilePassword.handleChangePassword,
+    handleUpdateDetails: profileDetails.handleUpdateDetails,
+    formatJoinDate,
   };
 }

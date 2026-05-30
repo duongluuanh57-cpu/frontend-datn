@@ -1,15 +1,16 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Package, Eye } from 'lucide-react';
 import { Link } from '@/navigation';
 import type { UseAdminOrdersReturn } from '@/hooks/useAdminOrders';
 
 interface OrderTableProps {
   adminOrders: UseAdminOrdersReturn;
+  deletingIds?: string[];
 }
 
-export function OrderTable({ adminOrders }: OrderTableProps) {
+export function OrderTable({ adminOrders, deletingIds = [] }: OrderTableProps) {
   const { isVi, orders, isLoading, handleUpdateStatus, handleDeleteOrder } = adminOrders;
 
   const t = (key: string) => isVi
@@ -86,6 +87,17 @@ export function OrderTable({ adminOrders }: OrderTableProps) {
     });
   };
 
+  const [filterVersion, setFilterVersion] = useState(0);
+  const prevOrdersKeyRef = useRef('');
+
+  useEffect(() => {
+    const key = (orders || []).map(o => o._id).join(',');
+    if (prevOrdersKeyRef.current !== key) {
+      setFilterVersion((v) => v + 1);
+      prevOrdersKeyRef.current = key;
+    }
+  }, [orders]);
+
   const handleConfirmDelete = (orderId: string, customerName: string) => {
     const msg = isVi
       ? `Bạn có chắc chắn muốn xóa đơn hàng của "${customerName}"?`
@@ -117,6 +129,16 @@ export function OrderTable({ adminOrders }: OrderTableProps) {
 
   return (
     <div className="orders-table-wrapper">
+      <style>{`
+        @keyframes orderRowEnter {
+          from { opacity: 0; transform: translateY(8px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes orderRowExit {
+          from { opacity: 1; transform: translateX(0); }
+          to   { opacity: 0; transform: translateX(70px); }
+        }
+      `}</style>
       <table className="orders-table">
         <thead>
           <tr>
@@ -130,8 +152,20 @@ export function OrderTable({ adminOrders }: OrderTableProps) {
           </tr>
         </thead>
         <tbody>
-          {orders.map((order) => (
-            <tr key={order._id}>
+          {orders.map((order, index) => {
+            const isDeleting = deletingIds.includes(order._id);
+            const animDelay = `${index * 0.04}s`;
+            return (
+            <tr
+              key={`${filterVersion}-${order._id}`}
+              style={{
+                animationName: isDeleting ? 'orderRowExit' : 'orderRowEnter',
+                animationDuration: '0.35s',
+                animationTimingFunction: 'ease',
+                animationFillMode: isDeleting ? 'forwards' : 'both',
+                animationDelay: isDeleting ? '0s' : animDelay,
+              }}
+            >
               <td className="order-cell--id">#{order._id.slice(-8)}</td>
               <td className="order-cell--customer">{order.customerName}</td>
               <td className="order-cell--products">
@@ -172,7 +206,8 @@ export function OrderTable({ adminOrders }: OrderTableProps) {
                 </Link>
               </td>
             </tr>
-          ))}
+          );
+          })}
         </tbody>
       </table>
     </div>

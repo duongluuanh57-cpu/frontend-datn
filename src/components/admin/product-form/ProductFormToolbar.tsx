@@ -10,10 +10,12 @@ interface ProductFormToolbarProps {
   isSubmitting: boolean;
   isImageUploading: boolean;
   productId?: string;
+  onAiRegenerate?: () => Promise<void>;
+  isAiRegenerating?: boolean;
 }
 
 export const ProductFormToolbar = React.memo(function ProductFormToolbar({
-  t, isVi, isSubmitting, isImageUploading, productId,
+  t, isVi, isSubmitting, isImageUploading, productId, onAiRegenerate, isAiRegenerating,
 }: ProductFormToolbarProps) {
   return (
     <div className="admin-form-toolbar">
@@ -27,6 +29,17 @@ export const ProductFormToolbar = React.memo(function ProductFormToolbar({
       </div>
 
       <div className="admin-page-header__actions flex gap-2">
+        <button
+          type="button"
+          onClick={onAiRegenerate}
+          disabled={isAiRegenerating}
+          className="px-4 py-2 border border-[#D4A5A5]/40 hover:border-[#D4A5A5] text-[#7A5C5C] rounded-xl text-sm font-semibold transition-all inline-flex items-center gap-2 disabled:opacity-50"
+        >
+          {isAiRegenerating && <Loader2 size={14} className="animate-spin" />}
+          {isAiRegenerating
+            ? (isVi ? 'Đang tạo...' : 'Generating...')
+            : (isVi ? 'AI Điền' : 'AI Fill')}
+        </button>
         <Link
           href="/admin/products"
           className="px-4 py-2 border border-gray-200 rounded-xl text-sm font-semibold text-[#7A5C5C]/60 hover:bg-gray-50 transition-all inline-flex items-center gap-2"

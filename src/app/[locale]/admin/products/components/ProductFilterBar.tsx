@@ -6,6 +6,7 @@ import { UseProductFiltersReturn } from '@/hooks/useProductFilters';
 import { SearchAndSort } from './product-filter-bar/SearchAndSort';
 import { TagPills } from './product-filter-bar/TagPills';
 import { BrandDropdown } from './product-filter-bar/BrandDropdown';
+import { CategoryDropdown } from './product-filter-bar/CategoryDropdown';
 import { StockSelect } from './product-filter-bar/StockSelect';
 
 interface ProductFilterBarProps {
@@ -17,6 +18,7 @@ export function ProductFilterBar({ filters }: ProductFilterBarProps) {
     isVi,
     searchQuery,
     selectedBrand,
+    selectedCategory,
     stockFilter,
     selectedTag,
     sortBy,
@@ -26,6 +28,7 @@ export function ProductFilterBar({ filters }: ProductFilterBarProps) {
   const showClearButton =
     searchQuery ||
     selectedBrand ||
+    selectedCategory ||
     stockFilter !== 'all' ||
     selectedTag !== 'all' ||
     sortBy !== 'bestSeller';
@@ -43,6 +46,8 @@ export function ProductFilterBar({ filters }: ProductFilterBarProps) {
         marginBottom: '24px',
         boxShadow: 'var(--admin-shadow-sm)',
         backdropFilter: 'blur(10px)',
+        position: 'relative',
+        zIndex: 10,
       }}
     >
       {/* Row 1: Search & Sort */}
@@ -66,39 +71,46 @@ export function ProductFilterBar({ filters }: ProductFilterBarProps) {
         {/* Dropdown Filters (Stock & Brand) + Clear All Button */}
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
           {/* Clear All Filters Button */}
-          {showClearButton && (
-            <button
-              type="button"
-              onClick={handleClearFilters}
+          <button
+            type="button"
+            onClick={handleClearFilters}
               title={isVi ? 'Xóa tất cả bộ lọc' : 'Clear all filters'}
               style={{
-                padding: '8px 14px',
-                borderRadius: 'var(--admin-radius-md)',
-                background: 'rgba(212, 165, 165, 0.1)',
-                border: '1px solid var(--admin-border-subtle)',
-                color: 'var(--admin-accent-hover, #D4A5A5)',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                fontSize: '0.75rem',
-                fontWeight: 600,
-                transition: 'all 0.2s',
-                whiteSpace: 'nowrap',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(212, 165, 165, 0.2)';
-                e.currentTarget.style.borderColor = 'var(--admin-accent-hover, #D4A5A5)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(212, 165, 165, 0.1)';
-                e.currentTarget.style.borderColor = 'var(--admin-border-subtle)';
-              }}
-            >
-              <X size={14} />
-              {isVi ? 'Xóa bộ lọc' : 'Clear Filters'}
-            </button>
-          )}
+              padding: '8px 14px',
+              borderRadius: 'var(--admin-radius-md)',
+              background: showClearButton ? 'rgba(212, 165, 165, 0.1)' : 'rgba(212, 165, 165, 0)',
+              border: `1px solid ${showClearButton ? 'var(--admin-border-subtle)' : 'transparent'}`,
+              color: showClearButton ? 'var(--admin-accent-hover, #D4A5A5)' : 'transparent',
+              cursor: showClearButton ? 'pointer' : 'default',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              whiteSpace: 'nowrap',
+              opacity: showClearButton ? 1 : 0,
+              transform: showClearButton ? 'scale(1)' : 'scale(0.92)',
+              visibility: showClearButton ? 'visible' : 'hidden',
+              transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+              pointerEvents: showClearButton ? 'auto' : 'none',
+            }}
+            onMouseEnter={(e) => {
+              if (!showClearButton) return;
+              e.currentTarget.style.background = 'rgba(212, 165, 165, 0.2)';
+              e.currentTarget.style.borderColor = 'var(--admin-accent-hover, #D4A5A5)';
+            }}
+            onMouseLeave={(e) => {
+              if (!showClearButton) return;
+              e.currentTarget.style.background = 'rgba(212, 165, 165, 0.1)';
+              e.currentTarget.style.borderColor = 'var(--admin-border-subtle)';
+            }}
+          >
+            <X size={14} />
+            {isVi ? 'Xóa lọc' : 'Clear Filters'}
+          </button>
+
+          {/* Category Dropdown */}
+          <CategoryDropdown filters={filters} />
 
           {/* Brand Custom Dropdown */}
           <BrandDropdown filters={filters} />

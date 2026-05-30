@@ -37,12 +37,12 @@ export function CustomerReviews() {
   const t = useTranslations('Index'); // Fallback to index if no specific translations exist, or hardcode
 
   return (
-    <section className="py-12 lg:py-20 relative overflow-hidden bg-[var(--background)]"
+    <section className="w-full py-12 lg:py-20 relative overflow-hidden bg-[var(--background)]"
       style={{ contain: 'content', contentVisibility: 'auto' } as React.CSSProperties}>
       {/* Subtle background decoration */}
       <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[var(--primary)] to-transparent opacity-20"></div>
       
-      <div className="container mx-auto px-6 lg:px-8 max-w-7xl relative z-10">
+      <div className="px-6 lg:px-8 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -53,7 +53,7 @@ export function CustomerReviews() {
           <p className="text-[var(--primary)] uppercase tracking-[0.2em] text-xs font-semibold mb-3">
             Testimonials
           </p>
-          <h2 className="font-heading text-4xl md:text-5xl text-[var(--content)] mb-6 tracking-wide font-light">
+          <h2 className="font-body text-4xl md:text-5xl text-[var(--content)] mb-6 tracking-wide font-light">
             Câu Chuyện Khách Hàng
           </h2>
           <div className="w-16 h-[1px] bg-[var(--primary)] mx-auto opacity-50"></div>
@@ -77,7 +77,7 @@ export function CustomerReviews() {
                 ))}
               </div>
 
-              <p className="text-[var(--content)] leading-relaxed font-light mb-8 italic relative z-10 text-sm md:text-base">
+              <p className="font-body text-[var(--content)] leading-relaxed font-light mb-8 italic relative z-10 text-sm md:text-base">
                 "{review.content}"
               </p>
 
@@ -92,10 +92,10 @@ export function CustomerReviews() {
                   />
                 </div>
                 <div>
-                  <h4 className="text-[var(--content)] font-medium text-sm">
+                  <h4 className="font-body text-[var(--content)] font-medium text-sm">
                     {review.name}
                   </h4>
-                  <p className="text-[var(--primary)] text-xs tracking-wider uppercase mt-0.5">
+                  <p className="font-body text-[var(--primary)] text-xs tracking-wider uppercase mt-0.5">
                     {review.role}
                   </p>
                 </div>

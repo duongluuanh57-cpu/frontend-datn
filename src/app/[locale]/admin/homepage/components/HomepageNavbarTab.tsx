@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   DndContext,
@@ -20,12 +20,13 @@ import {
   sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Plus, Trash2, GripVertical, Eye, Type, AlignLeft, Home, Store, Library, BookOpen, HelpCircle } from 'lucide-react';
-import type { NavbarConfig, NavLink } from '@/hooks/useHomepageConfig';
+import { Plus, Trash2, GripVertical, Eye, Type, AlignLeft, Home, Store, Library, BookOpen, HelpCircle, Search, ShoppingBag, User } from 'lucide-react';
+import type { NavbarConfig, NavLink, SpecialItemConfig } from '@/hooks/useHomepageConfig';
 
 interface HomepageNavbarTabProps {
   navbarConfig: NavbarConfig;
   setNavbarConfig: React.Dispatch<React.SetStateAction<NavbarConfig>>;
+  onSidebarChange?: (open: boolean) => void;
 }
 
 // ── Logo presets ──
@@ -176,11 +177,22 @@ function NavbarPreview({ navbarConfig }: { navbarConfig: NavbarConfig }) {
         </span>
       );
     }
-    const emojiMap: Record<string, string> = { search: '🔍', cart: '🛒', user: '👤' };
-    if (emojiMap[id]) {
+    const iconMap: Record<string, React.ReactNode> = {
+      search: <Search size={iconSize} strokeWidth={2} />,
+      cart: <ShoppingBag size={iconSize} strokeWidth={2} />,
+      user: <User size={iconSize} strokeWidth={2.5} />,
+    };
+    const specialKeys: Record<string, 'searchConfig' | 'cartConfig' | 'userConfig'> = {
+      search: 'searchConfig', cart: 'cartConfig', user: 'userConfig',
+    };
+    if (iconMap[id]) {
+      const sk = specialKeys[id];
+      const cfg = navbarConfig[sk];
+      const mode = cfg?.displayMode || 'icon';
       return (
-        <span key={id} className="px-1.5" style={{ fontSize: iconSize }}>
-          {emojiMap[id]}
+        <span key={id} className="flex items-center gap-1 px-2 py-1 rounded text-xs" style={{ color: style.textColor }}>
+          {(mode === 'icon' || mode === 'icon-text') && iconMap[id]}
+          {(mode === 'text' || mode === 'icon-text') && (cfg?.label || id)}
         </span>
       );
     }
@@ -207,107 +219,6 @@ function NavbarPreview({ navbarConfig }: { navbarConfig: NavbarConfig }) {
           </div>
         );
       })}
-    </div>
-  );
-}
-
-// ── Inline Item Editor ──
-function ItemEditor({ itemId, navbarConfig, setNavbarConfig, onClose }: {
-  itemId: string;
-  navbarConfig: NavbarConfig;
-  setNavbarConfig: React.Dispatch<React.SetStateAction<NavbarConfig>>;
-  onClose: () => void;
-}) {
-  if (itemId.match(/^link-\d+$/)) return null;
-
-  if (itemId === 'logo') {
-    const inPreset = LOGO_PRESETS.some(p => p.w === navbarConfig.logo.width && p.h === navbarConfig.logo.height);
-    const [customMode, setCustomMode] = useState(!inPreset);
-
-    const pickPreset = (preset: typeof LOGO_PRESETS[0]) => {
-      setCustomMode(false);
-      setNavbarConfig(prev => ({ ...prev, logo: { ...prev.logo, width: preset.w, height: preset.h, text: preset.text } }));
-    };
-
-    return (
-      <div className="admin-panel bg-white rounded-2xl border border-[#D4A5A5]/40 p-6 shadow-sm">
-        <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">
-          <h3 className="text-xs font-bold text-[#7A5C5C] uppercase tracking-wider">
-            ✎ Editing: Logo
-          </h3>
-          <button onClick={onClose} className="text-[10px] text-gray-400 hover:text-gray-600">✕ Close</button>
-        </div>
-        <div className="flex flex-wrap gap-2 mb-3">
-          {LOGO_PRESETS.map(p => (
-            <button
-              key={p.label}
-              onClick={() => pickPreset(p)}
-              className={`px-2.5 py-1 text-[10px] font-semibold rounded-lg border transition-colors ${
-                !customMode && p.w === navbarConfig.logo.width && p.h === navbarConfig.logo.height
-                  ? 'bg-[#7A5C5C] text-white border-[#7A5C5C]'
-                  : 'bg-white text-gray-500 border-gray-200'
-              }`}
-            >
-              {p.label} ({p.w}×{p.h})
-            </button>
-          ))}
-          <button
-            onClick={() => { setCustomMode(true); }}
-            className={`px-2.5 py-1 text-[10px] font-semibold rounded-lg border transition-colors ${
-              customMode
-                ? 'bg-[#7A5C5C] text-white border-[#7A5C5C]'
-                : 'bg-white text-gray-500 border-gray-200'
-            }`}
-          >
-            Tùy chỉnh
-          </button>
-        </div>
-        <div className="flex gap-3">
-          <div className="flex-1 space-y-3">
-            <div>
-              <label className="text-[9px] font-semibold text-gray-500 uppercase tracking-wider block">Brand Text</label>
-              <input type="text" value={navbarConfig.logo.text}
-                onChange={e => setNavbarConfig(prev => ({ ...prev, logo: { ...prev.logo, text: e.target.value } }))}
-                className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D4A5A5]/40" />
-            </div>
-            <div>
-              <label className="text-[9px] font-semibold text-gray-500 uppercase tracking-wider block">Image URL</label>
-              <input type="text" value={navbarConfig.logo.image}
-                onChange={e => setNavbarConfig(prev => ({ ...prev, logo: { ...prev.logo, image: e.target.value } }))}
-                className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D4A5A5]/40" />
-            </div>
-          </div>
-          {customMode && (
-            <div className="flex-1 space-y-3">
-              <div>
-                <label className="text-[9px] font-semibold text-gray-500 uppercase tracking-wider block">Width (px)</label>
-                <input type="number" min="10" max="300" value={navbarConfig.logo.width}
-                  onChange={e => setNavbarConfig(prev => ({ ...prev, logo: { ...prev.logo, width: Number(e.target.value) } }))}
-                  className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D4A5A5]/40" />
-              </div>
-              <div>
-                <label className="text-[9px] font-semibold text-gray-500 uppercase tracking-wider block">Height (px)</label>
-                <input type="number" min="10" max="300" value={navbarConfig.logo.height}
-                  onChange={e => setNavbarConfig(prev => ({ ...prev, logo: { ...prev.logo, height: Number(e.target.value) } }))}
-                  className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D4A5A5]/40" />
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  // search / cart / user
-  return (
-    <div className="admin-panel bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-          ✎ Editing: {getItemLabel(itemId, navbarConfig)}
-        </h3>
-        <button onClick={onClose} className="text-[10px] text-gray-400 hover:text-gray-600">✕ Close</button>
-      </div>
-      <p className="text-[11px] text-gray-400 italic">Item này là cố định, không thể chỉnh sửa.</p>
     </div>
   );
 }
@@ -396,11 +307,24 @@ function SidebarLinkRow({ index, link, isSelected, onUpdate, onRemove, onSelect 
 export const HomepageNavbarTab = React.memo(function HomepageNavbarTab({
   navbarConfig,
   setNavbarConfig,
+  onSidebarChange,
 }: HomepageNavbarTabProps) {
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [sidebarVisible, setSidebarVisible] = useState(false);
+  const [logoCustomMode, setLogoCustomMode] = useState(false);
   const [selectedLinkIndex, setSelectedLinkIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    onSidebarChange?.(sidebarVisible);
+  }, [sidebarVisible, onSidebarChange]);
+
+  useEffect(() => {
+    if (editingId === 'logo') {
+      const inPreset = LOGO_PRESETS.some(p => p.w === navbarConfig.logo.width && p.h === navbarConfig.logo.height);
+      setLogoCustomMode(!inPreset);
+    }
+  }, [editingId]);
 
   // ── Link management ──
   const addLink = () => {
@@ -537,12 +461,18 @@ export const HomepageNavbarTab = React.memo(function HomepageNavbarTab({
   };
 
   const handleEditChip = (id: string) => {
+    if (sidebarVisible && editingId === id) {
+      setSidebarVisible(false);
+      setEditingId(null);
+      setSelectedLinkIndex(null);
+      return;
+    }
     const linkMatch = id.match(/^link-(\d+)$/);
     if (linkMatch) {
       setSelectedLinkIndex(parseInt(linkMatch[1]));
-      setSidebarVisible(true);
     }
     setEditingId(id);
+    setSidebarVisible(true);
   };
 
   return (
@@ -571,10 +501,6 @@ export const HomepageNavbarTab = React.memo(function HomepageNavbarTab({
               <GripVertical size={18} className="text-[#D4A5A5]" />
               <h2 className="text-sm font-semibold text-[#7A5C5C]">Navbar Layout Builder</h2>
             </div>
-            <button onClick={() => setSidebarVisible(!sidebarVisible)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-semibold rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">
-              {sidebarVisible ? '✕' : '☰'} {sidebarVisible ? 'Ẩn' : 'Hiện'} Liên kết
-            </button>
           </div>
           <p className="text-[11px] text-gray-400 mb-4">
             Kéo thả các item giữa các khu vực hoặc kéo từ danh sách Liên kết bên phải vào khu vực mong muốn.
@@ -593,25 +519,9 @@ export const HomepageNavbarTab = React.memo(function HomepageNavbarTab({
             ))}
           </div>
         </div>
-
-        {/* ── Inline Item Editor (logo / search / cart / user only) ── */}
-        {editingId && (
-          <ItemEditor
-            itemId={editingId}
-            navbarConfig={navbarConfig}
-            setNavbarConfig={setNavbarConfig}
-            onClose={() => setEditingId(null)}
-          />
-        )}
       </motion.div>
 
-      {/* ── Fixed Drawer – Navbar Links ── */}
-      {sidebarVisible && (
-        <div
-          className="fixed inset-0 z-30 bg-black/20"
-          onClick={() => setSidebarVisible(false)}
-        />
-      )}
+      {/* ── Fixed Drawer – Navbar Links / Item Editing ── */}
       <div style={{
         position: 'fixed',
         top: 0,
@@ -626,37 +536,140 @@ export const HomepageNavbarTab = React.memo(function HomepageNavbarTab({
         display: 'flex',
         flexDirection: 'column',
       }}>
+        {/* ── Header ── */}
         <div className="flex items-center justify-between p-4 border-b border-gray-100">
           <h3 className="text-[11px] font-semibold text-[#7A5C5C] uppercase tracking-wider">
-            Liên kết
+            {editingId === 'logo' ? '✎ Logo' :
+             editingId && ['search','cart','user'].includes(editingId) ? `✎ ${getItemLabel(editingId, navbarConfig)}` :
+             'Liên kết'}
           </h3>
           <div className="flex items-center gap-2">
-            <button onClick={addLink}
-              className="flex items-center gap-1 px-2 py-1 text-[10px] font-semibold rounded-lg bg-[#7A5C5C] text-white hover:bg-[#604444] transition-colors">
-              <Plus size={10} /> Thêm
-            </button>
-            <button onClick={() => setSidebarVisible(false)}
-              className="p-1 text-gray-400 hover:text-gray-600 rounded transition-colors">
-              ✕
-            </button>
+            {editingId && editingId.match(/^link-\d+$/) && (
+              <button onClick={() => { setEditingId(null); setSelectedLinkIndex(-1); setSidebarVisible(false); }}
+                className="text-[11px] font-semibold text-[#7A5C5C] hover:text-[#604444] px-1">← Danh sách</button>
+            )}
+            {(!editingId || editingId.match(/^link-\d+$/)) && (
+              <button onClick={addLink}
+                className="flex items-center gap-1 px-2 py-1 text-[10px] font-semibold rounded-lg bg-[#7A5C5C] text-white hover:bg-[#604444] transition-colors">
+                <Plus size={10} /> Thêm
+              </button>
+            )}
           </div>
         </div>
+
+        {/* ── Body ── */}
         <div className="flex-1 overflow-y-auto p-4 space-y-1.5">
-          {navbarConfig.links.map((link, i) => (
-            <div key={i} onClick={() => setSelectedLinkIndex(i)}
-              className={selectedLinkIndex === i ? 'rounded-lg ring-2 ring-[#D4A5A5]/30' : ''}>
-              <SidebarLinkRow
-                index={i}
-                link={link}
-                isSelected={selectedLinkIndex === i}
-                onUpdate={updateLink}
-                onRemove={removeLink}
-                onSelect={setSelectedLinkIndex}
-              />
+
+          {editingId === 'logo' && (
+            <div className="space-y-4">
+              <div className="flex flex-wrap gap-2">
+                {LOGO_PRESETS.map(p => (
+                  <button key={p.label} onClick={() => { setLogoCustomMode(false); setNavbarConfig(prev => ({ ...prev, logo: { ...prev.logo, width: p.w, height: p.h, text: p.text } })); }}
+                    className={`px-2.5 py-1 text-[10px] font-semibold rounded-lg border transition-colors ${
+                      !logoCustomMode && p.w === navbarConfig.logo.width && p.h === navbarConfig.logo.height
+                        ? 'bg-[#7A5C5C] text-white border-[#7A5C5C]'
+                        : 'bg-white text-gray-500 border-gray-200'
+                    }`}>
+                    {p.label} ({p.w}×{p.h})
+                  </button>
+                ))}
+                <button onClick={() => setLogoCustomMode(true)}
+                  className={`px-2.5 py-1 text-[10px] font-semibold rounded-lg border transition-colors ${
+                    logoCustomMode
+                      ? 'bg-[#7A5C5C] text-white border-[#7A5C5C]'
+                      : 'bg-white text-gray-500 border-gray-200'
+                  }`}>
+                  Tùy chỉnh
+                </button>
+              </div>
+              <div>
+                <label className="text-[9px] font-semibold text-gray-500 uppercase tracking-wider block">Brand Text</label>
+                <input type="text" value={navbarConfig.logo.text}
+                  onChange={e => setNavbarConfig(prev => ({ ...prev, logo: { ...prev.logo, text: e.target.value } }))}
+                  className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D4A5A5]/40" />
+              </div>
+              <div>
+                <label className="text-[9px] font-semibold text-gray-500 uppercase tracking-wider block">Image URL</label>
+                <input type="text" value={navbarConfig.logo.image}
+                  onChange={e => setNavbarConfig(prev => ({ ...prev, logo: { ...prev.logo, image: e.target.value } }))}
+                  className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D4A5A5]/40" />
+              </div>
+              {logoCustomMode && (
+                <div className="flex gap-3">
+                  <div className="flex-1">
+                    <label className="text-[9px] font-semibold text-gray-500 uppercase tracking-wider block">Width (px)</label>
+                    <input type="number" min="10" max="300" value={navbarConfig.logo.width}
+                      onChange={e => setNavbarConfig(prev => ({ ...prev, logo: { ...prev.logo, width: Number(e.target.value) } }))}
+                      className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D4A5A5]/40" />
+                  </div>
+                  <div className="flex-1">
+                    <label className="text-[9px] font-semibold text-gray-500 uppercase tracking-wider block">Height (px)</label>
+                    <input type="number" min="10" max="300" value={navbarConfig.logo.height}
+                      onChange={e => setNavbarConfig(prev => ({ ...prev, logo: { ...prev.logo, height: Number(e.target.value) } }))}
+                      className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D4A5A5]/40" />
+                  </div>
+                </div>
+              )}
             </div>
-          ))}
-          {navbarConfig.links.length === 0 && (
-            <p className="text-[11px] text-gray-400 italic text-center py-4">Chưa có liên kết nào.</p>
+          )}
+
+          {editingId && ['search', 'cart', 'user'].includes(editingId) && (
+            (() => {
+              const specialKey = editingId === 'search' ? 'searchConfig' : editingId === 'cart' ? 'cartConfig' : 'userConfig';
+              const config = navbarConfig[specialKey];
+              const modes: { key: 'icon' | 'text' | 'icon-text'; label: string }[] = [
+                { key: 'icon', label: 'Chỉ icon' },
+                { key: 'text', label: 'Chỉ chữ' },
+                { key: 'icon-text', label: 'Icon + Chữ' },
+              ];
+              return (
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-[9px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block">Display Mode</label>
+                    <div className="flex gap-1.5">
+                      {modes.map(m => (
+                        <button key={m.key}
+                          onClick={() => setNavbarConfig(prev => ({ ...prev, [specialKey]: { ...prev[specialKey], displayMode: m.key } }))}
+                          className={`px-3 py-1.5 text-[10px] font-semibold rounded-lg border transition-colors ${
+                            config.displayMode === m.key
+                              ? 'bg-[#7A5C5C] text-white border-[#7A5C5C]'
+                              : 'bg-white text-gray-600 border-gray-200 hover:border-[#7A5C5C]/30'
+                          }`}>
+                          {m.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[9px] font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">Label</label>
+                    <input type="text" value={config.label}
+                      onChange={e => setNavbarConfig(prev => ({ ...prev, [specialKey]: { ...prev[specialKey], label: e.target.value } }))}
+                      className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D4A5A5]/40" />
+                  </div>
+                </div>
+              );
+            })()
+          )}
+
+          {(!editingId || editingId.match(/^link-\d+$/)) && (
+            <>
+              {navbarConfig.links.map((link, i) => (
+                <div key={i} onClick={() => setSelectedLinkIndex(i)}
+                  className={selectedLinkIndex === i ? 'rounded-lg ring-2 ring-[#D4A5A5]/30' : ''}>
+                  <SidebarLinkRow
+                    index={i}
+                    link={link}
+                    isSelected={selectedLinkIndex === i}
+                    onUpdate={updateLink}
+                    onRemove={removeLink}
+                    onSelect={setSelectedLinkIndex}
+                  />
+                </div>
+              ))}
+              {navbarConfig.links.length === 0 && (
+                <p className="text-[11px] text-gray-400 italic text-center py-4">Chưa có liên kết nào.</p>
+              )}
+            </>
           )}
         </div>
       </div>

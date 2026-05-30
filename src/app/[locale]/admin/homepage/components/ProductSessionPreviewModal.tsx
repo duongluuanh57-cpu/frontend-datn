@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ArrowRight, Filter } from 'lucide-react';
 import { useProductSessionPreviewStore } from '@/store/useProductSessionPreviewStore';
@@ -26,6 +26,13 @@ export function ProductSessionPreviewModal() {
     }
   }, [showPreviewModal, setIsPreviewMode]);
 
+  useEffect(() => {
+    if (showPreviewModal) {
+      document.body.style.overflow = 'hidden';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [showPreviewModal]);
+
   const handleClose = () => {
     setIsPreviewMode(false);
     setShowPreviewModal(false);
@@ -45,7 +52,7 @@ export function ProductSessionPreviewModal() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-start justify-center overflow-y-auto"
+          className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-start justify-center"
           onClick={handleClose}
         >
           <motion.div

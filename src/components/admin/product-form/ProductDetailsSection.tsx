@@ -17,11 +17,12 @@ interface ProductDetailsSectionProps {
   setPriceSuggestionData: (data: any) => void;
   setActiveSuggestContext: (ctx: any) => void;
   handleOpenPriceSuggestion: (size?: string, basePrice?: number, onApply?: (price: number) => void) => void;
-  setIsGenderModalOpen: (v: boolean) => void;
+  setIsCategoryModalOpen: (v: boolean) => void;
   setIsScentGroupModalOpen: (v: boolean) => void;
   setIsConcentrationModalOpen: (v: boolean) => void;
   setIsSegmentModalOpen: (v: boolean) => void;
-  selectedGenders: string[];
+  categories?: { _id: string; name: string }[];
+  selectedCategories: string[];
   selectedScentGroups: string[];
   selectedConcentrations: string[];
   selectedSegments: string[];
@@ -59,8 +60,8 @@ export const ProductDetailsSection = React.memo(function ProductDetailsSection({
   dynamicSizeReport, dynamicDiscountReport,
   setIsPriceSuggestModalOpen, setPriceSuggestionData, setActiveSuggestContext,
   handleOpenPriceSuggestion,
-  setIsGenderModalOpen, setIsScentGroupModalOpen, setIsConcentrationModalOpen, setIsSegmentModalOpen,
-  selectedGenders, selectedScentGroups, selectedConcentrations, selectedSegments,
+  setIsCategoryModalOpen, setIsScentGroupModalOpen, setIsConcentrationModalOpen, setIsSegmentModalOpen,
+  categories, selectedCategories, selectedScentGroups, selectedConcentrations, selectedSegments,
 }: ProductDetailsSectionProps) {
 
   const handleSelectClick = (label: string, setter: (v: boolean) => void) => {
@@ -176,11 +177,31 @@ export const ProductDetailsSection = React.memo(function ProductDetailsSection({
         </div>
 
         <div className="grid grid-cols-4 gap-3 mt-4">
+          <div className="admin-field">
+            <label className="admin-label">{isVi ? 'Danh mục' : 'Category'}</label>
+            <div
+              onClick={() => handleSelectClick(isVi ? 'Danh mục' : 'Category', setIsCategoryModalOpen)}
+              style={selectBoxBase}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(212, 165, 165, 0.4)';
+                e.currentTarget.style.boxShadow = '0 0 0 3px rgba(212, 165, 165, 0.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'var(--admin-border)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            >
+              <div className="flex flex-wrap gap-[6px] max-h-[82px] overflow-y-auto w-full">
+                {selectedCategories.length > 0 ? selectedCategories.map((item) => (
+                  <span key={`cat-${item}`} style={tagStyle}>{categories?.find(c => c.name === item)?.name || item}</span>
+                )) : null}
+              </div>
+            </div>
+          </div>
           {[
-            { label: isVi ? 'Giới tính' : 'Gender', items: selectedGenders, setter: setIsGenderModalOpen },
-            { label: isVi ? 'Nhóm hương' : 'Scent Group', items: selectedScentGroups, setter: setIsScentGroupModalOpen },
-            { label: isVi ? 'Nồng độ' : 'Concentration', items: selectedConcentrations, setter: setIsConcentrationModalOpen },
-            { label: isVi ? 'Phân khúc nhóm' : 'Brand Segment', items: selectedSegments, setter: setIsSegmentModalOpen },
+            { label: isVi ? 'Nhóm hương' : 'Scent Group', items: selectedScentGroups, setter: setIsScentGroupModalOpen as (v: boolean) => void },
+            { label: isVi ? 'Nồng độ' : 'Concentration', items: selectedConcentrations, setter: setIsConcentrationModalOpen as (v: boolean) => void },
+            { label: isVi ? 'Phân khúc nhóm' : 'Brand Segment', items: selectedSegments, setter: setIsSegmentModalOpen as (v: boolean) => void },
           ].map(({ label, items, setter }) => (
             <div className="admin-field" key={label}>
               <label className="admin-label">{label}</label>
@@ -198,7 +219,7 @@ export const ProductDetailsSection = React.memo(function ProductDetailsSection({
               >
                 <div className="flex flex-wrap gap-[6px] max-h-[82px] overflow-y-auto w-full">
                   {items.length > 0 ? items.map((item) => (
-                    <span key={item} style={tagStyle}>{item}</span>
+                    <span key={`${label}-${item}`} style={tagStyle}>{item}</span>
                   )) : null}
                 </div>
               </div>

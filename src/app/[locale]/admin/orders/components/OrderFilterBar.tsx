@@ -3,6 +3,7 @@
 import React from 'react';
 import { Search, X } from 'lucide-react';
 import type { UseAdminOrdersReturn } from '@/hooks/useAdminOrders';
+import { DateRangePicker } from './DateRangePicker';
 
 interface OrderFilterBarProps {
   adminOrders: UseAdminOrdersReturn;
@@ -38,8 +39,6 @@ export function OrderFilterBar({ adminOrders }: OrderFilterBarProps) {
         clearFilters: 'Xóa lọc',
         status: 'Trạng thái',
         payment: 'Thanh toán',
-        dateFrom: 'Từ',
-        dateTo: 'Đến',
       }[key] || key
     : {
         searchPlaceholder: 'Search...',
@@ -55,8 +54,6 @@ export function OrderFilterBar({ adminOrders }: OrderFilterBarProps) {
         clearFilters: 'Clear',
         status: 'Status',
         payment: 'Payment',
-        dateFrom: 'From',
-        dateTo: 'To',
       }[key] || key;
 
   const hasActiveFilters = !!(
@@ -88,6 +85,13 @@ export function OrderFilterBar({ adminOrders }: OrderFilterBarProps) {
         />
       </div>
 
+      {hasActiveFilters && (
+        <button onClick={handleClearFilters} className="admin-filter-clear">
+          <X size={14} />
+          <span>{t('clearFilters')}</span>
+        </button>
+      )}
+
       <select
         value={selectedStatus}
         onChange={(e) => setSelectedStatus(e.target.value)}
@@ -112,30 +116,13 @@ export function OrderFilterBar({ adminOrders }: OrderFilterBarProps) {
         <option value="refunded">{t('refunded')}</option>
       </select>
 
-      <div className="admin-filter-bar__date-range">
-        <input
-          type="date"
-          value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
-          className="admin-filter-date"
-          placeholder={t('dateFrom')}
-        />
-        <span className="admin-filter-bar__date-sep">–</span>
-        <input
-          type="date"
-          value={endDate}
-          onChange={(e) => setEndDate(e.target.value)}
-          className="admin-filter-date"
-          placeholder={t('dateTo')}
-        />
-      </div>
-
-      {hasActiveFilters && (
-        <button onClick={handleClearFilters} className="admin-filter-clear">
-          <X size={14} />
-          <span>{t('clearFilters')}</span>
-        </button>
-      )}
+      <DateRangePicker
+        startDate={startDate}
+        endDate={endDate}
+        onStartDateChange={setStartDate}
+        onEndDateChange={setEndDate}
+        isVi={isVi}
+      />
     </div>
   );
 }

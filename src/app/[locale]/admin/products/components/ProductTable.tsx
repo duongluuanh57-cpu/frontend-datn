@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useRef, useLayoutEffect } from 'react';
 import Image from 'next/image';
 import { Link } from '@/navigation';
 import { formatSizeString } from '@/components/admin/ProductForm';
@@ -21,6 +21,7 @@ interface ProductTableProps {
   handleSelectAll: () => void;
   handleSelectRow: (id: string) => void;
   setProductToDelete: (product: Product | null) => void;
+  deletingIds?: string[];
 }
 
 const formatPrice = (price: number, locale: string) =>
@@ -35,11 +36,63 @@ export const ProductTable = React.memo(function ProductTable({
   selectedIds, isAllSelected, isSomeSelected,
   handleSelectAll, handleSelectRow,
   setProductToDelete,
+  deletingIds = [],
 }: ProductTableProps) {
+
+  const rowRefs = useRef<Map<string, HTMLTableRowElement | null>>(new Map());
+  const prevPositionsRef = useRef<Map<string, number>>(new Map());
+  const prevProductsRef = useRef<Product[]>([]);
+
+  useLayoutEffect(() => {
+    const prevIds = new Set(prevProductsRef.current.map(p => p._id));
+    const isDeletion = products.length > 0 && products.length < prevProductsRef.current.length &&
+      products.every(p => prevIds.has(p._id));
+
+    if (isDeletion && prevPositionsRef.current.size > 0) {
+      requestAnimationFrame(() => {
+        for (const p of products) {
+          const el = rowRefs.current.get(p._id);
+          if (!el) continue;
+          const oldTop = prevPositionsRef.current.get(p._id);
+          const newTop = el.getBoundingClientRect().top;
+          if (oldTop !== undefined && Math.abs(oldTop - newTop) > 1) {
+            const d = oldTop - newTop;
+            el.style.transition = 'none';
+            el.style.transform = `translateY(${d}px)`;
+            void el.offsetHeight;
+            el.style.transition = 'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)';
+            el.style.transform = 'translateY(0)';
+          }
+        }
+      });
+    }
+
+    requestAnimationFrame(() => {
+      prevPositionsRef.current.clear();
+      for (const p of products) {
+        const el = rowRefs.current.get(p._id);
+        if (el) {
+          prevPositionsRef.current.set(p._id, el.getBoundingClientRect().top);
+        }
+      }
+    });
+
+    prevProductsRef.current = products;
+  }, [products]);
 
   return (
     <div className="admin-table-wrap">
-      <div className="admin-table-scroll">
+      <style>{`
+        @keyframes adminRowEnter {
+          from { opacity: 0; transform: translateY(8px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes adminRowExit {
+          from { opacity: 1; transform: translateX(0); }
+          to   { opacity: 0; transform: translateX(70px); }
+        }
+      `}</style>
+      <div className="admin-table-scroll" style={{ overflowX: deletingIds.length > 0 ? ('hidden' as const) : undefined }}>
         <table className="admin-table">
           <thead>
             <tr>
@@ -87,12 +140,22 @@ export const ProductTable = React.memo(function ProductTable({
                 </td>
               </tr>
             ) : (
-              products.map((product) => {
+              products.map((product, index) => {
                 const isChecked = selectedIds.includes(product._id);
+                const isDeleting = deletingIds.includes(product._id);
+                const animDelay = `${index * 0.04}s`;
                 return (
                   <tr
                     key={product._id}
-                    style={isChecked ? { background: 'rgba(212, 165, 165, 0.05)' } : undefined}
+                    ref={el => { if (el) rowRefs.current.set(product._id, el); else rowRefs.current.delete(product._id); }}
+                    style={{
+                      animationName: isDeleting ? 'adminRowExit' : 'adminRowEnter',
+                      animationDuration: '0.35s',
+                      animationTimingFunction: 'ease',
+                      animationFillMode: isDeleting ? 'forwards' : 'both',
+                      animationDelay: isDeleting ? '0s' : animDelay,
+                      ...(isChecked && !isDeleting ? { background: 'rgba(212, 165, 165, 0.05)' } : {}),
+                    }}
                   >
                     <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
                       <input

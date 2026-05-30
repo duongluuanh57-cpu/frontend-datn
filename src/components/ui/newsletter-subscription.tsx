@@ -51,11 +51,11 @@ export function NewsletterSubscription() {
           
           <Mail className="w-12 h-12 text-[var(--primary)] mx-auto mb-6 stroke-[1.5]" />
           
-          <h2 className="font-heading text-3xl md:text-4xl text-[var(--content)] mb-4 tracking-wide font-light">
+          <h2 className="font-body text-3xl md:text-4xl text-[var(--content)] mb-4 tracking-wide font-light">
             Nhận Đặc Quyền & Ưu Đãi
           </h2>
           
-          <p className="text-[var(--content)] opacity-80 mb-10 max-w-lg mx-auto font-light leading-relaxed">
+          <p className="font-body text-[var(--content)] opacity-80 mb-10 max-w-lg mx-auto font-light leading-relaxed">
             Đăng ký email để trở thành những người đầu tiên nhận thông tin về bộ sưu tập mới và các ưu đãi đặc quyền từ L'essence.
           </p>
 
@@ -67,7 +67,7 @@ export function NewsletterSubscription() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Nhập địa chỉ email của bạn..."
                 disabled={isSubmitting || isSuccess}
-                className="w-full bg-white/60 border border-[var(--primary)]/30 rounded-full py-4 pl-6 pr-14 text-[var(--content)] placeholder:text-[var(--content)]/40 focus:outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] transition-all duration-300 shadow-inner"
+                className="font-body w-full bg-white/60 border border-[var(--primary)]/30 rounded-full py-4 pl-6 pr-14 text-[var(--content)] placeholder:text-[var(--content)]/40 focus:outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] transition-all duration-300 shadow-inner"
               />
               <button
                 type="submit"
@@ -87,7 +87,7 @@ export function NewsletterSubscription() {
               <motion.p 
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="absolute -bottom-8 left-0 w-full text-sm text-[var(--contrast)] font-medium"
+                className="font-body absolute -bottom-8 left-0 w-full text-sm text-[var(--contrast)] font-medium"
               >
                 Cảm ơn bạn đã đăng ký!
               </motion.p>

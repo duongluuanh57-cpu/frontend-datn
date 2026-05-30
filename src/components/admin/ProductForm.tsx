@@ -18,19 +18,18 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
     t, isVi, isSubmitting, formData, update,
     handleSubmit, isImageUploading, setIsImageUploading,
     parsedSizes, selectedSizes, isFormComplete,
-    brands, tags, scentGroups, concentrations, segments,
+    brands, tags, categories, scentGroups, concentrations, segments,
     selectedTags, handleTagToggle,
     isTagModalOpen, setIsTagModalOpen,
-    isGenderModalOpen, setIsGenderModalOpen,
+    isCategoryModalOpen, setIsCategoryModalOpen,
     isScentGroupModalOpen, setIsScentGroupModalOpen,
     isConcentrationModalOpen, setIsConcentrationModalOpen,
     isSegmentModalOpen, setIsSegmentModalOpen,
-    customGender, setCustomGender,
     customScentGroup, setCustomScentGroup,
     customConcentration, setCustomConcentration,
     customSegment, setCustomSegment,
-    selectedGenders, selectedScentGroups, selectedConcentrations, selectedSegments,
-    handleGenderToggle, handleScentGroupToggle, handleConcentrationToggle, handleSegmentToggle,
+    selectedScentGroups, selectedConcentrations, selectedSegments, selectedCategories,
+    handleCategoryToggle, handleScentGroupToggle, handleConcentrationToggle, handleSegmentToggle,
     addScentGroupMutation, addConcentrationMutation, addSegmentMutation,
     isPriceSuggestModalOpen, setIsPriceSuggestModalOpen,
     isSuggestingPrice, priceMarkupPercentage,
@@ -38,6 +37,7 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
     activeSuggestContext, setActiveSuggestContext,
     dynamicSizeReport, dynamicDiscountReport,
     handleOpenPriceSuggestion, handleRecalculatePriceMarkup,
+    isAiGenerating, handleAiGenerateProduct,
   } = useProductForm({ initialData, productId });
 
   return (
@@ -49,6 +49,8 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
           isSubmitting={isSubmitting}
           isImageUploading={isImageUploading}
           productId={productId}
+          onAiRegenerate={handleAiGenerateProduct}
+          isAiRegenerating={isAiGenerating}
         />
 
         <div className="admin-form-grid">
@@ -65,11 +67,12 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
               setPriceSuggestionData={setPriceSuggestionData}
               setActiveSuggestContext={setActiveSuggestContext}
               handleOpenPriceSuggestion={handleOpenPriceSuggestion}
-              setIsGenderModalOpen={setIsGenderModalOpen}
+              setIsCategoryModalOpen={setIsCategoryModalOpen}
               setIsScentGroupModalOpen={setIsScentGroupModalOpen}
               setIsConcentrationModalOpen={setIsConcentrationModalOpen}
               setIsSegmentModalOpen={setIsSegmentModalOpen}
-              selectedGenders={selectedGenders}
+              categories={categories}
+              selectedCategories={selectedCategories}
               selectedScentGroups={selectedScentGroups}
               selectedConcentrations={selectedConcentrations}
               selectedSegments={selectedSegments}
@@ -103,19 +106,19 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
         formHelpers={{
           t, isVi, formData, update,
           tags, selectedTags, handleTagToggle, isTagModalOpen, setIsTagModalOpen,
-          isGenderModalOpen, setIsGenderModalOpen, isScentGroupModalOpen, setIsScentGroupModalOpen,
+          isCategoryModalOpen, setIsCategoryModalOpen, isScentGroupModalOpen, setIsScentGroupModalOpen,
           isConcentrationModalOpen, setIsConcentrationModalOpen, isSegmentModalOpen, setIsSegmentModalOpen,
-          customGender, setCustomGender, customScentGroup, setCustomScentGroup,
+          customScentGroup, setCustomScentGroup,
           customConcentration, setCustomConcentration, customSegment, setCustomSegment,
-          selectedGenders, selectedScentGroups, selectedConcentrations, selectedSegments,
-          handleGenderToggle, handleScentGroupToggle, handleConcentrationToggle, handleSegmentToggle,
-          scentGroups, concentrations, segments,
+          selectedScentGroups, selectedConcentrations, selectedSegments, selectedCategories,
+          handleCategoryToggle, handleScentGroupToggle, handleConcentrationToggle, handleSegmentToggle,
+          scentGroups, categories, concentrations, segments,
           addScentGroupMutation, addConcentrationMutation, addSegmentMutation,
           isPriceSuggestModalOpen, setIsPriceSuggestModalOpen,
           isSuggestingPrice, priceMarkupPercentage, priceSuggestionData, setPriceSuggestionData,
           activeSuggestContext, setActiveSuggestContext,
           handleRecalculatePriceMarkup, parsedSizes, selectedSizes,
-        } as UseProductFormReturn}
+        } as unknown as UseProductFormReturn}
       />
     </>
   );

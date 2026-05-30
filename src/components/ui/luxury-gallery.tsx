@@ -39,9 +39,8 @@ export function LuxuryGallery() {
   } = formHelpers;
 
   return (
-    <section className="luxury-gallery-section w-full bg-transparent pt-12 pb-10 lg:pt-20 lg:pb-14 overflow-hidden"
-      style={{ contain: 'content', contentVisibility: 'auto' } as React.CSSProperties}>
-      <div className="max-w-container mx-auto px-6">
+    <section className="luxury-gallery-section w-full bg-transparent pt-12 pb-10 lg:pt-20 lg:pb-14 overflow-hidden">
+      <div className="px-6">
         
         {/* Section Header */}
         <motion.div
@@ -56,7 +55,7 @@ export function LuxuryGallery() {
           </span>
           <h2 className="mt-4 text-3xl font-medium text-[#7A5C5C] md:text-4xl lg:text-5xl uppercase"
             style={{ fontFamily: 'var(--font-heading), serif' }}>
-            {locale === 'vi' ? 'KHOẢNH KHẮC NGHỆ THUẬT' : 'Moments d\'Élégance'}
+            {locale === 'vi' ? 'Khoảnh khắc nghệ thuật' : 'Moments d\'Élégance'}
           </h2>
           <p className="mt-3 text-[11px] md:text-xs text-[#7A5C5C] max-w-[480px] font-medium leading-relaxed">
             {locale === 'vi'

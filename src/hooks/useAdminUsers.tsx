@@ -2,9 +2,11 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { toast } from 'sonner';
 import { User, RoleFilter, UserFormData } from '@/types/admin';
+import { useUserFilters } from '@/hooks/admin-users/useUserFilters';
+import { useUserSelection } from '@/hooks/admin-users/useUserSelection';
 
 export interface UseAdminUsersReturn {
   searchTerm: string;
@@ -23,11 +25,7 @@ export interface UseAdminUsersReturn {
   error: any;
   total: number;
   totalPages: number;
-  stats: {
-    total: number;
-    admins: number;
-    regularUsers: number;
-  };
+  stats: { total: number; admins: number; regularUsers: number };
   deleteMutation: any;
   bulkDeleteMutation: any;
   updateRoleMutation: any;
@@ -49,36 +47,20 @@ export interface UseAdminUsersReturn {
   selectedUserNames: Map<string, string>;
 }
 
-
 export function useAdminUsers(): UseAdminUsersReturn {
   const queryClient = useQueryClient();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [roleFilter, setRoleFilter] = useState<RoleFilter>('ALL');
-  const [currentPage, setCurrentPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [selectedUserNames, setSelectedUserNames] = useState<Map<string, string>>(new Map());
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
-  const itemsPerPage = 10;
 
-  // Build query params
-  const queryParams = useMemo(() => {
-    const params: Record<string, string | number> = {
-      page: currentPage,
-      limit: itemsPerPage,
-    };
-    if (searchTerm) params.search = searchTerm;
-    if (roleFilter !== 'ALL') params.role = roleFilter;
-    return params;
-  }, [currentPage, searchTerm, roleFilter]);
+  const filter = useUserFilters();
 
   // Fetch users with server-side pagination
   const { data: pageData, isLoading, error } = useQuery({
-    queryKey: ['admin-users', queryParams],
+    queryKey: ['admin-users', filter.queryParams],
     queryFn: async () => {
-      const { data } = await api.get('/users', { params: queryParams });
+      const { data } = await api.get('/users', { params: filter.queryParams });
       return data.data as { items: User[]; total: number; page: number; totalPages: number };
     },
     staleTime: 15_000,
@@ -88,32 +70,17 @@ export function useAdminUsers(): UseAdminUsersReturn {
   const total = pageData?.total || 0;
   const totalPages = pageData?.totalPages || 0;
 
-  // Reset page on filter change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, roleFilter]);
+  // Selection
+  const selection = useUserSelection(users);
 
-  // Track selected user names for bulk delete modal
-  useEffect(() => {
-    if (!users) return;
-    setSelectedUserNames(prev => {
-      const next = new Map(prev);
-      for (const u of users) {
-        if (selectedIds.includes(u._id)) {
-          next.set(u._id, u.username);
-        }
-      }
-      return next;
-    });
-  }, [users, selectedIds]);
-
+  // Mutations
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => api.delete(`/users/${id}`),
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
       toast.success('Đã xóa người dùng thành công');
       setUserToDelete(null);
-      setSelectedIds(prev => prev.filter(item => item !== id));
+      selection.setSelectedIds(prev => prev.filter(item => item !== id));
     },
     onError: (err: any) => {
       toast.error(err.response?.data?.message || 'Không thể xóa người dùng');
@@ -126,8 +93,8 @@ export function useAdminUsers(): UseAdminUsersReturn {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
       toast.success('Đã xóa hàng loạt người dùng thành công');
-      setSelectedIds([]);
-      setSelectedUserNames(new Map());
+      selection.setSelectedIds([]);
+      selection.setSelectedUserNames(new Map());
       setShowBulkDeleteModal(false);
     },
     onError: (err: any) => {
@@ -137,7 +104,7 @@ export function useAdminUsers(): UseAdminUsersReturn {
   });
 
   const updateRoleMutation = useMutation({
-    mutationFn: async ({ id, role }: { id: string; role: 'USER' | 'ADMIN' }) => 
+    mutationFn: async ({ id, role }: { id: string; role: 'USER' | 'ADMIN' }) =>
       api.patch(`/users/${id}/role`, { role }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
@@ -162,7 +129,7 @@ export function useAdminUsers(): UseAdminUsersReturn {
   });
 
   const updateUserMutation = useMutation({
-    mutationFn: async ({ id, userData }: { id: string; userData: Partial<UserFormData> }) => 
+    mutationFn: async ({ id, userData }: { id: string; userData: Partial<UserFormData> }) =>
       api.patch(`/users/${id}`, userData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
@@ -175,7 +142,7 @@ export function useAdminUsers(): UseAdminUsersReturn {
     }
   });
 
-  // Stats - computed from server data (total from pagination response, roles from API)
+  // Stats
   const { data: allUsers } = useQuery({
     queryKey: ['admin-users-stats'],
     queryFn: async () => {
@@ -211,82 +178,28 @@ export function useAdminUsers(): UseAdminUsersReturn {
         <p className="text-sm font-semibold text-[#7A5C5C]">Xác nhận đổi vai trò</p>
         <p className="text-xs text-[#7A5C5C]/70">Bạn có chắc muốn thay đổi vai trò của "{user.username}" thành {newRole}?</p>
         <div className="flex gap-2 justify-end pt-1">
-          <button
-            onClick={() => toast.dismiss(tId)}
-            className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 text-[#7A5C5C] hover:bg-gray-50 transition-colors"
-          >
-            Hủy
-          </button>
-          <button
-            onClick={() => {
-              updateRoleMutation.mutate({ id: user._id, role: newRole });
-              toast.dismiss(tId);
-            }}
-            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#7A5C5C] text-white hover:bg-[#604444] transition-colors"
-          >
-            Xác nhận
-          </button>
+          <button onClick={() => toast.dismiss(tId)} className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 text-[#7A5C5C] hover:bg-gray-50 transition-colors">Hủy</button>
+          <button onClick={() => { updateRoleMutation.mutate({ id: user._id, role: newRole }); toast.dismiss(tId); }} className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#7A5C5C] text-white hover:bg-[#604444] transition-colors">Xác nhận</button>
         </div>
       </div>
     ), { duration: Infinity });
   };
 
-  const allFilteredIds = users?.map(u => u._id) || [];
-  const isAllSelected = allFilteredIds.length > 0 && allFilteredIds.every(id => selectedIds.includes(id));
-  const isSomeSelected = selectedIds.length > 0 && !isAllSelected;
-
-  const handleSelectAll = () => {
-    if (isAllSelected) {
-      setSelectedIds(prev => prev.filter(id => !allFilteredIds.includes(id)));
-    } else {
-      setSelectedIds(prev => Array.from(new Set([...prev, ...allFilteredIds])));
-    }
-  };
-
-  const handleSelectRow = (id: string) => {
-    if (selectedIds.includes(id)) {
-      setSelectedIds(selectedIds.filter(item => item !== id));
-    } else {
-      setSelectedIds([...selectedIds, id]);
-    }
-  };
-
   return {
-    searchTerm,
-    setSearchTerm,
-    roleFilter,
-    setRoleFilter,
-    currentPage,
-    setCurrentPage,
-    isModalOpen,
-    setIsModalOpen,
-    editingUser,
-    setEditingUser,
-    itemsPerPage,
-    users,
-    isLoading,
-    error,
-    total,
-    totalPages,
-    stats,
-    deleteMutation,
-    bulkDeleteMutation,
-    updateRoleMutation,
-    createUserMutation,
-    updateUserMutation,
-    handleOpenModal,
-    handleCloseModal,
-    handleToggleRole,
-    selectedIds,
-    setSelectedIds,
-    isAllSelected,
-    isSomeSelected,
-    handleSelectAll,
-    handleSelectRow,
-    userToDelete,
-    setUserToDelete,
-    showBulkDeleteModal,
-    setShowBulkDeleteModal,
-    selectedUserNames,
+    searchTerm: filter.searchTerm, setSearchTerm: filter.setSearchTerm,
+    roleFilter: filter.roleFilter, setRoleFilter: filter.setRoleFilter,
+    currentPage: filter.currentPage, setCurrentPage: filter.setCurrentPage,
+    isModalOpen, setIsModalOpen,
+    editingUser, setEditingUser,
+    itemsPerPage: filter.itemsPerPage,
+    users, isLoading, error, total, totalPages, stats,
+    deleteMutation, bulkDeleteMutation, updateRoleMutation, createUserMutation, updateUserMutation,
+    handleOpenModal, handleCloseModal, handleToggleRole,
+    selectedIds: selection.selectedIds, setSelectedIds: selection.setSelectedIds,
+    isAllSelected: selection.isAllSelected, isSomeSelected: selection.isSomeSelected,
+    handleSelectAll: selection.handleSelectAll, handleSelectRow: selection.handleSelectRow,
+    userToDelete, setUserToDelete,
+    showBulkDeleteModal, setShowBulkDeleteModal,
+    selectedUserNames: selection.selectedUserNames,
   };
 }

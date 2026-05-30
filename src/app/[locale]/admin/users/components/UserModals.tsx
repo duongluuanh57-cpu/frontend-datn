@@ -89,6 +89,13 @@ function UserFormModal({ isOpen, onClose, user, onSubmit, isLoading }: UserFormM
     }
   }, [isOpen, user]);
 
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [isOpen]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -132,7 +139,7 @@ function UserFormModal({ isOpen, onClose, user, onSubmit, isLoading }: UserFormM
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.95, opacity: 0 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden"
+          className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto"
         >
           {/* Header */}
           <div className="bg-gradient-to-r from-[#7A5C5C] to-[#604444] px-6 py-4 flex items-center justify-between">

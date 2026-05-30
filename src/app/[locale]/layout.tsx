@@ -1,19 +1,13 @@
 import '../globals.css';
-import './homepage-responsive.css';
 import { NextIntlClientProvider } from 'next-intl';
 import { setRequestLocale, getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
-import { locales } from '@/navigation';
 import { PHProvider } from '@/providers/posthog-provider';
 import type { Metadata } from 'next';
 import Script from 'next/script';
 import { Inter, Cormorant, Montserrat } from 'next/font/google';
-import { Topbar } from '@/components/ui/topbar';
-import { Navbar } from '@/components/ui/navbar';
-import { NavigationWrapper } from '@/components/ui/navigation-wrapper';
-import { BackendWarmup } from '@/providers/BackendWarmup';
 import { Toaster } from 'sonner';
-import { VisitTracker } from '@/providers/VisitTracker';
+import { NavigationWrapper } from '@/components/ui/navigation-wrapper';
 
 import QueryProvider from '@/providers/QueryProvider';
 
@@ -34,12 +28,8 @@ const montserrat = Montserrat({
   subsets: ['latin', 'vietnamese'],
   display: 'swap',
   variable: '--font-montserrat',
-  weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900'],
+  weight: ['300', '400', '500', '600', '700'],
 });
-
-export function generateStaticParams() {
-  return locales.map((locale) => ({ locale }));
-}
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
@@ -57,54 +47,22 @@ export default async function LocaleLayout({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
+  const isProduction = process.env.NODE_ENV === 'production';
 
-  if (!(locales as readonly string[]).includes(locale)) {
-    notFound();
+  // Prevent favicon.ico or other non-locale paths from crashing
+  if (!locale || locale === 'favicon.ico' || locale.includes('.')) {
+    return <>{children}</>;
   }
 
   setRequestLocale(locale);
 
   const messages = (await import(`../../messages/${locale}.json`)).default;
-  const isProduction = process.env.NODE_ENV === 'production';
-
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    "name": "Elite SaaS 2026",
-    "url": "https://your-domain.com",
-    "potentialAction": {
-      "@type": "SearchAction",
-      "target": "{search_term_string}",
-      "query-input": "required name=search_term_string"
-    }
-  };
 
   return (
     <html lang={locale} suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://pub-51942afe81314369ba1985f0493bce19.r2.dev" />
         <link rel="dns-prefetch" href="https://pub-51942afe81314369ba1985f0493bce19.r2.dev" />
-        <script
-          id="preloader-check"
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                try {
-                  var path = window.location.pathname;
-                  var isHomepage = path === '/' || path === '/vi' || path === '/vi/' || path === '/en' || path === '/en/';
-                  var hasShown = sessionStorage.getItem('preloader_shown');
-                  if (isHomepage && !hasShown) {
-                    document.documentElement.classList.add('preloader-loading');
-                  }
-                } catch (e) {}
-              })();
-            `
-          }}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
       </head>
       <body className={`${inter.className} ${cormorant.variable} ${montserrat.variable}`}>
         {isProduction && (
@@ -127,10 +85,8 @@ export default async function LocaleLayout({
         <PHProvider>
           <QueryProvider>
             <NextIntlClientProvider messages={messages} locale={locale}>
-              <VisitTracker />
               <NavigationWrapper>
                 <Toaster position="top-center" richColors />
-                <BackendWarmup />
                 {children}
               </NavigationWrapper>
             </NextIntlClientProvider>

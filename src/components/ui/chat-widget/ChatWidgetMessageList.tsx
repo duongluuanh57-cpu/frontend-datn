@@ -1,14 +1,17 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useChatWidget } from './useChatWidget';
 import { ChatFeedback } from '../chat-feedback';
 import { ChatProductCard } from './ChatProductCard';
 import { cn } from '@/lib/utils';
+import { type ProductData } from '../product-card';
 
 interface ChatWidgetMessageListProps {
   formHelpers: ReturnType<typeof useChatWidget>;
 }
+
+const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:4000/api';
 
 export function ChatWidgetMessageList({ formHelpers }: ChatWidgetMessageListProps) {
   const {
@@ -18,15 +21,56 @@ export function ChatWidgetMessageList({ formHelpers }: ChatWidgetMessageListProp
     setMessageRating
   } = formHelpers;
 
-  const renderMessageContent = (content: string) => {
+  const [productMap, setProductMap] = useState<Record<string, ProductData>>({});
+  const [loadingCards, setLoadingCards] = useState(false);
+  const prevCardIdsRef = useRef('');
+
+  const extractCardIds = (content: string): string[] => {
     const cardRegex = /\[CARD:([a-f\d]{24})\]/g;
-    const cardIds: string[] = [];
+    const ids: string[] = [];
     let match;
-
     while ((match = cardRegex.exec(content)) !== null) {
-      cardIds.push(match[1]);
+      ids.push(match[1]);
     }
+    return ids;
+  };
 
+  const allCardIds = messages
+    .filter(m => m.role === 'assistant')
+    .flatMap(m => extractCardIds(m.content));
+
+  const cardIdsKey = allCardIds.join(',');
+
+  useEffect(() => {
+    if (!allCardIds.length) return;
+    if (cardIdsKey === prevCardIdsRef.current) return;
+    prevCardIdsRef.current = cardIdsKey;
+
+    let cancelled = false;
+    setLoadingCards(true);
+
+    (async () => {
+      try {
+        const res = await fetch(`${backendUrl}/products/bulk?ids=${allCardIds.join(',')}`);
+        const json = await res.json();
+        if (cancelled) return;
+        if (json.success && Array.isArray(json.data)) {
+          const map: Record<string, ProductData> = {};
+          json.data.forEach((p: ProductData) => { map[p._id] = p; });
+          setProductMap(map);
+        }
+      } catch (err) {
+        console.error('Failed to bulk fetch products', err);
+      } finally {
+        if (!cancelled) setLoadingCards(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [cardIdsKey]);
+
+  const renderMessageContent = (content: string) => {
+    const cardIds = extractCardIds(content);
     const cleanText = content.replace(/\[CARD:[a-f\d]{24}\]/g, '').trim();
 
     return (
@@ -39,7 +83,11 @@ export function ChatWidgetMessageList({ formHelpers }: ChatWidgetMessageListProp
             cardIds.length === 1 ? "grid-cols-1 max-w-[180px]" : "grid-cols-2"
           )}>
             {cardIds.map((id, i) => (
-              <ChatProductCard key={`${id}-${i}`} productId={id} />
+              <ChatProductCard
+                key={`${id}-${i}`}
+                product={productMap[id] ?? null}
+                loading={loadingCards && !productMap[id]}
+              />
             ))}
           </div>
         )}
@@ -61,7 +109,6 @@ export function ChatWidgetMessageList({ formHelpers }: ChatWidgetMessageListProp
             {renderMessageContent(msg.content)}
           </div>
           
-          {/* Rating feedback section for AI response */}
           {msg.role === 'assistant' && msg.id !== 'welcome' && !isLoading && (
             <ChatFeedback 
               messageId={msg.id} 

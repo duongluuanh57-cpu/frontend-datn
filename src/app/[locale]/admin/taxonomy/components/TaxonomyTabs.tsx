@@ -24,7 +24,6 @@ export function TaxonomyTabs({ adminTaxonomy }: TaxonomyTabsProps) {
     >
       {tabs.map((tab) => {
         const active = activeTab === tab.id;
-        const Icon = tab.icon;
         return (
           <button
             key={tab.id}
@@ -51,7 +50,6 @@ export function TaxonomyTabs({ adminTaxonomy }: TaxonomyTabsProps) {
               if (!active) e.currentTarget.style.color = 'var(--admin-text-muted, #9a857c)';
             }}
           >
-            <Icon size={16} style={{ opacity: active ? 1 : 0.7 }} />
             {isVi ? tab.labelVi : tab.labelEn}
           </button>
         );

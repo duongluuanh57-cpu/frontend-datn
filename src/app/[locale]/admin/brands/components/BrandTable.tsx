@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Loader2, Sparkles, Search, Award, Globe, Check, X } from 'lucide-react';
 import Image from 'next/image';
 import { Link } from '@/navigation';
@@ -8,9 +8,10 @@ import type { UseAdminBrandsReturn } from '@/hooks/useAdminBrands';
 
 interface BrandTableProps {
   adminBrands: UseAdminBrandsReturn;
+  deletingIds?: string[];
 }
 
-export function BrandTable({ adminBrands }: BrandTableProps) {
+export function BrandTable({ adminBrands, deletingIds = [] }: BrandTableProps) {
   const {
     isVi,
     isLoading,
@@ -27,8 +28,29 @@ export function BrandTable({ adminBrands }: BrandTableProps) {
     total,
   } = adminBrands;
 
+  const [filterVersion, setFilterVersion] = useState(0);
+  const prevBrandsKeyRef = useRef('');
+
+  useEffect(() => {
+    const key = (brands || []).map(b => b._id).join(',');
+    if (prevBrandsKeyRef.current !== key) {
+      setFilterVersion((v) => v + 1);
+      prevBrandsKeyRef.current = key;
+    }
+  }, [brands]);
+
   return (
     <div className="admin-table-wrap">
+      <style>{`
+        @keyframes brandRowEnter {
+          from { opacity: 0; transform: translateY(8px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes brandRowExit {
+          from { opacity: 1; transform: translateX(0); }
+          to   { opacity: 0; transform: translateX(70px); }
+        }
+      `}</style>
       <div className="admin-table-scroll">
         <table className="admin-table">
           <thead>
@@ -85,10 +107,22 @@ export function BrandTable({ adminBrands }: BrandTableProps) {
                 </td>
               </tr>
             ) : (
-              brands.map((brand) => {
+              brands.map((brand, index) => {
                 const isChecked = selectedIds.includes(brand._id);
+                const isDeleting = deletingIds.includes(brand._id);
+                const animDelay = `${index * 0.04}s`;
                 return (
-                  <tr key={brand._id} style={isChecked ? { background: 'rgba(212, 165, 165, 0.05)' } : undefined}>
+                  <tr
+                    key={`${filterVersion}-${brand._id}`}
+                    style={{
+                      animationName: isDeleting ? 'brandRowExit' : 'brandRowEnter',
+                      animationDuration: '0.35s',
+                      animationTimingFunction: 'ease',
+                      animationFillMode: isDeleting ? 'forwards' : 'both',
+                      animationDelay: isDeleting ? '0s' : animDelay,
+                      ...(isChecked && !isDeleting ? { background: 'rgba(212, 165, 165, 0.05)' } : {}),
+                    }}
+                  >
                     <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
                       <input
                         type="checkbox"

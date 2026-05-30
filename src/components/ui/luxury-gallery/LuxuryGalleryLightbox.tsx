@@ -27,7 +27,7 @@ export function LuxuryGalleryLightbox({ formHelpers }: LuxuryGalleryLightboxProp
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.4 }}
-        className="fixed inset-0 z-[999] bg-black/90 backdrop-blur-xl flex flex-col items-center justify-center p-4 md:p-8 select-none"
+        className="fixed inset-0 z-[10001] bg-black/90 backdrop-blur-xl flex flex-col items-center justify-center p-4 md:p-8 select-none"
         onClick={() => setSelectedImageIndex(null)}
       >
         {/* Soft background light blooms */}

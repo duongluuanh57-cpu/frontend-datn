@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslations, useLocale } from 'next-intl';
 import './banner.css';
@@ -12,15 +12,7 @@ import { BannerTitle } from './banner/BannerTitle';
 import { BannerDescription } from './banner/BannerDescription';
 import { BannerActions } from './banner/BannerActions';
 import { ImageEditorModal } from './banner/ImageEditorModal';
-
-// --- Configuration ---
-const SLIDE_DURATION = 6000; // 6 seconds per slide
-const DEFAULT_IMAGES = [
-  "/images/banner-1.webp",
-  "/images/banner-2.webp",
-  "/images/banner-3.webp",
-  "/images/banner-4.webp"
-];
+import { useBannerData } from './banner/useBannerData';
 
 // --- Animation Variants ---
 const containerVariants = {
@@ -63,67 +55,20 @@ export function Banner({
 }: BannerProps) {
   const t = useTranslations('Home');
   const locale = useLocale();
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editorMaxWidth, setEditorMaxWidth] = useState<number | undefined>(1024);
   const [editorQuality, setEditorQuality] = useState<number | undefined>(80);
 
-  // Dynamic customized data states
-  const [images, setImages] = useState<string[]>(previewData ? previewData.images : DEFAULT_IMAGES);
-  const [bannerTexts, setBannerTexts] = useState({
-    title: '',
-    subtitle: ''
-  });
-  const [bannerLabel, setBannerLabel] = useState('');
+  const {
+    currentImageIndex, setCurrentImageIndex,
+    images, setImages,
+    bannerTexts: { title, subtitle },
+    bannerLabel, setBannerLabel,
+  } = useBannerData(previewData);
 
-  // Load customizable homepage data from LocalStorage
-  useEffect(() => {
-    if (previewData) {
-      setImages(previewData.images);
-      if (previewData.label) setBannerLabel(previewData.label);
-      return;
-    }
-
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('lessence_custom_homepage_data');
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (parsed.banners && Array.isArray(parsed.banners) && parsed.banners.length > 0) {
-            setImages(parsed.banners);
-          }
-          const lang = locale === 'vi' ? 'vi' : 'en';
-          const title = parsed[`banner_title_${lang}`];
-          const subtitle = parsed[`banner_subtitle_${lang}`];
-          setBannerTexts({
-            title: title || '',
-            subtitle: subtitle || ''
-          });
-          const label = parsed[`banner_label_${lang}`];
-          setBannerLabel(label || '');
-        } catch (e) {
-          console.error('Error loading custom homepage config:', e);
-        }
-      }
-    }
-  }, [locale, previewData]);
-
-  // Update images if previewData changes
-  useEffect(() => {
-    if (previewData) {
-      setImages(previewData.images);
-    }
-  }, [previewData]);
-
-  // Auto-slide effect
-  useEffect(() => {
-    if (images.length === 0) return;
-    const timer = setInterval(() => {
-      setCurrentImageIndex((prev) => (prev + 1) % images.length);
-    }, SLIDE_DURATION);
-    return () => clearInterval(timer);
-  }, [images]);
+  const displayTitle = title || t('bannerTitle');
+  const displaySubtitle = subtitle || t('bannerSubtitle');
+  const displayLabel = bannerLabel || (locale === 'vi' ? 'BST NƯỚC HOA CAO CẤP' : 'PREMIUM FRAGRANCE HOUSE');
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -133,25 +78,20 @@ export function Banner({
     "url": "https://lessence.vn"
   };
 
-  const displayTitle = bannerTexts.title || t('bannerTitle');
-  const displaySubtitle = bannerTexts.subtitle || t('bannerSubtitle');
-  const displayLabel = bannerLabel || (locale === 'vi' ? 'BST NƯỚC HOA CAO CẤP' : 'PREMIUM FRAGRANCE HOUSE');
-
   return (
     <section
-      className={`relative w-full overflow-hidden bg-[#FFF5F5] ${
-        isPreview ? 'h-[320px] sm:h-[380px] md:h-[450px]' : 'h-[calc(85vh-13px)]'
+      className={`relative overflow-hidden bg-[#FFF5F5] ${
+        isPreview ? 'w-full h-[320px] sm:h-[380px] md:h-[450px]' : 'w-[calc(100%-4rem)] mx-auto h-[calc(85vh-13px)]'
       }`}
       role="banner"
       aria-label="Hero Banner Slideshow"
     >
-      {/* Schema Markup */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      {/* Quick-edit overlay for images (shown on hover) */}
+      {/* Quick-edit overlay */}
       {isPreview && (
         <div className="absolute inset-0 z-20 flex items-start justify-start pointer-events-none">
           <button
@@ -164,7 +104,6 @@ export function Banner({
         </div>
       )}
 
-      {/* Slide Background */}
       {images.length > 0 && (
         <BannerBackground
           images={images}
@@ -173,15 +112,11 @@ export function Banner({
         />
       )}
 
-      {/* Morphing ambient color blobs behind the glass card for refraction aesthetics */}
       <div className="ambient-glow glow-1" />
       <div className="ambient-glow glow-2" />
 
-      {/* Content wrapper with floating Glassmorphic panel */}
       <div className="absolute inset-0 z-10 flex items-center justify-center md:justify-end px-6 md:px-16 lg:px-24">
         <div className="flex flex-col md:flex-row items-center gap-6 lg:gap-10">
-
-          {/* Glass Card Container */}
           <motion.div
             className={`banner-glass banner-floating flex flex-col items-center md:items-end text-center md:text-right ${
               isPreview 
@@ -211,11 +146,8 @@ export function Banner({
             <BannerActions isPreview={isPreview} />
           </motion.div>
 
-          {/* Slide Indicators - Translucent Dots */}
-          <div
-            className="flex md:flex-col gap-4 py-2"
-            aria-label={t('goToSlide', { n: '' })}
-          >
+          {/* Slide Indicators */}
+          <div className="flex md:flex-col gap-4 py-2" aria-label={t('goToSlide', { n: '' })}>
             {images.map((_, i) => (
               <button
                 key={i}
@@ -243,7 +175,6 @@ export function Banner({
               setQuality={setEditorQuality}
             />
           )}
-
         </div>
       </div>
     </section>

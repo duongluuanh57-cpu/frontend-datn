@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { AlertCircle } from 'lucide-react';
 import { useProductList } from '@/hooks/useProductList';
 import { useProductFilters } from '@/hooks/useProductFilters';
@@ -19,10 +19,48 @@ export default function AdminProductsPage() {
     selectedBrand: filters.selectedBrand,
     stockFilter: filters.stockFilter,
     selectedTag: filters.selectedTag,
+    selectedCategory: filters.selectedCategory,
     sortBy: filters.sortBy,
   });
   const selection = useProductSelection(products);
   const deletes = useProductDelete(filters.isVi, selection.setSelectedIds);
+
+  const [deletingIds, setDeletingIds] = useState<string[]>([]);
+
+  const handleDeleteWithAnimation = (id: string) => {
+    setDeletingIds(prev => [...prev, id]);
+    deletes.setProductToDelete(null);
+    setTimeout(() => deletes.deleteMutation.mutate(id), 400);
+  };
+
+  const handleBulkDeleteWithAnimation = (ids: string[]) => {
+    setDeletingIds(prev => [...prev, ...ids]);
+    deletes.setShowBulkDeleteModal(false);
+    setTimeout(() => deletes.bulkDeleteMutation.mutate(ids), 400);
+  };
+
+  const animatedDeleteMutation = {
+    mutate: handleDeleteWithAnimation,
+    isPending: deletes.deleteMutation.isPending,
+  };
+
+  const animatedBulkDeleteMutation = {
+    mutate: handleBulkDeleteWithAnimation,
+    isPending: deletes.bulkDeleteMutation.isPending,
+  };
+
+  const prevProductsKeyRef = useRef('');
+
+  useEffect(() => {
+    const key = products.map(p => p._id).join(',');
+    if (prevProductsKeyRef.current === key) return;
+    prevProductsKeyRef.current = key;
+    setDeletingIds(prev => {
+      const ids = new Set(products.map(p => p._id));
+      const next = prev.filter(id => ids.has(id));
+      return next.length === prev.length && next.every((id, i) => id === prev[i]) ? prev : next;
+    });
+  }, [products]);
 
   if (error) {
     return (
@@ -51,6 +89,7 @@ export default function AdminProductsPage() {
         handleSelectAll={selection.handleSelectAll}
         handleSelectRow={selection.handleSelectRow}
         setProductToDelete={deletes.setProductToDelete}
+        deletingIds={deletingIds}
       />
       <ProductPagination
         currentPage={currentPage}
@@ -64,8 +103,8 @@ export default function AdminProductsPage() {
         setProductToDelete={deletes.setProductToDelete}
         showBulkDeleteModal={deletes.showBulkDeleteModal}
         setShowBulkDeleteModal={deletes.setShowBulkDeleteModal}
-        deleteMutation={deletes.deleteMutation}
-        bulkDeleteMutation={deletes.bulkDeleteMutation}
+        deleteMutation={animatedDeleteMutation}
+        bulkDeleteMutation={animatedBulkDeleteMutation}
         products={products}
         selectedIds={selection.selectedIds}
         isVi={filters.isVi}

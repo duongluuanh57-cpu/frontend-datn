@@ -18,7 +18,7 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
               L'essence Journal
             </span>
             <h1 className="mt-4 text-4xl md:text-5xl lg:text-6xl font-medium text-[#7A5C5C]">
-              {isVi ? 'Góc chia sẻ kiến thức' : 'Knowledge Blog'}
+              {isVi ? 'Bài viết mới nhất' : 'Latest Posts'}
             </h1>
             <p className="mt-4 text-sm text-[#7A5C5C]/60 max-w-[600px] font-medium leading-relaxed">
               {isVi

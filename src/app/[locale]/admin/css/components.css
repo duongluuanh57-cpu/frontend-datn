@@ -611,7 +611,7 @@
   border: 1px solid var(--admin-border);
   border-radius: var(--admin-radius-lg);
   box-shadow: var(--admin-shadow-sm);
-  overflow: hidden;
+  overflow: clip;
 }
 
 .admin-table-scroll {

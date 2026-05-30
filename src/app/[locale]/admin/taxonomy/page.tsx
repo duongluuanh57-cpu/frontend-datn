@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAdminTaxonomy } from '@/hooks/useAdminTaxonomy';
 import { TaxonomyHeader } from './components/TaxonomyHeader';
 import { TaxonomyFilterBar } from './components/TaxonomyFilterBar';
@@ -13,7 +13,50 @@ import { AlertCircle } from 'lucide-react';
 
 export default function AdminTaxonomyPage() {
   const adminTaxonomy = useAdminTaxonomy();
-  const { error, isVi } = adminTaxonomy;
+  const { error, isVi, items } = adminTaxonomy;
+
+  const [deletingIds, setDeletingIds] = useState<string[]>([]);
+
+  const handleDeleteWithAnimation = (id: string) => {
+    setDeletingIds(prev => [...prev, id]);
+    adminTaxonomy.setItemToDelete(null);
+    setTimeout(() => adminTaxonomy.deleteMutation.mutate(id), 400);
+  };
+
+  const handleBulkDeleteWithAnimation = (ids: string[]) => {
+    setDeletingIds(prev => [...prev, ...ids]);
+    adminTaxonomy.setShowBulkDeleteModal(false);
+    setTimeout(() => adminTaxonomy.bulkDeleteMutation.mutate(ids), 400);
+  };
+
+  const prevItemsKeyRef = useRef('');
+
+  useEffect(() => {
+    const key = (items || []).map(i => i._id).join(',');
+    if (prevItemsKeyRef.current === key) return;
+    prevItemsKeyRef.current = key;
+    setDeletingIds(prev => {
+      const ids = new Set((items || []).map(i => i._id));
+      const next = prev.filter(id => ids.has(id));
+      return next.length === prev.length && next.every((id, i) => id === prev[i]) ? prev : next;
+    });
+  }, [items]);
+
+  const animatedDeleteMutation = {
+    mutate: handleDeleteWithAnimation,
+    isPending: adminTaxonomy.deleteMutation.isPending,
+  };
+
+  const animatedBulkDeleteMutation = {
+    mutate: handleBulkDeleteWithAnimation,
+    isPending: adminTaxonomy.bulkDeleteMutation.isPending,
+  };
+
+  const modifiedAdminTaxonomy = {
+    ...adminTaxonomy,
+    deleteMutation: animatedDeleteMutation,
+    bulkDeleteMutation: animatedBulkDeleteMutation,
+  };
 
   if (error) {
     return (
@@ -32,10 +75,10 @@ export default function AdminTaxonomyPage() {
       <TaxonomyHeader adminTaxonomy={adminTaxonomy} />
       <TaxonomyFilterBar adminTaxonomy={adminTaxonomy} />
       <TaxonomyTabs adminTaxonomy={adminTaxonomy} />
-      <TaxonomyTable adminTaxonomy={adminTaxonomy} />
+      <TaxonomyTable adminTaxonomy={adminTaxonomy} deletingIds={deletingIds} />
       <TaxonomyPagination adminTaxonomy={adminTaxonomy} />
       <TaxonomyBulkActionBar adminTaxonomy={adminTaxonomy} />
-      <TaxonomyModals adminTaxonomy={adminTaxonomy} />
+      <TaxonomyModals adminTaxonomy={modifiedAdminTaxonomy} />
     </div>
   );
 }

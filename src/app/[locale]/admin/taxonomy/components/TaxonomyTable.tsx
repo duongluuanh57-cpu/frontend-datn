@@ -1,15 +1,16 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Loader2, Sparkles, Search } from 'lucide-react';
 import { Link } from '@/navigation';
 import type { UseAdminTaxonomyReturn } from '@/hooks/useAdminTaxonomy';
 
 interface TaxonomyTableProps {
   adminTaxonomy: UseAdminTaxonomyReturn;
+  deletingIds?: string[];
 }
 
-export function TaxonomyTable({ adminTaxonomy }: TaxonomyTableProps) {
+export function TaxonomyTable({ adminTaxonomy, deletingIds = [] }: TaxonomyTableProps) {
   const {
     activeTab,
     isVi,
@@ -25,10 +26,31 @@ export function TaxonomyTable({ adminTaxonomy }: TaxonomyTableProps) {
     handleSelectRow,
   } = adminTaxonomy;
 
-  const colCount = activeTab === 'tags' ? 5 : 4; // checkbox + name + slug + (desc) + status
+  const colCount = 4; // checkbox + name + slug + status
+
+  const [filterVersion, setFilterVersion] = useState(0);
+  const prevItemsKeyRef = useRef('');
+
+  useEffect(() => {
+    const key = (items || []).map(i => i._id).join(',');
+    if (prevItemsKeyRef.current !== key) {
+      setFilterVersion((v) => v + 1);
+      prevItemsKeyRef.current = key;
+    }
+  }, [items]);
 
   return (
     <div className="admin-table-wrap">
+      <style>{`
+        @keyframes taxonomyRowEnter {
+          from { opacity: 0; transform: translateY(8px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes taxonomyRowExit {
+          from { opacity: 1; transform: translateX(0); }
+          to   { opacity: 0; transform: translateX(70px); }
+        }
+      `}</style>
       <div className="admin-table-scroll">
         <table className="admin-table">
           <thead>
@@ -52,7 +74,7 @@ export function TaxonomyTable({ adminTaxonomy }: TaxonomyTableProps) {
               </th>
               <th>{isVi ? 'Tên gọi' : 'Name'}</th>
               <th>{isVi ? 'Mã liên kết (Slug)' : 'Slug'}</th>
-              {activeTab === 'tags' && <th>{isVi ? 'Mô tả' : 'Description'}</th>}
+
               <th>{isVi ? 'Trạng thái' : 'Status'}</th>
             </tr>
           </thead>
@@ -85,10 +107,22 @@ export function TaxonomyTable({ adminTaxonomy }: TaxonomyTableProps) {
                 </td>
               </tr>
             ) : (
-              items.map((item) => {
+              items.map((item, index) => {
                 const isChecked = selectedIds.includes(item._id);
+                const isDeleting = deletingIds.includes(item._id);
+                const animDelay = `${index * 0.04}s`;
                 return (
-                  <tr key={item._id} style={isChecked ? { background: 'rgba(212, 165, 165, 0.05)' } : undefined}>
+                  <tr
+                    key={`${filterVersion}-${item._id}`}
+                    style={{
+                      animationName: isDeleting ? 'taxonomyRowExit' : 'taxonomyRowEnter',
+                      animationDuration: '0.35s',
+                      animationTimingFunction: 'ease',
+                      animationFillMode: isDeleting ? 'forwards' : 'both',
+                      animationDelay: isDeleting ? '0s' : animDelay,
+                      ...(isChecked && !isDeleting ? { background: 'rgba(212, 165, 165, 0.05)' } : {}),
+                    }}
+                  >
                     <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
                       <input
                         type="checkbox"
@@ -115,13 +149,7 @@ export function TaxonomyTable({ adminTaxonomy }: TaxonomyTableProps) {
                         {item.slug}
                       </code>
                     </td>
-                    {activeTab === 'tags' && (
-                      <td>
-                        <span style={{ fontSize: '0.8125rem', color: 'var(--admin-text-secondary, #6b564c)' }}>
-                          {item.description || '—'}
-                        </span>
-                      </td>
-                    )}
+
                     <td>
                       <span
                         className={`admin-badge ${item.status === 'active' ? 'admin-badge--ok' : 'admin-badge--low'}`}

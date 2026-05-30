@@ -6,131 +6,13 @@ import { toast } from 'sonner';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/navigation';
 import api from '@/lib/api';
+import type { ProductFormData, Brand, TagItem } from './productFormTypes';
+import { SIZE_CATEGORIES, EMPTY_FORM } from './productFormTypes';
+import { toFormState, slugify, uploadBase64ImagesToR2 } from './productFormHelpers';
 
-export interface ProductFormData {
-  name: string;
-  brand: string;
-  price: number;
-  image: string;
-  images?: string[];
-  description: string;
-  tag: string;
-  scentGroup?: string;
-  concentration?: string;
-  segment?: string;
-  gender?: string;
-  rating: number;
-  reviewsCount: number;
-  size: string;
-  quantityInStock: number;
-  discountPercentage: number;
-  discountStartDate?: Date | null | string;
-  discountEndDate?: Date | null | string;
-  metaTitle: string;
-  metaDescription: string;
-  keywords?: string[] | string;
-  slug?: string;
-  priceReport?: string;
-  sizeReport?: string;
-  discountReport?: string;
-}
-
-export interface Brand {
-  _id: string;
-  name: string;
-  status: 'active' | 'inactive';
-}
-
-export interface TagItem {
-  _id: string;
-  name: string;
-  slug: string;
-  status: 'active' | 'inactive';
-}
-
-export const SIZE_CATEGORIES = [
-  { name: 'Chiết/Sample (dùng thử)', nameEn: 'Decant/Sample (trial)', sizes: ['2ml', '5ml', '10ml'] },
-  { name: 'Size nhỏ', nameEn: 'Small Size', sizes: ['30ml'] },
-  { name: 'Size tiêu chuẩn', nameEn: 'Standard Size', sizes: ['50ml', '100ml'] },
-  { name: 'Size lớn', nameEn: 'Large Size', sizes: ['150ml', '200ml'] }
-];
-
-export const EMPTY_FORM = {
-  name: '', brand: '', price: 0, image: '', images: [] as string[],
-  description: '', tag: '', scentGroup: '', concentration: '', segment: '',
-  gender: '', rating: 5, reviewsCount: 0, size: '', quantityInStock: 0,
-  discountPercentage: 0, discountStartDate: null as Date | null,
-  discountEndDate: null as Date | null, metaTitle: '', metaDescription: '',
-  keywords: '', slug: '', priceReport: '', sizeReport: '', discountReport: '',
-};
-
-export function toFormState(data?: ProductFormData) {
-  if (!data) return { ...EMPTY_FORM };
-  return {
-    name: data.name ?? '', brand: data.brand ?? '', price: data.price ?? 0,
-    image: data.image ?? '', images: data.images ?? [],
-    description: data.description ?? '', tag: data.tag ?? '',
-    scentGroup: data.scentGroup ?? '', concentration: data.concentration ?? '',
-    segment: data.segment ?? '', gender: data.gender ?? '',
-    rating: data.rating ?? 5, reviewsCount: data.reviewsCount ?? 0,
-    size: data.size ?? '', quantityInStock: data.quantityInStock ?? 0,
-    discountPercentage: data.discountPercentage ?? 0,
-    discountStartDate: data.discountStartDate ? new Date(data.discountStartDate) : null,
-    discountEndDate: data.discountEndDate ? new Date(data.discountEndDate) : null,
-    metaTitle: data.metaTitle ?? '', metaDescription: data.metaDescription ?? '',
-    keywords: Array.isArray(data.keywords) ? data.keywords.join(', ') : (data.keywords ?? ''),
-    slug: data.slug ?? '',
-    priceReport: data.priceReport ?? '', sizeReport: data.sizeReport ?? '',
-    discountReport: data.discountReport ?? '',
-  };
-}
-
-export const formatSizeString = (sizeStr: string) => {
-  if (!sizeStr) return '';
-  return sizeStr.split(',').map(item => {
-    const parts = item.trim().split(':');
-    const sz = parts[0];
-    const pr = parts[1];
-    if (pr) {
-      const num = parseInt(pr);
-      if (!isNaN(num)) return `${sz} (${num.toLocaleString('vi-VN')}đ)`;
-    }
-    return sz;
-  }).join(', ');
-};
-
-export const parseExplanation = (text: string) => {
-  if (!text) return [];
-  const sections = text.split(/\*\*(?=\d\.)/);
-  return sections.map((sec) => sec.trim()).filter(Boolean).filter((sec) => /^\d\./.test(sec)).map((sec) => {
-    const lines = sec.split('\n');
-    let titleLine = lines[0].replace(/\*\*/g, '').trim();
-    let content = lines.slice(1).join('\n').trim();
-    if (titleLine.length > 80 && titleLine.includes(':')) {
-      const colonIndex = titleLine.indexOf(':');
-      const realTitle = titleLine.substring(0, colonIndex + 1).trim();
-      const firstBullet = titleLine.substring(colonIndex + 1).trim();
-      titleLine = realTitle;
-      content = firstBullet + (content ? '\n' + content : '');
-    }
-    return { title: titleLine, content };
-  });
-};
-
-export const slugify = (text: string): string => {
-  const vietnameseMap: Record<string, string> = {
-    à: 'a', á: 'a', ả: 'a', ã: 'a', ạ: 'a', ă: 'a', ắ: 'a', ằ: 'a', ẳ: 'a', ẵ: 'a', ặ: 'a',
-    â: 'a', ấ: 'a', ầ: 'a', ẩ: 'a', ẫ: 'a', ậ: 'a', è: 'e', é: 'e', ẻ: 'e', ẽ: 'e', ẹ: 'e',
-    ê: 'e', ế: 'e', ề: 'e', ể: 'e', ễ: 'e', ệ: 'e', ì: 'i', í: 'i', ỉ: 'i', ĩ: 'i', ị: 'i',
-    ò: 'o', ó: 'o', ỏ: 'o', õ: 'o', ọ: 'o', ô: 'o', ố: 'o', ổ: 'o', ỗ: 'o', ộ: 'o',
-    ơ: 'o', ớ: 'o', ờ: 'o', ở: 'o', ỡ: 'o', ợ: 'o', ù: 'u', ú: 'u', ủ: 'u', ũ: 'u', ụ: 'u',
-    ư: 'u', ứ: 'u', ừ: 'u', ử: 'u', ữ: 'u', ự: 'u', ỳ: 'y', ý: 'y', ỷ: 'y', ỹ: 'y', ỵ: 'y', đ: 'd',
-  };
-  return text.toString().toLowerCase().trim()
-    .replace(/[^\u0000-\u007E]/g, (char) => vietnameseMap[char] ?? '')
-    .replace(/\s+/g, '-').replace(/[^\w-]+/g, '').replace(/--+/g, '-')
-    .replace(/^-+|-+$/g, '') || `product-${Date.now()}`;
-};
+export type { ProductFormData, Brand, TagItem } from './productFormTypes';
+export { SIZE_CATEGORIES, EMPTY_FORM } from './productFormTypes';
+export { toFormState, formatSizeString, parseExplanation, slugify, uploadBase64ImagesToR2 } from './productFormHelpers';
 
 export interface UseProductFormProps {
   initialData?: ProductFormData;
@@ -157,6 +39,10 @@ export function useProductForm({ initialData, productId }: UseProductFormProps) 
   const { data: tags } = useQuery({
     queryKey: ['admin-active-tags-list'],
     queryFn: async () => { const { data } = await api.get('/tags'); return data.data as TagItem[]; }
+  });
+  const { data: categories } = useQuery({
+    queryKey: ['categories-list'],
+    queryFn: async () => { const { data } = await api.get('/categories'); return data.data as { _id: string; name: string; slug: string; status: string }[]; }
   });
   const { data: taxonomyList } = useQuery({
     queryKey: ['v2-taxonomies'],
@@ -199,7 +85,6 @@ export function useProductForm({ initialData, productId }: UseProductFormProps) 
   // Chuyển đổi brand name sang brandId khi brands load xong (cho edit mode)
   useEffect(() => {
     if (brands && initialData?.brand && /^[0-9a-fA-F]{24}$/.test(initialData.brand) === false) {
-      // brand hiện tại là tên, cần chuyển sang ID
       const matchedBrand = brands.find(b => b.name.toLowerCase() === initialData.brand!.toLowerCase());
       if (matchedBrand) {
         setFormData(prev => ({ ...prev, brand: matchedBrand._id }));
@@ -212,19 +97,19 @@ export function useProductForm({ initialData, productId }: UseProductFormProps) 
   };
 
   // --- Selection State & Toggles ---
-  const selectedTags = formData.tag ? formData.tag.split(',').map((s) => s.trim()).filter(Boolean) : [];
-  const selectedGenders = formData.gender ? formData.gender.split(',').map((s) => s.trim()).filter(Boolean) : [];
-  const selectedScentGroups = formData.scentGroup ? formData.scentGroup.split(',').map((s) => s.trim()).filter(Boolean) : [];
-  const selectedConcentrations = formData.concentration ? formData.concentration.split(',').map((s) => s.trim()).filter(Boolean) : [];
-  const selectedSegments = formData.segment ? formData.segment.split(',').map((s) => s.trim()).filter(Boolean) : [];
+  const selectedTags = formData.tag ? [...new Set(formData.tag.split(',').map((s) => s.trim()).filter(Boolean))] : [];
+  const selectedScentGroups = formData.scentGroup ? [...new Set(formData.scentGroup.split(',').map((s) => s.trim()).filter(Boolean))] : [];
+  const selectedConcentrations = formData.concentration ? [...new Set(formData.concentration.split(',').map((s) => s.trim()).filter(Boolean))] : [];
+  const selectedSegments = formData.segment ? [...new Set(formData.segment.split(',').map((s) => s.trim()).filter(Boolean))] : [];
+  const selectedCategories = formData.categories ? [...new Set(formData.categories.split(',').map((s) => s.trim()).filter(Boolean))] : [];
 
   const handleTagToggle = (slug: string) => {
     const next = selectedTags.includes(slug) ? selectedTags.filter((t) => t !== slug) : [...selectedTags, slug];
     update({ tag: next.join(',') });
   };
-  const handleGenderToggle = (val: string) => {
-    const next = selectedGenders.includes(val) ? selectedGenders.filter((v) => v !== val) : [...selectedGenders, val];
-    update({ gender: next.join(',') });
+  const handleCategoryToggle = (val: string) => {
+    const next = selectedCategories.includes(val) ? selectedCategories.filter((v) => v !== val) : [...selectedCategories, val];
+    update({ categories: next.join(',') });
   };
   const handleScentGroupToggle = (val: string) => {
     const next = selectedScentGroups.includes(val) ? selectedScentGroups.filter((v) => v !== val) : [...selectedScentGroups, val];
@@ -240,12 +125,11 @@ export function useProductForm({ initialData, productId }: UseProductFormProps) 
   };
 
   const [isTagModalOpen, setIsTagModalOpen] = useState(false);
-  const [isGenderModalOpen, setIsGenderModalOpen] = useState(false);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isScentGroupModalOpen, setIsScentGroupModalOpen] = useState(false);
   const [isConcentrationModalOpen, setIsConcentrationModalOpen] = useState(false);
   const [isSegmentModalOpen, setIsSegmentModalOpen] = useState(false);
 
-  const [customGender, setCustomGender] = useState('');
   const [customScentGroup, setCustomScentGroup] = useState('');
   const [customConcentration, setCustomConcentration] = useState('');
   const [customSegment, setCustomSegment] = useState('');
@@ -316,29 +200,21 @@ export function useProductForm({ initialData, productId }: UseProductFormProps) 
         availableScentGroups: scentGroups?.map((s) => s.name) || [],
         availableConcentrations: concentrations?.map((c) => c.name) || [],
         availableSegments: segments?.map((s) => s.name) || [],
-        availableGenders: ['Nam', 'Nữ', 'Unisex'],
+        availableCategories: categories?.map(c => c.name) || ['Nam', 'Nữ', 'Unisex'],
         availableSizes: allAvailableSizes,
         availableTags: tags?.map((t) => t.name) || [],
       });
       if (data.success && data.data) {
         const info = data.data;
         setFormData((prev) => {
-          // Ưu tiên dùng brandId từ AI response, nếu không có thì resolve từ brand name
           let brandId = prev.brand;
           if (info.brandId) {
-            // AI đã trả về brandId sẵn
             brandId = info.brandId;
           } else if (info.brand && brands) {
-            // AI chỉ trả về brand name, cần resolve sang brandId
             const matchedBrand = brands.find(b => b.name.toLowerCase() === info.brand.toLowerCase());
-            if (matchedBrand) {
-              brandId = matchedBrand._id;
-            } else {
-              // Nếu không tìm thấy, giữ nguyên tên để backend xử lý fallback
-              brandId = info.brand;
-            }
+            if (matchedBrand) brandId = matchedBrand._id;
+            else brandId = info.brand;
           }
-
 
           const nextMetaTitle = info.metaTitle || prev.metaTitle;
           const nextSlug = info.slug || prev.slug || slugify(nextMetaTitle || info.name || prev.name);
@@ -356,11 +232,9 @@ export function useProductForm({ initialData, productId }: UseProductFormProps) 
             sizeReport: info.sizeReport || prev.sizeReport,
             discountReport: info.discountReport || prev.discountReport,
             scentGroup: info.scentGroup || prev.scentGroup, concentration: info.concentration || prev.concentration,
-            segment: info.segment || prev.segment, gender: info.gender || prev.gender, tag: info.tag || prev.tag,
+            segment: info.segment || prev.segment, categories: info.category || prev.categories || '', tag: info.tag || prev.tag,
           };
         });
-// ... existing code ...
-// ... existing code ...
         setPriceReport(info.priceReport || null);
         setSizeReport(info.sizeReport || null);
         setDiscountReport(info.discountReport || null);
@@ -446,14 +320,10 @@ export function useProductForm({ initialData, productId }: UseProductFormProps) 
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      // Upload base64 images lên R2 trước khi submit
       const folder = formData.name.trim() ? `products/${slugify(formData.name)}` : 'products';
       const allImages = formData.image ? [formData.image, ...(formData.images || [])] : [];
       const uploadedImages = await uploadBase64ImagesToR2(allImages, folder);
 
-      // Cập nhật payload với URLs đã upload
-
-      // Cập nhật payload với URLs đã upload
       const payload = {
         ...formData,
         image: uploadedImages[0] || '',
@@ -468,7 +338,6 @@ export function useProductForm({ initialData, productId }: UseProductFormProps) 
       };
       if (productId) {
         await api.patch(`/products/${productId}`, payload);
-// ... existing code ...
         queryClient.invalidateQueries({ queryKey: ['admin-product', productId] });
       } else {
         await api.post('/products', payload);
@@ -481,7 +350,6 @@ export function useProductForm({ initialData, productId }: UseProductFormProps) 
         if (currentSaved) sessionStorage.setItem('adminProductListPage', currentSaved);
       }
       router.push('/admin/products');
-      router.refresh();
     } catch (err: any) {
       const backendMsg = err?.response?.data?.message;
       toast.error(backendMsg || t('savingError'));
@@ -496,20 +364,20 @@ export function useProductForm({ initialData, productId }: UseProductFormProps) 
   return {
     t, isVi, isSubmitting, formData, update,
     handleSubmit, isImageUploading, setIsImageUploading,
+    isAiGenerating, handleAiGenerateProduct,
     parsedSizes, selectedSizes, isFormComplete,
-    brands, tags, scentGroups, concentrations, segments,
+    brands, tags, categories, scentGroups, concentrations, segments,
     selectedTags, handleTagToggle,
     isTagModalOpen, setIsTagModalOpen,
-    isGenderModalOpen, setIsGenderModalOpen,
+    isCategoryModalOpen, setIsCategoryModalOpen,
     isScentGroupModalOpen, setIsScentGroupModalOpen,
     isConcentrationModalOpen, setIsConcentrationModalOpen,
     isSegmentModalOpen, setIsSegmentModalOpen,
-    customGender, setCustomGender,
     customScentGroup, setCustomScentGroup,
     customConcentration, setCustomConcentration,
     customSegment, setCustomSegment,
-    selectedGenders, selectedScentGroups, selectedConcentrations, selectedSegments,
-    handleGenderToggle, handleScentGroupToggle, handleConcentrationToggle, handleSegmentToggle,
+    selectedScentGroups, selectedConcentrations, selectedSegments, selectedCategories,
+    handleCategoryToggle, handleScentGroupToggle, handleConcentrationToggle, handleSegmentToggle,
     addScentGroupMutation, addConcentrationMutation, addSegmentMutation,
     isPriceSuggestModalOpen, setIsPriceSuggestModalOpen,
     isSuggestingPrice, priceMarkupPercentage,
@@ -519,56 +387,6 @@ export function useProductForm({ initialData, productId }: UseProductFormProps) 
     handleOpenPriceSuggestion, handleRecalculatePriceMarkup,
     priceReport, sizeReport, discountReport,
   };
-}
-
-/**
- * Helper function để upload base64 strings lên R2
- * Chỉ upload các string bắt đầu bằng "data:image" (chưa upload)
- */
-export async function uploadBase64ImagesToR2(
-  images: string[],
-  folder: string
-): Promise<string[]> {
-  const uploadedUrls: string[] = [];
-
-  for (const image of images) {
-    // Nếu là URL từ R2 rồi thì giữ nguyên
-    if (!image.startsWith('data:image')) {
-      uploadedUrls.push(image);
-      continue;
-    }
-
-    try {
-      // Convert base64 to blob
-      const response = await fetch(image);
-      const blob = await response.blob();
-      const file = new File([blob], 'image.jpg', { type: blob.type });
-
-      // Upload lên R2
-      const formData = new FormData();
-      formData.append('image', file);
-      formData.append('maxWidth', '1920');
-      formData.append('quality', '90');
-      formData.append('folder', folder);
-
-      const { data } = await api.post('/media/upload-r2', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-
-      if (data.success && data.data.url) {
-        uploadedUrls.push(data.data.url);
-      } else {
-        // Fallback: giữ nguyên base64 nếu upload thất bại
-        uploadedUrls.push(image);
-      }
-    } catch (err) {
-      console.error('Failed to upload base64 image:', err);
-      // Fallback: giữ nguyên base64 nếu upload thất bại
-      uploadedUrls.push(image);
-    }
-  }
-
-  return uploadedUrls;
 }
 
 export type UseProductFormReturn = ReturnType<typeof useProductForm>;

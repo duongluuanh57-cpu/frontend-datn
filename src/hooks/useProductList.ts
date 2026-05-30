@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { Product } from '@/types/admin';
@@ -10,6 +10,7 @@ export interface ProductListFilters {
   selectedBrand: string;
   stockFilter: string;
   selectedTag: string;
+  selectedCategory: string;
   sortBy: string;
 }
 
@@ -22,10 +23,14 @@ export function useProductList(filters: ProductListFilters) {
     return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
   });
 
+  const isInitialMount = useRef(true);
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
     setCurrentPage(1);
-  }, [filters.searchQuery, filters.selectedBrand, filters.stockFilter, filters.selectedTag, filters.sortBy]);
+  }, [filters.searchQuery, filters.selectedBrand, filters.stockFilter, filters.selectedTag, filters.selectedCategory, filters.sortBy]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -42,9 +47,10 @@ export function useProductList(filters: ProductListFilters) {
     if (filters.selectedBrand) params.brand = filters.selectedBrand;
     if (filters.stockFilter !== 'all') params.stock = filters.stockFilter;
     if (filters.selectedTag !== 'all') params.tag = filters.selectedTag;
+    if (filters.selectedCategory) params.category = filters.selectedCategory;
     if (filters.sortBy !== 'bestSeller') params.sortBy = filters.sortBy;
     return params;
-  }, [currentPage, filters.searchQuery, filters.selectedBrand, filters.stockFilter, filters.selectedTag, filters.sortBy]);
+  }, [currentPage, filters.searchQuery, filters.selectedBrand, filters.stockFilter, filters.selectedTag, filters.selectedCategory, filters.sortBy]);
 
   const { data: pageData, isLoading, error } = useQuery({
     queryKey: ['admin-products', queryParams],

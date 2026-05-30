@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import type { UseUserProfileReturn } from '@/hooks/useUserProfile';
@@ -13,6 +13,13 @@ interface OrderDetailModalProps {
 
 export function OrderDetailModal({ userProfile }: OrderDetailModalProps) {
   const { selectedOrder, setSelectedOrder } = userProfile;
+
+  useEffect(() => {
+    if (selectedOrder) {
+      document.body.style.overflow = 'hidden';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [selectedOrder]);
 
   return (
     <AnimatePresence>

@@ -23,7 +23,6 @@ export default function NewTaxonomyPage() {
     name: '',
     slug: '',
     status: 'active' as 'active' | 'inactive',
-    description: '',
   });
   const [isSaving, setIsSaving] = useState(false);
 
@@ -40,7 +39,6 @@ export default function NewTaxonomyPage() {
         name: formData.name.trim(),
         slug: formData.slug.trim() || undefined,
         status: formData.status,
-        description: formData.description.trim() || undefined,
       };
 
       if (!currentTabConfig.taxonomySlug) {
@@ -116,20 +114,7 @@ export default function NewTaxonomyPage() {
             />
           </div>
 
-          {tab === 'tags' && (
-            <div>
-              <label className="block text-xs font-bold text-[#7A5C5C]/60 uppercase tracking-wider mb-2">
-                {isVi ? 'Mô tả nhãn' : 'Description'}
-              </label>
-              <textarea
-                rows={2}
-                placeholder={isVi ? 'Mô tả ngắn về công dụng...' : 'Short description...'}
-                value={formData.description}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-[#D4A5A5] focus:ring-4 focus:ring-[#D4A5A5]/10 transition-all resize-none"
-              />
-            </div>
-          )}
+
 
           <div>
             <label className="block text-xs font-bold text-[#7A5C5C]/60 uppercase tracking-wider mb-2">

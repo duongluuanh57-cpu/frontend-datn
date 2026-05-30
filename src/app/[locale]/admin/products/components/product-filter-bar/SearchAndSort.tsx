@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Search } from 'lucide-react';
+import { useDebounce } from '@/hooks/useDebounce';
 import { UseProductFiltersReturn } from '@/hooks/useProductFilters';
 
 interface SearchAndSortProps {
@@ -16,6 +17,26 @@ export function SearchAndSort({ filters }: SearchAndSortProps) {
     sortBy,
     setSortBy,
   } = filters;
+
+  const [localValue, setLocalValue] = useState(searchQuery);
+  const debouncedValue = useDebounce(localValue, 300);
+  const isFirstRender = useRef(true);
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    if (debouncedValue !== searchQuery) {
+      setSearchQuery(debouncedValue);
+    }
+  }, [debouncedValue]);
+
+  useEffect(() => {
+    if (searchQuery !== localValue && searchQuery !== debouncedValue) {
+      setLocalValue(searchQuery);
+    }
+  }, [searchQuery]);
 
   return (
     <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center', width: '100%' }}>
@@ -37,8 +58,8 @@ export function SearchAndSort({ filters }: SearchAndSortProps) {
               ? 'Tìm tên sản phẩm, thương hiệu hoặc từ khóa...'
               : 'Search name, brand or keywords...'
           }
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          value={localValue}
+          onChange={(e) => setLocalValue(e.target.value)}
           style={{
             width: '100%',
             padding: '10px 14px 10px 40px',

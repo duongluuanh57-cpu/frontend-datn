@@ -1,23 +1,11 @@
 'use client';
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import api from '@/lib/api';
+import { useState, useEffect } from 'react';
 import { useLocale } from 'next-intl';
-import React, { useState, useEffect, useMemo } from 'react';
-import {
-  Hash, Layers, Sliders, Sparkles,
-  LucideIcon
-} from 'lucide-react';
-import { TaxonomyItem, TabType } from '@/types/admin';
-
-export interface TabConfig {
-  id: TabType;
-  labelVi: string;
-  labelEn: string;
-  taxonomySlug: string | null;
-  queryKey: string;
-  icon: LucideIcon;
-}
+import type { TaxonomyItem, TabType } from '@/types/admin';
+import { useTaxonomyQuery, TABS } from '@/hooks/admin-taxonomy/useTaxonomyQuery';
+import { useTaxonomyMutations } from '@/hooks/admin-taxonomy/useTaxonomyMutations';
+import { useTaxonomySelection } from '@/hooks/admin-taxonomy/useTaxonomySelection';
 
 export interface UseAdminTaxonomyReturn {
   locale: string;
@@ -28,26 +16,16 @@ export interface UseAdminTaxonomyReturn {
   setIsModalOpen: (open: boolean) => void;
   editingItem: TaxonomyItem | null;
   setEditingItem: (item: TaxonomyItem | null) => void;
-  formData: {
-    name: string;
-    slug: string;
-    status: 'active' | 'inactive';
-    description: string;
-  };
-  setFormData: React.Dispatch<React.SetStateAction<{
-    name: string;
-    slug: string;
-    status: 'active' | 'inactive';
-    description: string;
-  }>>;
+  formData: { name: string; slug: string; status: 'active' | 'inactive' };
+  setFormData: React.Dispatch<React.SetStateAction<{ name: string; slug: string; status: 'active' | 'inactive' }>>;
   isSaving: boolean;
-  tabs: TabConfig[];
-  currentTabConfig: TabConfig;
+  tabs: typeof TABS;
+  currentTabConfig: (typeof TABS)[number];
   items: TaxonomyItem[] | undefined;
   isLoading: boolean;
   error: any;
-  deleteMutation: any;
-  bulkDeleteMutation: any;
+  deleteMutation: ReturnType<typeof useTaxonomyMutations>['deleteMutation'];
+  bulkDeleteMutation: ReturnType<typeof useTaxonomyMutations>['bulkDeleteMutation'];
   handleAddNewClick: () => void;
   handleEditClick: (item: TaxonomyItem) => void;
   handleFormSubmit: (e: React.FormEvent) => Promise<void>;
@@ -73,7 +51,6 @@ export interface UseAdminTaxonomyReturn {
 
 export function useAdminTaxonomy(): UseAdminTaxonomyReturn {
   const locale = useLocale();
-  const queryClient = useQueryClient();
   const isVi = locale === 'vi';
   const [activeTab, setActiveTab] = useState<TabType>('tags');
 
@@ -83,251 +60,79 @@ export function useAdminTaxonomy(): UseAdminTaxonomyReturn {
     name: '',
     slug: '',
     status: 'active' as 'active' | 'inactive',
-    description: ''
   });
   const [isSaving, setIsSaving] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [selectedItemNames, setSelectedItemNames] = useState<Map<string, string>>(new Map());
   const [itemToDelete, setItemToDelete] = useState<TaxonomyItem | null>(null);
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
-  const ITEMS_PER_PAGE = 25;
+  const [selectedItemNames, setSelectedItemNames] = useState<Map<string, string>>(new Map());
 
-  const tabs: TabConfig[] = [
-    { id: 'tags',          labelVi: 'Quản lý Tag',            labelEn: 'Tag Management',       taxonomySlug: null,           queryKey: 'admin-tags',           icon: Hash },
-    { id: 'notes',         labelVi: 'Quản lý Nhóm hương',     labelEn: 'Scent Groups',          taxonomySlug: 'scent_group',  queryKey: 'admin-scent-groups',   icon: Layers },
-    { id: 'concentrations',labelVi: 'Quản lý Nồng độ',        labelEn: 'Concentration Levels',  taxonomySlug: 'concentration',queryKey: 'admin-concentrations', icon: Sliders },
-    { id: 'segments',      labelVi: 'Quản lý Phân khúc nhóm', labelEn: 'Brand Segments',        taxonomySlug: 'segment',      queryKey: 'admin-segments',       icon: Sparkles },
-  ];
+  // Reset pagination when tab/search changes
+  useEffect(() => { setCurrentPage(1); }, [activeTab, searchTerm]);
 
-  const currentTabConfig = tabs.find(t => t.id === activeTab)!;
+  const { currentTabConfig, items, isLoading, error, total, totalPages, ITEMS_PER_PAGE, getTaxonomyId } =
+    useTaxonomyQuery(activeTab, searchTerm, currentPage);
 
-  // Reset pagination when tab or search changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [activeTab, searchTerm]);
+  const {
+    selectedIds, setSelectedIds,
+    isAllSelected, isSomeSelected,
+    handleSelectAll, handleSelectRow,
+  } = useTaxonomySelection(items, selectedItemNames);
 
-  const queryParams = useMemo(() => {
-    const params: Record<string, string | number> = {
-      page: currentPage,
-      limit: ITEMS_PER_PAGE,
-    };
-    if (searchTerm) params.search = searchTerm;
-    return params;
-  }, [currentPage, searchTerm]);
-
-  // Fetch taxonomy list (cha) — cached 10 min
-  const { data: taxonomyList } = useQuery({
-    queryKey: ['v2-taxonomies'],
-    queryFn: async () => {
-      const { data } = await api.get('/v2/taxonomies');
-      return data.data as { _id: string; slug: string; name: string }[];
-    },
-    staleTime: 1000 * 60 * 10,
+  const { deleteMutation, bulkDeleteMutation, saveMutation } = useTaxonomyMutations({
+    currentTabConfig,
+    getTaxonomyId,
+    locale,
   });
-
-  const getTaxonomyId = (slug: string): string | null =>
-    taxonomyList?.find(t => t.slug === slug)?._id ?? null;
-
-  // Fetch paginated items
-  const { data: pageData, isLoading, error } = useQuery({
-    queryKey: [currentTabConfig.queryKey, queryParams],
-    queryFn: async () => {
-      if (!currentTabConfig.taxonomySlug) {
-        const { data } = await api.get('/tags', { params: queryParams });
-        return data.data as { items: TaxonomyItem[]; total: number; page: number; totalPages: number };
-      }
-
-      const taxonomyId = getTaxonomyId(currentTabConfig.taxonomySlug);
-      if (!taxonomyId) {
-        return { items: [] as TaxonomyItem[], total: 0, page: 1, totalPages: 0 };
-      }
-      const { data } = await api.get(`/v2/taxonomies/${taxonomyId}/terms`, { params: queryParams });
-      return data.data as { items: TaxonomyItem[]; total: number; page: number; totalPages: number };
-    },
-    enabled: currentTabConfig.taxonomySlug === null || !!taxonomyList,
-  });
-
-  const items = pageData?.items;
-  const total = pageData?.total || 0;
-  const totalPages = pageData?.totalPages || 0;
-
-  // Track selected item names for bulk delete modal
-  useEffect(() => {
-    if (!items) return;
-    setSelectedItemNames(prev => {
-      const next = new Map(prev);
-      for (const item of items) {
-        if (selectedIds.includes(item._id)) {
-          next.set(item._id, item.name);
-        }
-      }
-      return next;
-    });
-  }, [items, selectedIds]);
-
-  // Delete mutation
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      if (!currentTabConfig.taxonomySlug) {
-        return api.delete(`/tags/${id}`);
-      }
-      const taxonomyId = getTaxonomyId(currentTabConfig.taxonomySlug);
-      if (!taxonomyId) throw new Error('Taxonomy không tồn tại');
-      return api.delete(`/v2/taxonomies/${taxonomyId}/terms/${id}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [currentTabConfig.queryKey] });
-      setItemToDelete(null);
-      setSelectedIds(prev => prev.filter(id => id !== itemToDelete?._id));
-    },
-    onError: (err: any) => {
-      console.error(err);
-      const isAuth = err.response?.status === 401 || err.message?.includes('Unauthorized');
-      if (isAuth) {
-        alert(isVi ? 'Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại!' : 'Session expired. Please log in again!');
-        window.location.href = `/${locale}/login`;
-      } else {
-        alert(err.response?.data?.message || (isVi ? 'Vui lòng kiểm tra lại thông tin.' : 'Please check the information.'));
-      }
-      setItemToDelete(null);
-    }
-  });
-
-  // Bulk delete mutation
-  const bulkDeleteMutation = useMutation({
-    mutationFn: async (ids: string[]) => api.post('/taxonomies/bulk-delete', { ids }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [currentTabConfig.queryKey] });
-      setSelectedIds([]);
-      setSelectedItemNames(new Map());
-      setShowBulkDeleteModal(false);
-    },
-    onError: (err: any) => {
-      console.error(err);
-      alert(err.response?.data?.message || (isVi ? 'Không thể xóa các mục đã chọn.' : 'Failed to delete selected items.'));
-      setShowBulkDeleteModal(false);
-    }
-  });
-
-  const allFilteredIds = items?.map(i => i._id) || [];
-  const isAllSelected = allFilteredIds.length > 0 && allFilteredIds.every(id => selectedIds.includes(id));
-  const isSomeSelected = selectedIds.length > 0 && !isAllSelected;
-
-  const handleSelectAll = () => {
-    if (isAllSelected) {
-      setSelectedIds(prev => prev.filter(id => !allFilteredIds.includes(id)));
-    } else {
-      setSelectedIds(prev => Array.from(new Set([...prev, ...allFilteredIds])));
-    }
-  };
-
-  const handleSelectRow = (id: string) => {
-    if (selectedIds.includes(id)) {
-      setSelectedIds(selectedIds.filter(item => item !== id));
-    } else {
-      setSelectedIds([...selectedIds, id]);
-    }
-  };
 
   const handleAddNewClick = () => {
     setEditingItem(null);
-    setFormData({ name: '', slug: '', status: 'active', description: '' });
+    setFormData({ name: '', slug: '', status: 'active' });
     setIsModalOpen(true);
   };
 
   const handleEditClick = (item: TaxonomyItem) => {
     setEditingItem(item);
-    setFormData({
-      name: item.name,
-      slug: item.slug,
-      status: item.status,
-      description: item.description || ''
-    });
+    setFormData({ name: item.name, slug: item.slug, status: item.status });
     setIsModalOpen(true);
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim()) return;
-
     setIsSaving(true);
     try {
-      const payload: any = {
-        name: formData.name.trim(),
-        slug: formData.slug.trim() || undefined,
-        status: formData.status,
-        description: formData.description.trim() || undefined
-      };
-
-      if (!currentTabConfig.taxonomySlug) {
-        if (editingItem) {
-          await api.patch(`/tags/${editingItem._id}`, payload);
-        } else {
-          await api.post('/tags', payload);
-        }
-      } else {
-        const taxonomyId = getTaxonomyId(currentTabConfig.taxonomySlug);
-        if (!taxonomyId) throw new Error('Taxonomy cha chưa được tạo. Vui lòng chạy migration trước.');
-
-        if (editingItem) {
-          await api.patch(`/v2/taxonomies/${taxonomyId}/terms/${editingItem._id}`, payload);
-        } else {
-          await api.post(`/v2/taxonomies/${taxonomyId}/terms`, payload);
-        }
-      }
-
-      queryClient.invalidateQueries({ queryKey: [currentTabConfig.queryKey] });
+      const payload = { name: formData.name.trim(), slug: formData.slug.trim() || undefined, status: formData.status };
+      await saveMutation.mutateAsync({
+        id: editingItem?._id,
+        payload,
+        isNew: !editingItem,
+      });
       setIsModalOpen(false);
-    } catch (err: any) {
-      console.error(err);
-      alert(err.response?.data?.message || (isVi ? 'Vui lòng kiểm tra lại thông tin.' : 'Please check the information.'));
-    } finally {
-      setIsSaving(false);
-    }
+    } catch { /* error handled by mutation */ }
+    finally { setIsSaving(false); }
   };
 
   return {
-    locale,
-    isVi,
-    activeTab,
-    setActiveTab,
-    isModalOpen,
-    setIsModalOpen,
-    editingItem,
-    setEditingItem,
-    formData,
-    setFormData,
-    isSaving,
-    tabs,
-    currentTabConfig,
-    items,
-    isLoading,
-    error,
-    deleteMutation,
-    bulkDeleteMutation,
-    handleAddNewClick,
-    handleEditClick,
-    handleFormSubmit,
-    searchTerm,
-    setSearchTerm,
-    currentPage,
-    setCurrentPage,
-    ITEMS_PER_PAGE,
-    total,
-    totalPages,
-    selectedIds,
-    setSelectedIds,
-    isAllSelected,
-    isSomeSelected,
-    handleSelectAll,
-    handleSelectRow,
-    itemToDelete,
-    setItemToDelete,
-    showBulkDeleteModal,
-    setShowBulkDeleteModal,
+    locale, isVi,
+    activeTab, setActiveTab,
+    isModalOpen, setIsModalOpen,
+    editingItem, setEditingItem,
+    formData, setFormData, isSaving,
+    tabs: TABS, currentTabConfig,
+    items, isLoading, error,
+    deleteMutation, bulkDeleteMutation,
+    handleAddNewClick, handleEditClick, handleFormSubmit,
+    searchTerm, setSearchTerm,
+    currentPage, setCurrentPage,
+    ITEMS_PER_PAGE, total, totalPages,
+    selectedIds, setSelectedIds,
+    isAllSelected, isSomeSelected,
+    handleSelectAll, handleSelectRow,
+    itemToDelete, setItemToDelete,
+    showBulkDeleteModal, setShowBulkDeleteModal,
     selectedItemNames,
   };
 }
