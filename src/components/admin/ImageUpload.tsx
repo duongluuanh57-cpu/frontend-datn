@@ -2,9 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
+import { ImageIcon } from 'lucide-react';
 import api from '@/lib/api';
 import { ImagePreview, ImagePlaceholder } from './multiple-image-upload/ImagePreview';
 import { UploadArea, UrlInput } from './multiple-image-upload/UploadArea';
+import { MediaLibraryModal } from './media-library/MediaLibraryModal';
 
 interface ImageUploadProps {
   value: string;
@@ -20,6 +22,7 @@ export function ImageUpload({ value, onChange, onUploadStateChange, hideUrlInput
   const t = useTranslations('Admin.upload');
   const [isUploading, setIsUploading] = useState(false);
   const [preview, setPreview] = useState(value || '');
+  const [mediaLibraryOpen, setMediaLibraryOpen] = useState(false);
 
   useEffect(() => { setPreview(value || ''); }, [value]);
 
@@ -51,6 +54,14 @@ export function ImageUpload({ value, onChange, onUploadStateChange, hideUrlInput
       {preview ? (
         <div className="flex flex-col gap-3">
           <ImagePreview src={preview} alt={t('preview')} uploading={isUploading} onRemove={removeImage} size="large" />
+          <button
+            type="button"
+            onClick={() => setMediaLibraryOpen(true)}
+            className="flex items-center gap-1.5 text-[10px] font-bold text-[#7A5C5C] hover:text-[#D4A5A5] transition-colors"
+          >
+            <ImageIcon size={12} />
+            Chọn từ thư viện
+          </button>
           {!hideUrlInput && (
             <div className="admin-upload__url-input-container">
               <input type="text" value={preview} readOnly className="admin-input" style={{ width: '100%', padding: '8px 12px', fontSize: '0.7rem', borderRadius: '8px', border: '1px solid var(--admin-border, rgba(0,0,0,0.08))', background: 'var(--admin-bg-secondary, rgba(255,255,255,0.8))', color: 'var(--admin-text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} onClick={(e) => (e.target as HTMLInputElement).select()} />
@@ -61,6 +72,14 @@ export function ImageUpload({ value, onChange, onUploadStateChange, hideUrlInput
       ) : (
         <div className="flex flex-col gap-4">
           <UploadArea disabled={isUploading} onFileSelect={handleUpload} />
+          <button
+            type="button"
+            onClick={() => setMediaLibraryOpen(true)}
+            className="flex items-center justify-center gap-1.5 text-[10px] font-bold text-[#7A5C5C] hover:text-[#D4A5A5] bg-gray-50 border border-dashed border-gray-200 rounded-lg py-2 transition-all hover:border-[#D4A5A5]/30"
+          >
+            <ImageIcon size={12} />
+            Chọn ảnh từ thư viện
+          </button>
           {!hideUrlInput && <UrlInput disabled={isUploading} onUrlSubmit={async (url) => {
             setIsUploading(true);
             onUploadStateChange?.(true);
@@ -71,6 +90,11 @@ export function ImageUpload({ value, onChange, onUploadStateChange, hideUrlInput
           }} />}
         </div>
       )}
+      <MediaLibraryModal
+        open={mediaLibraryOpen}
+        onClose={() => setMediaLibraryOpen(false)}
+        onSelect={(url) => { onChange(url); setPreview(url); }}
+      />
     </div>
   );
 }
