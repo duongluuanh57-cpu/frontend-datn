@@ -1,7 +1,8 @@
-'use client';
 
+'use client';
 import React from 'react';
 import type { UseAdminTaxonomyReturn } from '@/hooks/useAdminTaxonomy';
+import type { TabType } from '@/types/admin';
 
 interface TaxonomyTabsProps {
   adminTaxonomy: UseAdminTaxonomyReturn;
@@ -27,7 +28,7 @@ export function TaxonomyTabs({ adminTaxonomy }: TaxonomyTabsProps) {
         return (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => setActiveTab(tab.id as TabType)}
             style={{
               background: 'transparent',
               border: 'none',
