@@ -70,7 +70,7 @@ export function NewProducts() {
           )}
 
           {/* Filters Controls Bar */}
-          {layoutConfig.showFilterBar && !isLoading && products && products.length > 0 && (
+          {layoutConfig.showFilterBar && !isLoading && (
             <NewProductsFilterBar formHelpers={formHelpers} />
           )}
         </div>

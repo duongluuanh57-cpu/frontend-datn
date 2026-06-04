@@ -72,7 +72,7 @@ export function TrendingProducts() {
             </motion.div>
           )}
 
-          {layoutConfig.showFilterBar && !isLoading && products && products.length > 0 && (
+          {layoutConfig.showFilterBar && !isLoading && (
             <TrendingProductsFilterBar formHelpers={formHelpers} />
           )}
         </div>
