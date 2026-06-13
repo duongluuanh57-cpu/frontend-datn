@@ -13,9 +13,9 @@ export function BlogPosts() {
   const locale = useLocale();
 
   return (
-    <section className="blog-posts-section w-full bg-transparent pt-12 pb-12 lg:pt-20 lg:pb-20 overflow-hidden"
+    <section className="blog-posts-section mx-[calc(2rem+40px)] w-[calc(100%-4rem-80px)] bg-transparent pt-12 pb-12 lg:pt-20 lg:pb-20 overflow-hidden"
       style={{ contain: 'content', contentVisibility: 'auto' } as React.CSSProperties}>
-      <div className="px-6">
+      <div>
         
         {/* Header Section aligned exactly like products */}
         <motion.div
@@ -28,14 +28,14 @@ export function BlogPosts() {
           <span className="text-[10px] font-bold uppercase text-[#D4A5A5]">
             {locale === 'vi' ? "NHẬT KÝ L'ESSENCE" : "L'ESSENCE JOURNAL"}
           </span>
-          <h2 className="mt-4 text-3xl font-medium text-[#7A5C5C] md:text-4xl lg:text-5xl"
+          <h2 className="mt-4 text-[30px] font-medium text-[#7A5C5C]"
             style={{ fontFamily: 'var(--font-heading), serif' }}>
             {locale === 'vi' ? 'Bài viết mới nhất' : 'Latest Journal'}
           </h2>
-          <p className="mt-3 text-[11px] md:text-xs text-[#7A5C5C] max-w-[480px] font-medium leading-relaxed">
+          <p className="mt-3 text-[15px] text-[#7A5C5C] max-w-[480px] font-medium leading-relaxed">
             {locale === 'vi'
-              ? 'Khám phá thế giới nước hoa qua những góc nhìn chuyên sâu và nghệ thuật lưu hương.'
-              : 'Journey into the olfactory world through professional insights and perfume arts.'}
+              ? 'Bài viết về nước hoa, mẹo chọn hương và phong cách sống.'
+              : 'Articles about fragrances, scent tips and lifestyle.'}
           </p>
         </motion.div>
 

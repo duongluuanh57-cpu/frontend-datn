@@ -3,7 +3,7 @@
 import React, { useEffect } from 'react';
 import { TagSelectionModal } from './modals/TagSelectionModal';
 import { TaxonomySelectionModal } from './modals/TaxonomySelectionModal';
-import { SizeVariantsPanel, DiscountPanel, PriceSuggestionPanel, AIPriceReportPanel } from './modals/PriceSuggestionModal';
+import { SizeVariantsPanel, DiscountPanel } from './modals/PriceSuggestionModal';
 import type { UseProductFormReturn } from './useProductForm';
 
 export function ProductFormModals({ formHelpers }: { formHelpers: UseProductFormReturn }) {
@@ -19,9 +19,8 @@ export function ProductFormModals({ formHelpers }: { formHelpers: UseProductForm
     scentGroups, categories, concentrations, segments,
     addScentGroupMutation, addConcentrationMutation, addSegmentMutation,
     isPriceSuggestModalOpen, setIsPriceSuggestModalOpen,
-    isSuggestingPrice, priceMarkupPercentage, priceSuggestionData, setPriceSuggestionData,
     activeSuggestContext, setActiveSuggestContext,
-    handleRecalculatePriceMarkup, parsedSizes, selectedSizes,
+    parsedSizes, selectedSizes,
   } = formHelpers;
 
   useEffect(() => {
@@ -41,6 +40,7 @@ export function ProductFormModals({ formHelpers }: { formHelpers: UseProductForm
         selectedTags={selectedTags}
         handleTagToggle={handleTagToggle}
         isVi={isVi}
+        formData={formData}
       />
 
       {/* Category Selection Modal */}
@@ -53,11 +53,11 @@ export function ProductFormModals({ formHelpers }: { formHelpers: UseProductForm
         defaultItems={[]}
         selectedIds={selectedCategories}
         onToggle={handleCategoryToggle}
-        customValue=""
-        onCustomChange={() => {}}
-        customPlaceholder=""
-        onCustomAdd={() => {}}
-        isCustomPending={false}
+        customValue={undefined}
+        onCustomChange={undefined}
+        customPlaceholder={undefined}
+        onCustomAdd={undefined}
+        isCustomPending={undefined}
         emptyMessage={isVi ? 'Không có danh mục nào' : 'No categories available'}
         isVi={isVi}
       />
@@ -126,17 +126,16 @@ export function ProductFormModals({ formHelpers }: { formHelpers: UseProductForm
         isVi={isVi}
       />
 
-      {/* AI Price/Discount/Variants Suggestion Modal */}
-      {isPriceSuggestModalOpen && (
+      {/* AI Price/Discount/Variants Suggestion Modal (only for Size & Discount) */}
+      {isPriceSuggestModalOpen && activeSuggestContext?.size && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-5"
           style={{ background: 'rgba(61, 46, 36, 0.4)', backdropFilter: 'blur(8px)' }}
           onClick={() => setIsPriceSuggestModalOpen(false)}>
-          <div className="flex flex-row gap-5 items-stretch justify-center flex-wrap w-full max-w-[1060px] max-h-[90vh] overflow-y-auto"
+          <div className="flex flex-row gap-5 items-stretch justify-center flex-wrap w-full max-w-[560px] max-h-[90vh] overflow-y-auto"
             style={{ animation: 'fadeIn 0.2s ease-out' }}
             onClick={(e) => e.stopPropagation()}>
 
-            {/* Left Card */}
-            <div className="flex-[1_1_420px] max-w-[480px] p-6 rounded-[var(--admin-radius-lg)] flex flex-col gap-5"
+            <div className="flex-[1_1_420px] max-w-[560px] p-6 rounded-[var(--admin-radius-lg)] flex flex-col gap-5"
               style={{ background: 'var(--admin-surface)', border: '1px solid var(--admin-border)', boxShadow: 'var(--admin-shadow-lg)' }}>
 
               {activeSuggestContext?.size === 'Dung tích' ? (
@@ -147,22 +146,8 @@ export function ProductFormModals({ formHelpers }: { formHelpers: UseProductForm
                 <DiscountPanel
                   isVi={isVi} formData={formData} update={update}
                   setIsPriceSuggestModalOpen={setIsPriceSuggestModalOpen} />
-              ) : (
-                <PriceSuggestionPanel
-                  isVi={isVi} isSuggestingPrice={isSuggestingPrice}
-                  priceSuggestionData={priceSuggestionData} priceMarkupPercentage={priceMarkupPercentage}
-                  setPriceSuggestionData={setPriceSuggestionData}
-                  handleRecalculatePriceMarkup={handleRecalculatePriceMarkup}
-                  activeSuggestContext={activeSuggestContext}
-                  setIsPriceSuggestModalOpen={setIsPriceSuggestModalOpen}
-                  isSuggesting={isSuggestingPrice} />
-              )}
+              ) : null}
             </div>
-
-            {/* Right Card: AI Market Analysis Report */}
-            <AIPriceReportPanel
-              isVi={isVi} priceSuggestionData={priceSuggestionData}
-              isSuggestingPrice={isSuggestingPrice} activeSuggestContext={activeSuggestContext} />
           </div>
         </div>
       )}

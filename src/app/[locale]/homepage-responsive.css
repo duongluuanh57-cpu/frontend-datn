@@ -130,8 +130,7 @@
   }
   
   .banner-indicator.active {
-    width: 24px !important;
-    height: 8px !important;
+    border-width: 1.5px;
   }
 }
 

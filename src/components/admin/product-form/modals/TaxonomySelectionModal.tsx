@@ -13,11 +13,11 @@ interface TaxonomySelectionModalProps {
   defaultItems: string[];
   selectedIds: string[];
   onToggle: (val: string) => void;
-  customValue: string;
-  onCustomChange: (val: string) => void;
-  customPlaceholder: string;
-  onCustomAdd: () => void;
-  isCustomPending: boolean;
+  customValue?: string | undefined;
+  onCustomChange?: ((val: string) => void) | undefined;
+  customPlaceholder?: string | undefined;
+  onCustomAdd?: (() => void) | undefined;
+  isCustomPending?: boolean | undefined;
   emptyMessage: string;
   isVi: boolean;
 }

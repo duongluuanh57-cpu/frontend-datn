@@ -29,7 +29,7 @@ export const DEFAULT_PRODUCT_SESSION_LAYOUT: ProductSessionLayoutConfig = {
   gap: 20,
   titleFontSize: 14,
   showTitle: true,
-  showSubtitle: true,
+  showSubtitle: false,
   subtitleFontSize: 13,
   showFilterBar: true,
   showViewAll: true,
@@ -44,22 +44,22 @@ export const DEFAULT_PRODUCT_SESSION_LAYOUT: ProductSessionLayoutConfig = {
   sessions: {
     saleProducts: {
       titleText: 'Ưu đãi đặc biệt',
-      subtitleText: 'Trải nghiệm những hương thơm Niche tinh tuyển với ưu đãi đặc quyền giới hạn.',
+      subtitleText: '',
       filterTag: 'sale'
     },
     newProducts: {
       titleText: 'Sản phẩm mới',
-      subtitleText: 'Khám phá những kiệt tác mùi hương mới nhất vừa cập bến bộ sưu tập L\'essence.',
+      subtitleText: '',
       filterTag: 'new'
     },
     limitedProducts: {
       titleText: 'Sản phẩm giới hạn',
-      subtitleText: 'Khám phá những dòng hương giới hạn được chọn lọc cho bộ sưu tập riêng, số lượng ít và tinh tế.',
+      subtitleText: '',
       filterTag: 'limited'
     },
     trendingProducts: {
       titleText: 'Sản phẩm thịnh hành',
-      subtitleText: 'Khám phá các kiệt tác mùi hương thịnh hành nhất và được ưa chuộng tại cửa hàng.',
+      subtitleText: '',
       filterTag: 'trending'
     }
   }
@@ -84,7 +84,7 @@ export const DEFAULT_BLOG_CARD_CONFIG: BlogCardConfig = {
 
 export const DEFAULT_NAVBAR_LAYOUT: NavbarLayout = {
   left: ['logo'],
-  center: ['link-0', 'link-1', 'link-2', 'link-3', 'link-4'],
+  center: ['link-0', 'link-1', 'link-2', 'link-3', 'link-4', 'link-5'],
   right: ['search', 'cart', 'user'],
 };
 
@@ -101,6 +101,7 @@ export const DEFAULT_NAVBAR_CONFIG: NavbarConfig = {
     { label: 'Bộ sưu tập', href: '/bo-suu-tap', order: 2, enabled: true, displayMode: 'icon' },
     { label: 'Bài viết', href: '/blog', order: 3, enabled: true, displayMode: 'icon' },
     { label: 'Hỗ trợ', href: '/tro-giup', order: 4, enabled: true, displayMode: 'icon' },
+    { label: 'Về chúng tôi', href: '/about', order: 5, enabled: true, displayMode: 'icon' },
   ],
   searchConfig: { displayMode: 'icon', label: 'Tìm kiếm' },
   cartConfig: { displayMode: 'icon', label: 'Giỏ hàng' },
@@ -111,7 +112,7 @@ export const DEFAULT_NAVBAR_CONFIG: NavbarConfig = {
     accentColor: '#C08497',
     iconSize: 26,
   },
-  layout: { left: ['logo'], center: ['link-0', 'link-1', 'link-2', 'link-3', 'link-4'], right: ['search', 'cart', 'user'] },
+  layout: { left: ['logo'], center: ['link-0', 'link-1', 'link-2', 'link-3', 'link-4', 'link-5'], right: ['search', 'cart', 'user'] },
 };
 
 export const DEFAULT_PRODUCT_CARD_CONFIG: ProductCardConfig = {

@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
-import { Search, X, Image as ImageIcon, Sparkles, Loader2 } from 'lucide-react';
+import { Search, X, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { useRouter } from '@/navigation';
 import { resolveImageUrl } from '@/lib/api';
 import api from '@/lib/api';
@@ -30,7 +30,6 @@ export function NavbarSearch({ navbarConfig, style }: NavbarSearchProps) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState<ProductSuggestion[]>([]);
-  const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -40,7 +39,7 @@ export function NavbarSearch({ navbarConfig, style }: NavbarSearchProps) {
   const mode = sc.displayMode || 'icon';
 
   const debouncedQuery = useDebounce(query, 300);
-  const hasResults = suggestions.length > 0 || aiSuggestions.length > 0;
+  const hasResults = suggestions.length > 0;
 
   useEffect(() => {
     if (isSearchOpen && searchInputRef.current) {
@@ -48,47 +47,55 @@ export function NavbarSearch({ navbarConfig, style }: NavbarSearchProps) {
     }
   }, [isSearchOpen]);
 
+  // Fetch product suggestions when search opens
   useEffect(() => {
-    if (!debouncedQuery || debouncedQuery.length < 1) {
-      setSuggestions([]);
-      setAiSuggestions([]);
-      setIsOpen(false);
-      return;
-    }
-
+    if (!isSearchOpen) return;
     let cancelled = false;
-    setIsLoading(true);
-    setSelectedIndex(-1);
-
     (async () => {
       try {
-        const { data } = await api.get(`/products/suggest?q=${encodeURIComponent(debouncedQuery)}&limit=8`);
+        const { data } = await api.get(`/products/suggest?q=&limit=10`);
+        if (!cancelled) {
+          const products: ProductSuggestion[] = data.data || [];
+          setSuggestions(products);
+          if (products.length > 0) setIsOpen(true);
+        }
+      } catch {
+        // ignore
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isSearchOpen]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      if (!debouncedQuery || debouncedQuery.length < 1) {
+        try {
+          const { data } = await api.get(`/products/suggest?q=&limit=10`);
+          if (cancelled) return;
+          const products: ProductSuggestion[] = data.data || [];
+          setSuggestions(products);
+          if (products.length > 0) setIsOpen(true);
+        } catch {
+          // ignore
+        }
+        return;
+      }
+
+      setIsLoading(true);
+      setSelectedIndex(-1);
+
+      try {
+        const { data } = await api.get(`/products/suggest?q=${encodeURIComponent(debouncedQuery)}&limit=10`);
         if (cancelled) return;
 
         const products: ProductSuggestion[] = data.data || [];
         setSuggestions(products);
-
-        if (products.length === 0 && debouncedQuery.length >= 2) {
-          try {
-            const aiRes = await api.post('/ai/autocomplete', {
-              field: 'name',
-              currentValue: debouncedQuery,
-            });
-            if (!cancelled && aiRes.data?.success) {
-              setAiSuggestions(aiRes.data.data || []);
-            }
-          } catch {
-            setAiSuggestions([]);
-          }
-        } else {
-          setAiSuggestions([]);
-        }
-
         setIsOpen(true);
       } catch {
         if (!cancelled) {
           setSuggestions([]);
-          setAiSuggestions([]);
         }
       } finally {
         if (!cancelled) setIsLoading(false);
@@ -101,6 +108,9 @@ export function NavbarSearch({ navbarConfig, style }: NavbarSearchProps) {
   const handleClickOutside = useCallback((e: MouseEvent) => {
     if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
       setIsOpen(false);
+      setIsSearchOpen(false);
+      setQuery('');
+      setSuggestions([]);
     }
   }, []);
 
@@ -109,7 +119,7 @@ export function NavbarSearch({ navbarConfig, style }: NavbarSearchProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [handleClickOutside]);
 
-  const totalItems = suggestions.length + aiSuggestions.length;
+  const totalItems = suggestions.length;
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!isOpen || !hasResults) return;
@@ -120,22 +130,12 @@ export function NavbarSearch({ navbarConfig, style }: NavbarSearchProps) {
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       setSelectedIndex(prev => (prev > 0 ? prev - 1 : totalItems - 1));
-    } else if (e.key === 'Enter' && selectedIndex >= 0) {
+    } else if (e.key === 'Enter' && selectedIndex >= 0 && suggestions[selectedIndex]) {
       e.preventDefault();
-      if (selectedIndex < suggestions.length) {
-        const product = suggestions[selectedIndex];
-        setIsOpen(false);
-        setQuery('');
-        router.push(`/product/${product._id}`);
-      } else {
-        const aiIdx = selectedIndex - suggestions.length;
-        const aiText = aiSuggestions[aiIdx];
-        if (aiText) {
-          setIsOpen(false);
-          setQuery('');
-          router.push(`/search?q=${encodeURIComponent(aiText)}`);
-        }
-      }
+      const product = suggestions[selectedIndex];
+      setIsOpen(false);
+      setQuery('');
+      router.push(`/product/${product._id}`);
     } else if (e.key === 'Escape') {
       setIsOpen(false);
       searchInputRef.current?.blur();
@@ -146,12 +146,6 @@ export function NavbarSearch({ navbarConfig, style }: NavbarSearchProps) {
     setIsOpen(false);
     setQuery('');
     router.push(`/product/${productId}`);
-  };
-
-  const handleSelectAi = (text: string) => {
-    setIsOpen(false);
-    setQuery('');
-    router.push(`/search?q=${encodeURIComponent(text)}`);
   };
 
   const formatPrice = (price: number) =>
@@ -171,12 +165,9 @@ export function NavbarSearch({ navbarConfig, style }: NavbarSearchProps) {
     >
       {mode !== 'text' && (
         <div style={{
-          display: 'flex',
-          alignItems: 'center',
           position: 'relative',
-          width: isSearchOpen ? '300px' : '40px',
+          width: isSearchOpen ? '200px' : '40px',
           height: '40px',
-          justifyContent: 'center',
           transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
         }}>
           <input
@@ -192,15 +183,17 @@ export function NavbarSearch({ navbarConfig, style }: NavbarSearchProps) {
             placeholder={t('searchPlaceholder')}
             style={{
               position: 'absolute',
-              right: 0,
+              left: 0,
+              top: 0,
               width: '100%',
+              height: '100%',
               opacity: isSearchOpen ? 1 : 0,
-              padding: isSearchOpen ? '10px 45px 10px 20px' : '0',
+              padding: isSearchOpen ? '0 40px 0 16px' : '0',
               border: isSearchOpen ? '1px solid var(--accent)' : 'none',
               outline: 'none',
               background: 'white',
               borderRadius: '25px',
-              fontSize: '0.9rem',
+              fontSize: '0.85rem',
               transition: 'opacity 0.3s',
               color: 'var(--content)',
               pointerEvents: isSearchOpen ? 'auto' : 'none',
@@ -209,31 +202,14 @@ export function NavbarSearch({ navbarConfig, style }: NavbarSearchProps) {
             }}
           />
 
-          {isSearchOpen && query && (
-            <button
-              onClick={() => { setQuery(''); setSuggestions([]); setAiSuggestions([]); setIsOpen(false); searchInputRef.current?.focus(); }}
-              style={{
-                position: 'absolute',
-                right: '12px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                color: '#999',
-                zIndex: 2,
-                padding: '2px',
-              }}
-            >
-              <X size={16} />
-            </button>
-          )}
-
           <button
             className="nav-link"
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => setIsSearchOpen(!isSearchOpen)}
             style={{
+              position: 'absolute',
+              right: 0,
+              top: 0,
               background: 'none',
               border: 'none',
               cursor: 'pointer',
@@ -249,11 +225,11 @@ export function NavbarSearch({ navbarConfig, style }: NavbarSearchProps) {
             }}
           >
             {isLoading && isSearchOpen ? (
-              <Loader2 size={22} strokeWidth={2} className="animate-spin" style={{ color: '#D4A5A5' }} />
+              <Loader2 size={18} strokeWidth={2} className="animate-spin" style={{ color: '#D4A5A5' }} />
             ) : (
-              <Search size={26} strokeWidth={2} style={{ display: isSearchOpen ? 'none' : 'block' }} />
+              <Search size={20} strokeWidth={2} style={{ display: isSearchOpen ? 'none' : 'block' }} />
             )}
-            <X size={26} strokeWidth={2} style={{ display: isSearchOpen && !isLoading ? 'block' : 'none' }} />
+            <X size={20} strokeWidth={2} style={{ display: isSearchOpen && !isLoading ? 'block' : 'none' }} />
             {!isSearchOpen && <span className="nav-tooltip">{t('search')}</span>}
           </button>
         </div>
@@ -272,8 +248,8 @@ export function NavbarSearch({ navbarConfig, style }: NavbarSearchProps) {
             position: 'absolute',
             top: 'calc(100% + 8px)',
             right: 0,
-            width: '340px',
-            maxHeight: '420px',
+            width: '320px',
+            maxHeight: '300px',
             background: 'white',
             borderRadius: '16px',
             border: '1px solid rgba(122,92,92,0.12)',
@@ -309,7 +285,7 @@ export function NavbarSearch({ navbarConfig, style }: NavbarSearchProps) {
                     width: '40px',
                     height: '40px',
                     borderRadius: '8px',
-                    overflow: 'hidden',
+            overflowY: 'auto',
                     flexShrink: 0,
                     background: '#f5f0f0',
                     display: 'flex',
@@ -342,52 +318,7 @@ export function NavbarSearch({ navbarConfig, style }: NavbarSearchProps) {
             </div>
           )}
 
-          {aiSuggestions.length > 0 && (
-            <div style={{
-              borderTop: suggestions.length > 0 ? '1px solid rgba(122,92,92,0.08)' : 'none',
-              padding: '6px 0',
-            }}>
-              <div style={{
-                padding: '6px 14px 4px',
-                fontSize: '0.65rem',
-                fontWeight: 600,
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                color: '#b8a0a0',
-              }}>
-                <Sparkles size={10} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />
-                Gợi ý tìm kiếm
-              </div>
-              {aiSuggestions.map((text, idx) => {
-                const globalIdx = suggestions.length + idx;
-                return (
-                  <button
-                    key={`ai-${idx}`}
-                    type="button"
-                    onClick={() => handleSelectAi(text)}
-                    onMouseEnter={() => setSelectedIndex(globalIdx)}
-                    style={{
-                      width: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '10px',
-                      padding: '8px 14px',
-                      border: 'none',
-                      background: selectedIndex === globalIdx ? 'rgba(212,165,165,0.1)' : 'transparent',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      fontSize: '0.8rem',
-                      color: '#7A5C5C',
-                      transition: 'background 0.15s',
-                    }}
-                  >
-                    <Sparkles size={14} style={{ flexShrink: 0, color: '#D4A5A5' }} />
-                    <span style={{ lineClamp: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{text}</span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
+
 
           {!hasResults && !isLoading && debouncedQuery.length >= 1 && (
             <div style={{

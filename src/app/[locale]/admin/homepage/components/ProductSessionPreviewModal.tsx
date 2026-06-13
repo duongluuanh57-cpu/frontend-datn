@@ -86,21 +86,12 @@ export function ProductSessionPreviewModal() {
                 {/* Left: Title */}
                 {config.showTitle && (
                   <div className="flex flex-col items-center lg:items-start text-center lg:text-left shrink-0">
-                    <span className="text-[10px] font-bold uppercase text-[#D4A5A5]">Sản phẩm mới</span>
                     <h2
-                      className="mt-4 font-medium text-[#7A5C5C]"
+                      className="font-medium text-[#7A5C5C]"
                       style={{ fontSize: `${config.sectionTitleFontSize}px` }}
                     >
                       {currentSession.titleText}
                     </h2>
-                    {config.showSubtitle && (
-                      <p
-                        className="mt-3 text-[#7A5C5C] max-w-[480px] font-medium leading-relaxed"
-                        style={{ fontSize: `${config.subtitleFontSize}px` }}
-                      >
-                        {currentSession.subtitleText}
-                      </p>
-                    )}
                   </div>
                 )}
 
@@ -157,10 +148,10 @@ export function ProductSessionPreviewModal() {
                     {/* Row 2: Price, Sort */}
                     <div className="flex flex-wrap items-center justify-center lg:justify-end gap-3">
                       {config.showFilterPrice && (
-                        <div className="flex flex-col gap-1.5 min-w-[120px] sm:min-w-[140px] flex-1 sm:flex-initial">
+                        <div className="flex flex-col gap-1.5 min-w-[120px] sm:min-w-[160px] flex-1 sm:flex-initial">
                           <label className="text-[9px] font-bold uppercase tracking-wider text-[#7A5C5C]/50">Mức giá</label>
                           <div className="w-full bg-white/40 border border-[#7A5C5C]/10 rounded-xl px-3 py-2 text-xs font-medium text-[#7A5C5C] h-[38px] flex items-center">
-                            Tất cả
+                            0₫ - 100.000.000₫
                           </div>
                         </div>
                       )}

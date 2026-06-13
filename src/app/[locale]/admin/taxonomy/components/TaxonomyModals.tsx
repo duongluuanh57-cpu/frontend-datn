@@ -25,7 +25,7 @@ export function TaxonomyModals({ adminTaxonomy }: TaxonomyModalsProps) {
     <>
       {/* Modal xóa đơn */}
       {itemToDelete && (
-        <div style={{
+        <div onClick={() => setItemToDelete(null)} style={{
           position: 'fixed',
           inset: 0,
           background: 'rgba(30, 20, 15, 0.45)',
@@ -36,7 +36,7 @@ export function TaxonomyModals({ adminTaxonomy }: TaxonomyModalsProps) {
           zIndex: 9999,
           padding: '16px',
         }}>
-          <div style={{
+          <div onClick={(e) => e.stopPropagation()} style={{
             background: 'var(--admin-surface, #ffffff)',
             border: '1px solid var(--admin-border-subtle, #f0e9e4)',
             borderRadius: '24px',
@@ -180,7 +180,9 @@ export function TaxonomyModals({ adminTaxonomy }: TaxonomyModalsProps) {
 
       {/* Modal xóa hàng loạt */}
       {showBulkDeleteModal && (
-        <div style={{
+        <div
+          onClick={() => setShowBulkDeleteModal(false)}
+          style={{
           position: 'fixed',
           inset: 0,
           background: 'rgba(30, 20, 15, 0.45)',
@@ -191,7 +193,7 @@ export function TaxonomyModals({ adminTaxonomy }: TaxonomyModalsProps) {
           zIndex: 9999,
           padding: '16px',
         }}>
-          <div style={{
+          <div onClick={(e) => e.stopPropagation()} style={{
             background: 'var(--admin-surface, #ffffff)',
             border: '1px solid var(--admin-border-subtle, #f0e9e4)',
             borderRadius: '24px',

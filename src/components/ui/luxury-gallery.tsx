@@ -4,31 +4,8 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 
-// Subcomponents & Hooks
 import { useLuxuryGallery } from './luxury-gallery/useLuxuryGallery';
 import { LuxuryGalleryLightbox } from './luxury-gallery/LuxuryGalleryLightbox';
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.12
-    }
-  }
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 30 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.8,
-      ease: [0.16, 1, 0.3, 1] as const
-    }
-  }
-};
 
 export function LuxuryGallery() {
   const formHelpers = useLuxuryGallery();
@@ -39,71 +16,63 @@ export function LuxuryGallery() {
   } = formHelpers;
 
   return (
-    <section className="luxury-gallery-section w-full bg-transparent pt-12 pb-10 lg:pt-20 lg:pb-14 overflow-hidden">
-      <div className="px-6">
-        
-        {/* Section Header */}
+    <section className="luxury-gallery-section mx-[calc(2rem+40px)] w-[calc(100%-4rem-80px)] bg-transparent pt-12 pb-10 lg:pt-20 lg:pb-14 overflow-hidden">
+      <div>
+
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
+          transition={{ duration: 0.6 }}
           className="relative mb-16 lg:mb-20 flex flex-col items-center lg:items-start text-center lg:text-left border-b border-[#D4A5A5]/10 pb-8"
         >
           <span className="text-[10px] font-bold uppercase text-[#D4A5A5]">
             {locale === 'vi' ? 'BỘ SƯU TẬP KHOẢNH KHẮC' : "L'ESSENCE GALLERY"}
           </span>
-          <h2 className="mt-4 text-3xl font-medium text-[#7A5C5C] md:text-4xl lg:text-5xl uppercase"
+          <h2 className="mt-4 text-[30px] font-medium text-[#7A5C5C]"
             style={{ fontFamily: 'var(--font-heading), serif' }}>
             {locale === 'vi' ? 'Khoảnh khắc nghệ thuật' : 'Moments d\'Élégance'}
           </h2>
-          <p className="mt-3 text-[11px] md:text-xs text-[#7A5C5C] max-w-[480px] font-medium leading-relaxed">
+          <p className="mt-3 text-[15px] text-[#7A5C5C] max-w-[480px] font-medium leading-relaxed">
             {locale === 'vi'
-              ? 'Nhật ký hình ảnh lưu giữ nguồn cảm hứng thơ mộng và phong cách sống tinh tế.'
-              : 'A visual journal of romantic inspiration and high-end aesthetic lifestyles.'}
+              ? 'Hình ảnh được chọn lọc từ cộng đồng yêu nước hoa.'
+              : 'Selected images from our fragrance community.'}
           </p>
         </motion.div>
 
-        {/* Pinterest Masonry Columns */}
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-40px" }}
-          className="columns-1 sm:columns-2 lg:columns-3 gap-6 [column-fill:_balance]"
-        >
+        <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 [column-fill:_balance]">
           {currentImages.map((image, index) => (
             <motion.div
               key={index}
-              variants={itemVariants}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.08, duration: 0.5 }}
               onClick={() => setSelectedImageIndex(index)}
-              className="break-inside-avoid mb-6 group relative rounded-2xl overflow-hidden border border-white/60 bg-white/40 p-2.5 shadow-[0_8px_32px_rgba(122,92,92,0.02)] hover:shadow-[0_20px_50px_rgba(212,165,165,0.12)] hover:border-[#D4A5A5]/30 transition-all duration-700 cursor-pointer"
+              className="break-inside-avoid mb-6 group relative rounded-xl overflow-hidden border border-[#D4A5A5]/8 bg-white/50 p-2 shadow-sm hover:shadow-md transition-shadow duration-300 cursor-pointer"
             >
-              {/* Image Frame with Glass background */}
-              <div className={`relative w-full ${image.aspect} rounded-xl overflow-hidden bg-[#7A5C5C]/3`}>
+              <div className={`relative w-full ${image.aspect} rounded-lg overflow-hidden bg-[#7A5C5C]/3`}>
                 <Image
                   src={image.url}
                   alt={image.title}
                   fill
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                  className="object-cover transition-transform duration-[1.2s] ease-out group-hover:scale-110 group-hover:rotate-[1deg]"
+                  className="object-cover transition-transform duration-500 group-hover:scale-105"
                 />
 
-                {/* Soft Vignette Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10 pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 pointer-events-none" />
 
-                {/* Aesthetic Glass Hover Details */}
-                <div className="absolute inset-0 z-20 flex flex-col justify-end p-6 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-[0.6s] cubic-bezier(0.16, 1, 0.3, 1) pointer-events-none">
+                <div className="absolute inset-0 z-20 flex flex-col justify-end p-5 translate-y-3 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-400 pointer-events-none">
                   <span className="text-[9px] font-bold uppercase tracking-[0.25em] text-[#E7B8B8] mb-1">
                     L'essence Moment
                   </span>
-                  <h3 
+                  <h3
                     className="text-sm font-light tracking-[0.1em] text-white uppercase mb-2"
                     style={{ fontFamily: 'var(--font-heading), serif' }}
                   >
                     {image.title}
                   </h3>
-                  <p 
+                  <p
                     className="text-[11px] leading-relaxed text-white/90 font-light italic tracking-wide"
                     style={{ fontFamily: 'var(--font-heading), serif' }}
                   >
@@ -113,11 +82,10 @@ export function LuxuryGallery() {
               </div>
             </motion.div>
           ))}
-        </motion.div>
+        </div>
 
       </div>
 
-      {/* Luxury Lightbox Overlay Modal */}
       <LuxuryGalleryLightbox formHelpers={formHelpers} />
 
     </section>

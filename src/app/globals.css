@@ -125,7 +125,7 @@ body {
   --color-on-primary: #FFFFFF;
   --color-secondary: #F9A8D4;
   --color-accent: #8B5CF6;
-  --color-background: #FDF2F8;
+  --color-background: #FFFFFF;
   --color-foreground: #831843;
   --color-muted: #F1EEF5;
   --color-border: #FBCFE8;
@@ -135,7 +135,7 @@ body {
   /* Legacy colors (for backward compatibility) */
   --primary: #D4A5A5;
   --accent: #E7B8B8;
-  --background: #FFF5F5;
+  --background: #FFFFFF;
   --content: #7A5C5C;
   --contrast: #C08497;
   --foreground-rgb: 122, 92, 92;

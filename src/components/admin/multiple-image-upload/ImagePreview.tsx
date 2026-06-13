@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { Loader2, X } from 'lucide-react';
-import Image from 'next/image';
 
 interface ImagePreviewProps {
   src: string;
@@ -21,23 +20,25 @@ export function ImagePreview({
   onDragStart, onDragOver, onDrop
 }: ImagePreviewProps) {
   const aspectClass = size === 'large'
-    ? 'w-full max-w-[360px] aspect-[4/3] mx-auto'
+    ? 'w-full max-w-[200px] aspect-square'
     : 'aspect-square w-full';
 
   return (
     <div
       className={`admin-upload__preview relative ${aspectClass} rounded-xl overflow-hidden border border-solid border-[var(--admin-border-subtle)] bg-[var(--admin-surface-muted)] shadow-sm group cursor-grab active:cursor-grabbing`}
+      style={{ width: '100%', margin: 0 }}
       draggable
       onDragStart={onDragStart}
       onDragOver={onDragOver}
       onDrop={onDrop}
     >
-      <Image
+      <img
         src={src}
         alt={alt}
-        fill
-        sizes={size === 'large' ? '300px' : '150px'}
-        className="object-cover"
+        style={{
+          position: 'absolute', inset: 0, width: '100%', height: '100%',
+          objectFit: 'cover', maxWidth: '100%', maxHeight: 'none',
+        }}
       />
 
       {uploading ? (

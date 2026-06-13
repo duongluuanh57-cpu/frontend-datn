@@ -19,17 +19,19 @@ interface SelectionModalProps {
   selectedIds: string[];
   onToggle: (id: string) => void;
   emptyMessage: string;
-  customValue?: string;
-  onCustomChange?: (value: string) => void;
-  customPlaceholder?: string;
-  onCustomAdd?: () => void;
-  isCustomPending?: boolean;
+  customValue?: string | undefined;
+  onCustomChange?: ((value: string) => void) | undefined;
+  customPlaceholder?: string | undefined;
+  onCustomAdd?: (() => void) | undefined;
+  isCustomPending?: boolean | undefined;
+  disabledIds?: string[] | undefined;
 }
 
 export function SelectionModal({
   isOpen, onClose, icon, title, subtitle,
   items, selectedIds, onToggle, emptyMessage,
   customValue, onCustomChange, customPlaceholder, onCustomAdd, isCustomPending,
+  disabledIds = [],
 }: SelectionModalProps) {
 
   if (!isOpen) return null;
@@ -70,20 +72,23 @@ export function SelectionModal({
         <div className="flex flex-col gap-[10px] max-h-[300px] overflow-y-auto pr-[6px] admin-scrollbar-luxury">
           {items.map((item) => {
             const isChecked = selectedIds.includes(item.id);
+            const isDisabled = disabledIds.includes(item.id);
             return (
               <label
                 key={item.id}
-                className="flex items-center justify-between cursor-pointer text-sm select-none p-3 rounded-xl border transition-all duration-250"
+                className={`flex items-center justify-between text-sm select-none p-3 rounded-xl border transition-all duration-250 ${isDisabled ? '' : 'cursor-pointer'}`}
                 style={{
                   background: isChecked ? 'rgba(212, 165, 165, 0.08)' : 'var(--admin-surface-muted, #faf8f6)',
                   borderColor: isChecked ? 'rgba(212, 165, 165, 0.25)' : 'var(--admin-border, #e8e0da)',
                   color: 'var(--admin-text, #3d2e24)',
+                  opacity: isDisabled ? 0.5 : 1,
+                  cursor: isDisabled ? 'not-allowed' : 'pointer',
                 }}
                 onMouseEnter={(e) => {
-                  if (!isChecked) { e.currentTarget.style.background = 'rgba(61, 46, 36, 0.03)'; e.currentTarget.style.borderColor = 'rgba(212, 165, 165, 0.2)'; }
+                  if (!isChecked && !isDisabled) { e.currentTarget.style.background = 'rgba(61, 46, 36, 0.03)'; e.currentTarget.style.borderColor = 'rgba(212, 165, 165, 0.2)'; }
                 }}
                 onMouseLeave={(e) => {
-                  if (!isChecked) { e.currentTarget.style.background = 'var(--admin-surface-muted, #faf8f6)'; e.currentTarget.style.borderColor = 'var(--admin-border, #e8e0da)'; }
+                  if (!isChecked && !isDisabled) { e.currentTarget.style.background = 'var(--admin-surface-muted, #faf8f6)'; e.currentTarget.style.borderColor = 'var(--admin-border, #e8e0da)'; }
                 }}
               >
                 <div className="flex items-center gap-[10px]">
@@ -97,9 +102,10 @@ export function SelectionModal({
                 <input
                   type="checkbox"
                   checked={isChecked}
-                  onChange={() => onToggle(item.id)}
-                  className="w-[18px] h-[18px] cursor-pointer"
-                  style={{ accentColor: 'var(--admin-accent, #5c4a42)' }}
+                  onChange={() => { if (!isDisabled) onToggle(item.id); }}
+                  disabled={isDisabled}
+                  className="w-[18px] h-[18px]"
+                  style={{ accentColor: 'var(--admin-accent, #5c4a42)', cursor: isDisabled ? 'not-allowed' : 'pointer' }}
                 />
               </label>
             );

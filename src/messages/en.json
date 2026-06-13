@@ -21,7 +21,7 @@
     "usernameLabel": "User Name",
     "confirmPasswordLabel": "Confirm Password",
     "registerTitle": "Start Your Journey",
-    "registerSubtitle": "Join our elite fragrance community and unlock exclusive member benefits today.",
+    "registerSubtitle": "Sign up to track orders and receive offers.",
     "benefit1": "Exclusive early access to new collections",
     "benefit2": "Global authentic brand warranty",
     "benefit3": "Reward points on every purchase",
@@ -58,15 +58,15 @@
   },
   "Home": {
     "bannerAria": "Homepage banner",
-    "bannerAlt": "L'essence — perfume bottle and roses in an elegant setting",
-    "bannerTitle": "Bespoke Niche Perfumery",
-    "bannerSubtitle": "Explore the elite essence of royal perfumery, crafted for individual distinction by master scent designers.",
-    "bannerCta": "Shop collection",
+    "bannerAlt": "L'essence — perfume and roses",
+    "bannerTitle": "Authentic Niche Fragrances",
+    "bannerSubtitle": "Authentic fragrances from France & Italy. Free shipping nationwide.",
+    "bannerCta": "Shop now",
     "prevSlide": "Previous slide",
     "nextSlide": "Next slide",
     "goToSlide": "Go to slide {n}",
     "aboutUs": "About us",
-    "brandsTitle": "OUR CURATED COLLECTION OF LUXURY FRAGRANCE BRANDS"
+    "brandsTitle": "OUR PARTNER BRANDS"
   },
   "Upload": {
     "title": "Upload image",
@@ -87,8 +87,8 @@
     "bytesSaved": "Size: {original} → {compressed} (saved space)"
   },
   "Topbar": {
-    "announcement1": "Welcome to L'essence - A symphony of radiant roses",
-    "announcement2": "Free shipping for all orders over 500k",
+    "announcement1": "Welcome to L'essence – New fragrance collection",
+    "announcement2": "Free shipping for orders over 500k",
     "announcement3": "10% off for your first purchase - Code: FIRSTLOVE",
     "email": "Email",
     "phone": "Hotline",
@@ -109,7 +109,8 @@
     "myOrders": "Order Management",
     "dashboard": "Dashboard",
     "settings": "Account Settings",
-    "logout": "Logout"
+    "logout": "Logout",
+    "noResults": "No products found"
   },
   "Admin": {
     "dashboard": {

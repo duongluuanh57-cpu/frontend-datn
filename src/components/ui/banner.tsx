@@ -80,8 +80,8 @@ export function Banner({
 
   return (
     <section
-      className={`relative overflow-hidden bg-[#FFF5F5] ${
-        isPreview ? 'w-full h-[320px] sm:h-[380px] md:h-[450px]' : 'w-[calc(100%-4rem)] mx-auto h-[calc(85vh-13px)]'
+      className={`relative overflow-hidden bg-[#FFF5F5] rounded-b-[32px] ${
+        isPreview ? 'w-full h-[320px] sm:h-[380px] md:h-[450px]' : 'mx-[calc(2rem+40px)] w-[calc(100%-4rem-80px)] h-[calc(85vh-13px)]'
       }`}
       role="banner"
       aria-label="Hero Banner Slideshow"
@@ -112,13 +112,21 @@ export function Banner({
         />
       )}
 
-      <div className="ambient-glow glow-1" />
-      <div className="ambient-glow glow-2" />
+      {/* Three-column grid matching navbar */}
+      {!isPreview && (
+        <div className="absolute inset-0 z-[1] pointer-events-none">
+          <div className="flex w-full h-full">
+            <div className="flex-1" />
+            <div className="flex-1" />
+            <div className="flex-1" />
+          </div>
+        </div>
+      )}
 
-      <div className="absolute inset-0 z-10 flex items-center justify-center md:justify-end px-6 md:px-16 lg:px-24">
+      <div className={`absolute inset-0 z-10 flex items-center justify-center md:justify-end ${isPreview ? 'px-6 md:px-16 lg:px-24' : ''}`}>
         <div className="flex flex-col md:flex-row items-center gap-6 lg:gap-10">
           <motion.div
-            className={`banner-glass banner-floating flex flex-col items-center md:items-end text-center md:text-right ${
+            className={`banner-glass flex flex-col items-center md:items-end text-center md:text-right ${
               isPreview 
                 ? 'max-w-[85vw] sm:max-w-[380px] md:max-w-[460px] lg:max-w-[500px] gap-3 md:gap-4 p-4 sm:p-6 md:p-8'
                 : 'max-w-[92vw] sm:max-w-[480px] md:max-w-[540px] lg:max-w-[620px] gap-4 md:gap-5 p-6 sm:p-8 md:p-10 lg:p-12'
@@ -147,7 +155,7 @@ export function Banner({
           </motion.div>
 
           {/* Slide Indicators */}
-          <div className="flex md:flex-col gap-4 py-2" aria-label={t('goToSlide', { n: '' })}>
+          <div className="flex md:flex-col gap-4 py-2 md:mr-16 lg:mr-24" aria-label={t('goToSlide', { n: '' })}>
             {images.map((_, i) => (
               <button
                 key={i}

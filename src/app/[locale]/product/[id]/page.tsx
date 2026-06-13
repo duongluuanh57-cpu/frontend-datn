@@ -1,5 +1,5 @@
 import { setRequestLocale } from 'next-intl/server';
-import { ProductDetail } from './ProductDetail';
+import { ProductDetail } from '@/components/ui/product-detail';
 
 export default async function ProductDetailPage({
   params,

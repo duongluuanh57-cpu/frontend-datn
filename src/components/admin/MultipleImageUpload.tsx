@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Trash2 } from 'lucide-react';
+import { Trash2, UploadCloud } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import api from '@/lib/api';
 import { ImagePreview } from './multiple-image-upload/ImagePreview';
-import { UploadArea, UrlInput } from './multiple-image-upload/UploadArea';
+import { UrlInput } from './multiple-image-upload/UploadArea';
 
 interface MultipleImageUploadProps {
   value: string[];
@@ -130,9 +130,9 @@ export function MultipleImageUpload({
         )}
       </div>
 
-      {images.length > 0 && (
-        <div className="flex flex-col gap-4 mb-4">
-          {/* Main Image */}
+      <div className="flex flex-col gap-4 mb-4">
+        {/* Main Image / Upload placeholder */}
+        {images.length > 0 ? (
           <ImagePreview
             src={images[0]}
             alt="Ảnh chính sản phẩm"
@@ -144,42 +144,54 @@ export function MultipleImageUpload({
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => handleDrop(e, 0)}
           />
+        ) : (
+          <label className="admin-upload__dropzone" style={{ cursor: 'pointer', margin: 0 }}>
+            <span className="admin-upload__dropzone-icon">
+              <UploadCloud size={22} />
+            </span>
+            <span className="admin-upload__dropzone-title">{t('prompt')}</span>
+            <span className="admin-upload__dropzone-hint">{t('hint')}</span>
+            <input type="file" accept="image/*" multiple onChange={handleUpload} disabled={isUploading} />
+          </label>
+        )}
 
-          {/* Sub Images */}
-          {images.length > 1 && (
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-bold tracking-wider text-[var(--admin-text-muted)] uppercase">
-                  Ảnh phụ / Bộ sưu tập ({images.length - 1})
-                </span>
-                <span className="text-[10px] text-blue-500 font-medium hidden sm:inline">
-                  💡 Kéo thả ảnh để thay đổi thứ tự hiển thị
-                </span>
-              </div>
-              <div className="grid grid-cols-4 sm:grid-cols-5 gap-2.5">
-                {images.slice(1).map((url, subIndex) => {
-                  const actualIndex = subIndex + 1;
-                  return (
-                    <ImagePreview
-                      key={actualIndex}
-                      src={url}
-                      alt={`Ảnh phụ ${actualIndex}`}
-                      uploading={uploadingIndex === actualIndex}
-                      onRemove={() => removeImage(actualIndex)}
-                      onDragStart={(e) => handleDragStart(e, actualIndex)}
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={(e) => handleDrop(e, actualIndex)}
-                    />
-                  );
-                })}
-              </div>
+        {/* Sub Images + Add button */}
+        {(images.length > 1 || images.length < maxImages) && (
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] font-bold tracking-wider text-[var(--admin-text-muted)] uppercase">
+                Ảnh phụ / Bộ sưu tập ({images.length > 0 ? images.length - 1 : 0})
+              </span>
             </div>
-          )}
-        </div>
-      )}
+            <div className="grid grid-cols-4 sm:grid-cols-5 gap-2.5">
+              {images.length < maxImages && (
+                <label className="aspect-square w-full flex items-center justify-center rounded-xl border-2 border-dashed border-[var(--admin-border-subtle)] bg-[var(--admin-surface-muted)] cursor-pointer hover:border-[var(--admin-accent)] transition-colors"
+                  style={{ minHeight: 0 }}>
+                  <span className="text-2xl text-[var(--admin-text-muted)]">+</span>
+                  <input type="file" accept="image/*" multiple className="hidden" onChange={handleUpload} />
+                </label>
+              )}
+              {images.slice(1).map((url, subIndex) => {
+                const actualIndex = subIndex + 1;
+                return (
+                  <ImagePreview
+                    key={actualIndex}
+                    src={url}
+                    alt={`Ảnh phụ ${actualIndex}`}
+                    uploading={uploadingIndex === actualIndex}
+                    onRemove={() => removeImage(actualIndex)}
+                    onDragStart={(e) => handleDragStart(e, actualIndex)}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => handleDrop(e, actualIndex)}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        )}
 
-      {images.length < maxImages && <UploadArea disabled={isUploading} onFileSelect={handleUpload} />}
-      {images.length < maxImages && <UrlInput disabled={isUploading} onUrlSubmit={handleUrlUpload} />}
+        {images.length < maxImages && <UrlInput disabled={isUploading} onUrlSubmit={handleUrlUpload} />}
+      </div>
     </div>
   );
 }

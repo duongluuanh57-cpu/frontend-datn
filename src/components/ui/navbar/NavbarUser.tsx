@@ -4,7 +4,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, usePathname, useRouter } from '@/navigation';
 import { useTranslations } from 'next-intl';
 import { motion, AnimatePresence } from 'framer-motion';
-import Image from 'next/image';
 import { User, ShoppingBag, LayoutDashboard, Settings, LogOut } from 'lucide-react';
 import { resolveImageUrl } from '@/lib/api';
 import type { NavbarConfig } from '@/hooks/useHomepageConfig';
@@ -87,12 +86,10 @@ export function NavbarUser({ user, isAuthenticated, logout, navbarConfig, style 
       >
         {mode !== 'text' && (
           user?.avatar ? (
-            <Image
+            <img
               src={resolveImageUrl(user.avatar)}
               alt={user.username || 'Avatar'}
-              fill
-              sizes="40px"
-              style={{ objectFit: 'cover', borderRadius: '12px' }}
+              style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '12px' }}
             />
           ) : (
             <User size={24} strokeWidth={2.5} />
@@ -133,12 +130,10 @@ export function NavbarUser({ user, isAuthenticated, logout, navbarConfig, style 
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', paddingBottom: '0.8rem', borderBottom: '1px solid rgba(231, 184, 184, 0.5)' }}>
               <div style={{ position: 'relative', width: '48px', height: '48px', borderRadius: '50%', overflow: 'hidden', border: '2px solid var(--primary)', flexShrink: 0 }}>
                 {user?.avatar ? (
-                  <Image
+                  <img
                     src={resolveImageUrl(user.avatar)}
                     alt={user.username}
-                    fill
-                    sizes="48px"
-                    style={{ objectFit: 'cover' }}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
                 ) : (
                   <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--accent)', color: 'white' }}>

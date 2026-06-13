@@ -30,6 +30,45 @@ const formatPrice = (price: number, locale: string) =>
     currency: locale === 'vi' ? 'VND' : 'USD',
   }).format(locale === 'vi' ? price : price / 25000);
 
+const computeCompletion = (product: Product): { pct: number; missing: string[] } => {
+  // Toàn bộ field có trong form chỉnh sửa sản phẩm
+  const fields: { key: string; label: string; check: (p: Product) => boolean }[] = [
+    { key: 'name', label: 'Tên', check: p => !!p.name?.trim() },
+    { key: 'brand', label: 'Brand', check: p => !!p.brand?.trim() },
+    { key: 'price', label: 'Giá', check: p => (p.price || 0) > 0 },
+    { key: 'image', label: 'Ảnh', check: p => !!p.image },
+    { key: 'description', label: 'Mô tả', check: p => !!p.description?.trim() },
+    { key: 'size', label: 'Size', check: p => !!p.size?.trim() },
+    { key: 'tag', label: 'Tag', check: p => !!p.tag?.trim() },
+    { key: 'quantityInStock', label: 'Kho', check: p => (p.quantityInStock || 0) >= 0 },
+    { key: 'discountPercentage', label: 'Giảm giá', check: p => (p.discountPercentage || 0) > 0 },
+    { key: 'scentGroup', label: 'Nhóm hương', check: p => !!p.scentGroup?.trim() },
+    { key: 'concentration', label: 'Nồng độ', check: p => !!p.concentration?.trim() },
+    { key: 'segment', label: 'Phân khúc', check: p => !!p.segment?.trim() },
+    { key: 'categories', label: 'Danh mục', check: p => !!p.categories?.trim() },
+    { key: 'longevity', label: 'Lưu hương', check: p => !!p.longevity?.trim() },
+    { key: 'sillage', label: 'Tỏa hương', check: p => !!p.sillage?.trim() },
+    { key: 'durability', label: 'Độ bền mùi', check: p => !!p.durability?.trim() },
+    { key: 'scentTrail', label: 'Vệt hương', check: p => !!p.scentTrail?.trim() },
+    { key: 'season', label: 'Mùa', check: p => !!p.season?.trim() },
+    { key: 'time', label: 'Thời gian', check: p => !!p.time?.trim() },
+    { key: 'metaTitle', label: 'Meta Title', check: p => !!p.metaTitle?.trim() },
+    { key: 'metaDescription', label: 'Meta Desc', check: p => !!p.metaDescription?.trim() },
+    { key: 'images', label: 'Ảnh phụ', check: p => (p as any).images ? (Array.isArray((p as any).images) ? (p as any).images.length > 0 : true) : false },
+    { key: 'keywords', label: 'Từ khóa', check: p => (Array.isArray(p.keywords) ? p.keywords.length > 0 : !!p.keywords?.toString().trim()) },
+    { key: 'slug', label: 'Slug', check: p => !!p.slug?.trim() },
+    { key: 'priceReport', label: 'Báo giá', check: p => !!p.priceReport?.trim() },
+    { key: 'sizeReport', label: 'Báo size', check: p => !!p.sizeReport?.trim() },
+    { key: 'discountReport', label: 'Báo giảm giá', check: p => !!p.discountReport?.trim() },
+  ];
+  const missing: string[] = [];
+  for (const f of fields) {
+    if (!f.check(product)) missing.push(f.label);
+  }
+  const pct = fields.length > 0 ? Math.round(((fields.length - missing.length) / fields.length) * 100) : 0;
+  return { pct, missing };
+};
+
 export const ProductTable = React.memo(function ProductTable({
   t, locale, isVi,
   products, isLoading, total,
@@ -114,16 +153,15 @@ export const ProductTable = React.memo(function ProductTable({
                 />
               </th>
               <th>{t('table.product')}</th>
-              <th>{t('table.tag')}</th>
               <th>{t('table.stock')}</th>
+              <th>{isVi ? 'Trạng thái' : 'Status'}</th>
               <th>{t('table.price')}</th>
-              <th>{t('table.rating')}</th>
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={6}>
+                <td colSpan={5}>
                   <div className="admin-loading">
                     <Loader2 className="admin-loading__spinner animate-spin" />
                     <p>{t('loading')}</p>
@@ -132,7 +170,7 @@ export const ProductTable = React.memo(function ProductTable({
               </tr>
             ) : total === 0 ? (
               <tr>
-                <td colSpan={6}>
+                <td colSpan={5}>
                   <div className="admin-empty">
                     <Sparkles className="admin-empty__icon" />
                     <p>{t('empty')}</p>
@@ -200,163 +238,6 @@ export const ProductTable = React.memo(function ProductTable({
                       </div>
                     </td>
                     <td>
-                      {(() => {
-                        const tags = product.tag
-                          ? product.tag
-                              .split(',')
-                              .map((t) => t.trim())
-                              .filter(Boolean)
-                          : [];
-
-                        if (tags.length === 0) {
-                          return <span style={{ opacity: 0.5 }}>—</span>;
-                        }
-
-                        const displayTags = tags.slice(0, 2);
-                        const hasMore = tags.length > 2;
-
-                        return (
-                          <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                            {displayTags.map((tag, idx) => (
-                              <span
-                                key={idx}
-                                className="admin-badge"
-                                style={{
-                                  border: '1px solid var(--admin-border-subtle)',
-                                  background: 'var(--admin-surface-muted)',
-                                  color: 'var(--admin-text-secondary)',
-                                  padding: '2px 8px',
-                                  borderRadius: '4px',
-                                  fontSize: '0.6875rem',
-                                  fontWeight: 600,
-                                  whiteSpace: 'nowrap',
-                                }}
-                              >
-                                {tag}
-                              </span>
-                            ))}
-
-                            {hasMore && (
-                              <div
-                                className="group relative inline-block"
-                                style={{ position: 'relative', display: 'inline-block' }}
-                              >
-                                <span
-                                  className="admin-badge"
-                                  style={{
-                                    border: '1px dashed var(--admin-accent, #3d2e24)',
-                                    background: 'rgba(212, 165, 165, 0.08)',
-                                    color: 'var(--admin-accent, #3d2e24)',
-                                    padding: '2px 8px',
-                                    borderRadius: '4px',
-                                    fontSize: '0.6875rem',
-                                    fontWeight: 600,
-                                    cursor: 'pointer',
-                                    whiteSpace: 'nowrap',
-                                    transition: 'all 0.2s ease',
-                                  }}
-                                >
-                                  +{tags.length - 2}
-                                </span>
-
-                                <div
-                                  className="invisible opacity-0 translate-y-1 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200"
-                                  style={{
-                                    position: 'absolute',
-                                    bottom: 'calc(100% + 8px)',
-                                    left: '50%',
-                                    transform: 'translateX(-50%)',
-                                    zIndex: 50,
-                                    background: '#ffffff',
-                                    border: '1px solid var(--admin-border, #e6deda)',
-                                    borderRadius: '8px',
-                                    padding: '8px 10px',
-                                    boxShadow: '0 10px 25px -5px rgba(61, 46, 36, 0.15), 0 8px 10px -6px rgba(61, 46, 36, 0.15)',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    gap: '6px',
-                                    minWidth: '130px',
-                                    pointerEvents: 'none',
-                                  }}
-                                >
-                                  <span
-                                    style={{
-                                      fontSize: '0.625rem',
-                                      fontWeight: 700,
-                                      color: 'var(--admin-text-muted, #8c7e76)',
-                                      textTransform: 'uppercase',
-                                      letterSpacing: '0.05em',
-                                      borderBottom: '1px solid var(--admin-border-subtle, #f5f0ed)',
-                                      paddingBottom: '4px',
-                                      marginBottom: '2px',
-                                      whiteSpace: 'nowrap',
-                                    }}
-                                  >
-                                    {isVi ? 'Tất cả nhãn' : 'All tags'}
-                                  </span>
-
-                                  <div
-                                    style={{
-                                      display: 'flex',
-                                      flexWrap: 'wrap',
-                                      gap: '4px',
-                                      maxWidth: '220px',
-                                    }}
-                                  >
-                                    {tags.map((tag, idx) => (
-                                      <span
-                                        key={idx}
-                                        className="admin-badge"
-                                        style={{
-                                          border: '1px solid var(--admin-border-subtle)',
-                                          background: 'var(--admin-surface-muted)',
-                                          color: 'var(--admin-text-secondary)',
-                                          padding: '1px 6px',
-                                          borderRadius: '4px',
-                                          fontSize: '0.625rem',
-                                          fontWeight: 600,
-                                          whiteSpace: 'nowrap',
-                                        }}
-                                      >
-                                        {tag}
-                                      </span>
-                                    ))}
-                                  </div>
-
-                                  <div
-                                    style={{
-                                      position: 'absolute',
-                                      top: '100%',
-                                      left: '50%',
-                                      transform: 'translateX(-50%)',
-                                      width: '0',
-                                      height: '0',
-                                      borderLeft: '6px solid transparent',
-                                      borderRight: '6px solid transparent',
-                                      borderTop: '6px solid var(--admin-border, #e6deda)',
-                                    }}
-                                  />
-                                  <div
-                                    style={{
-                                      position: 'absolute',
-                                      top: '99%',
-                                      left: '50%',
-                                      transform: 'translateX(-50%)',
-                                      width: '0',
-                                      height: '0',
-                                      borderLeft: '5px solid transparent',
-                                      borderRight: '5px solid transparent',
-                                      borderTop: '5px solid #ffffff',
-                                    }}
-                                  />
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })()}
-                    </td>
-                    <td>
                       <span
                         className={`admin-badge ${
                           product.quantityInStock < 10 ? 'admin-badge--low' : 'admin-badge--ok'
@@ -364,6 +245,46 @@ export const ProductTable = React.memo(function ProductTable({
                       >
                         {product.quantityInStock} SP
                       </span>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <div
+                          style={{
+                            width: '44px',
+                            height: '6px',
+                            borderRadius: '3px',
+                            background: 'var(--admin-border-subtle)',
+                            overflow: 'hidden',
+                            flexShrink: 0,
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: `${computeCompletion(product).pct}%`,
+                              height: '100%',
+                              borderRadius: '3px',
+                              transition: 'width 0.4s ease',
+                              background:
+                                computeCompletion(product).pct >= 80
+                                  ? '#22c55e'
+                                  : computeCompletion(product).pct >= 50
+                                  ? '#eab308'
+                                  : '#ef4444',
+                            }}
+                          />
+                        </div>
+                        <span
+                          style={{
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            whiteSpace: 'nowrap',
+                            color: 'var(--admin-text-secondary)',
+                          }}
+                          title={computeCompletion(product).missing.length > 0 ? `Thiếu: ${computeCompletion(product).missing.join(', ')}` : 'Đầy đủ'}
+                        >
+                          {computeCompletion(product).pct}%
+                        </span>
+                      </div>
                     </td>
                     <td>
                       <p className="admin-table-price">{formatPrice(product.price, locale)}</p>
@@ -444,11 +365,6 @@ export const ProductTable = React.memo(function ProductTable({
                           </div>
                         );
                       })()}
-                    </td>
-                    <td>
-                      <p className="admin-table-rating">
-                        {product.rating} <span>({product.reviewsCount})</span>
-                      </p>
                     </td>
                   </tr>
                 );

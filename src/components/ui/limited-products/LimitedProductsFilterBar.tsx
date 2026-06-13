@@ -4,6 +4,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { useLimitedProducts } from './useLimitedProducts';
 import { useProductSessionLayout } from '@/store/useProductSessionPreviewStore';
+import { PriceRangeSlider } from '@/components/ui/price-range-slider';
 
 interface LimitedProductsFilterBarProps {
   formHelpers: ReturnType<typeof useLimitedProducts>;
@@ -22,8 +23,8 @@ export function LimitedProductsFilterBar({ formHelpers }: LimitedProductsFilterB
     setSelectedBrand,
     selectedCapacity,
     setSelectedCapacity,
-    selectedPriceRange,
-    setSelectedPriceRange,
+    priceRange,
+    setPriceRange,
     selectedScentGroup,
     setSelectedScentGroup,
     selectedConcentration,
@@ -43,7 +44,7 @@ export function LimitedProductsFilterBar({ formHelpers }: LimitedProductsFilterB
     <div className="flex flex-wrap items-center justify-center lg:justify-end gap-3 sm:gap-4 text-[#7A5C5C]/80 w-full lg:w-auto">
       {(selectedBrand !== 'all' ||
         selectedCapacity !== 'all' ||
-        selectedPriceRange !== 'all' ||
+        priceRange !== null ||
         selectedScentGroup !== 'all' ||
         selectedConcentration !== 'all' ||
         selectedSegment !== 'all' ||
@@ -201,21 +202,7 @@ export function LimitedProductsFilterBar({ formHelpers }: LimitedProductsFilterB
       )}
 
       {layoutConfig.showFilterPrice && (
-        <div className="flex flex-col gap-1.5 min-w-[120px] sm:min-w-[140px] flex-1 sm:flex-initial">
-          <label className="text-[9px] font-bold uppercase tracking-wider text-[#7A5C5C]/50">
-            {isVi ? 'Mức giá' : 'Price'}
-          </label>
-          <select
-            value={selectedPriceRange}
-            onChange={(e) => setSelectedPriceRange(e.target.value)}
-            className="w-full bg-white/40 border border-[#7A5C5C]/10 rounded-xl px-3 py-2 text-xs font-medium backdrop-blur-md focus:outline-none focus:border-[#D4A5A5] transition-all cursor-pointer text-[#7A5C5C]"
-          >
-            <option value="all">{isVi ? 'Tất cả' : 'All Prices'}</option>
-            <option value="under-1m">{isVi ? 'Dưới 1 triệu' : 'Under 1M'}</option>
-            <option value="1m-3m">{isVi ? '1 triệu - 3 triệu' : '1M - 3M'}</option>
-            <option value="over-3m">{isVi ? 'Trên 3 triệu' : 'Over 3M'}</option>
-          </select>
-        </div>
+        <PriceRangeSlider value={priceRange} onChange={setPriceRange} locale={locale} />
       )}
 
       {layoutConfig.showFilterSort && (

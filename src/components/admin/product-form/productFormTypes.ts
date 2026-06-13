@@ -12,6 +12,8 @@ export interface ProductFormData {
   concentration?: string;
   segment?: string;
   categories?: string;
+  season?: string;
+  time?: string;
   rating: number;
   reviewsCount: number;
   size: string;
@@ -19,6 +21,13 @@ export interface ProductFormData {
   discountPercentage: number;
   discountStartDate?: Date | null | string;
   discountEndDate?: Date | null | string;
+  longevity?: string;
+  sillage?: string;
+  durability?: string;
+  scentTrail?: string;
+  style?: string;
+  suitableFor?: string;
+  occasion?: string;
   metaTitle: string;
   metaDescription: string;
   keywords?: string[] | string;
@@ -51,8 +60,11 @@ export const SIZE_CATEGORIES = [
 export const EMPTY_FORM: ProductFormData = {
   name: '', brand: '', price: 0, image: '', images: [] as string[],
   description: '', tag: '', scentGroup: '', concentration: '', segment: '',
-  categories: '', rating: 5, reviewsCount: 0, size: '', quantityInStock: 0,
+  categories: '', season: '', time: '', rating: 5, reviewsCount: 0, size: '', quantityInStock: 0,
   discountPercentage: 0, discountStartDate: null as Date | null,
-  discountEndDate: null as Date | null, metaTitle: '', metaDescription: '',
+  discountEndDate: null as Date | null,
+  longevity: '', sillage: '', durability: '', scentTrail: '', style: '',
+  suitableFor: '', occasion: '',
+  metaTitle: '', metaDescription: '',
   keywords: '', slug: '', priceReport: '', sizeReport: '', discountReport: '',
 };

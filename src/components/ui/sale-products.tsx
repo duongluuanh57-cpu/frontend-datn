@@ -13,7 +13,7 @@ import './new-products.css';
 
 const fetchSaleProducts = async (): Promise<ProductData[]> => {
   const { data } = await api.get('/products/sale');
-  return data.data;
+  return data?.data ?? [];
 };
 
 // --- Countdown Timer Component ---
@@ -135,12 +135,12 @@ export function SaleProducts() {
   const totalToShow = cols * rows;
 
   return (
-    <section className="new-products-section w-full bg-transparent pt-[56px] pb-10 lg:pt-[96px] lg:pb-14 overflow-hidden"
+    <section className="new-products-section mx-[calc(2rem+40px)] w-[calc(100%-4rem-80px)] bg-transparent pt-[56px] pb-10 lg:pt-[96px] lg:pb-14 overflow-hidden"
       style={{ contain: 'content', contentVisibility: 'auto' } as React.CSSProperties}>
-      <div className="px-6">
+      <div>
 
         {/* Header Section */}
-        <div className="relative mb-16 lg:mb-20 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 border-b border-[#D4A5A5]/10 pb-8">
+        <div className="relative mb-4 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 border-b border-[#D4A5A5]/10 pb-8">
           {layoutConfig.showTitle && (
             <motion.div
               initial={{ opacity: 0, y: 15 }}
@@ -149,23 +149,12 @@ export function SaleProducts() {
               transition={{ duration: 0.8 }}
               className="flex flex-col items-center lg:items-start text-center lg:text-left"
             >
-              <span className="text-[10px] font-bold uppercase text-[#D4A5A5]">
-                L'essence Promotions
-              </span>
               <h2
-                className="mt-4 font-medium text-[#7A5C5C]"
+                className="font-medium text-[#7A5C5C]"
                 style={{ fontSize: `${layoutConfig.sectionTitleFontSize}px` }}
               >
                 {layoutConfig.sessions.saleProducts.titleText}
               </h2>
-              {layoutConfig.showSubtitle && (
-                <p
-                  className="mt-3 text-[#7A5C5C] max-w-[480px] font-medium leading-relaxed"
-                  style={{ fontSize: `${layoutConfig.subtitleFontSize}px` }}
-                >
-                  {layoutConfig.sessions.saleProducts.subtitleText}
-                </p>
-              )}
             </motion.div>
           )}
 

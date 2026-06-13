@@ -23,7 +23,7 @@ export function NavbarLogo({ logo, style }: NavbarLogoProps) {
       }}>
         <div style={{ width: (logo?.width || 120), height: (logo?.height || 35), position: 'relative' }}>
           <Image
-            src={logo?.image || "/pointer.png"}
+            src={logo?.image || "https://i.ibb.co/TxzQXcMT/original.png"}
             alt="L'essence Logo"
             fill
             sizes="120px"

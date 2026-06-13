@@ -52,11 +52,10 @@ export function BannerActions({ isPreview = false }: BannerActionsProps) {
         onMouseLeave={() => setIsHovered(false)}
         onClick={handleCtaClick}
         aria-label={t('bannerCta')}
-        className={`banner-cta group relative flex items-center justify-center overflow-hidden rounded-full border border-white/40 bg-white/70 backdrop-blur-md shadow-md hover:shadow-xl transition-all duration-300 ${
+        className={`banner-cta group relative flex items-center justify-center overflow-hidden rounded-full border border-white/40 bg-white/70 shadow-sm hover:shadow-md transition-all duration-300 ${
           isPreview ? 'h-8 w-32' : 'h-10 w-44'
         }`}
       >
-        {/* Iridescent shimmer effect inside button */}
         <span
           className={`relative z-10 font-bold uppercase tracking-widest transition-colors duration-300 text-[#7A5C5C] group-hover:text-white ${
             isPreview ? 'text-[8px] md:text-[9px]' : 'text-[10px] md:text-xs'

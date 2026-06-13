@@ -294,12 +294,6 @@ export const HomepageProductSessionLayoutTab = React.memo(function HomepageProdu
                   className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D4A5A5]/40" />
               </div>
               <div>
-                <label className="text-[9px] font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">Subtitle</label>
-                <input type="text" value={currentSession.subtitleText}
-                  onChange={e => handleSessionChange({ subtitleText: e.target.value })}
-                  className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D4A5A5]/40" />
-              </div>
-              <div>
                 <label className="text-[9px] font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">Tag lọc sản phẩm</label>
                 <div className="relative">
                   <button onClick={() => setTagDropdownOpen(!tagDropdownOpen)}
@@ -349,8 +343,7 @@ const InlinePreview = React.memo(function InlinePreview({ config }: { config: Pr
         {/* Left: Title */}
         {config.showTitle && (
           <div className="flex flex-col items-center lg:items-start text-center lg:text-left shrink-0">
-            <span className="text-[10px] font-bold uppercase text-[#D4A5A5]">Sản phẩm mới</span>
-            <h2 className="mt-4 font-medium text-[#7A5C5C]"
+            <h2 className="font-medium text-[#7A5C5C]"
               style={{ fontSize: `${config.sectionTitleFontSize}px` }}>
               {session.titleText}
             </h2>
@@ -405,9 +398,9 @@ const InlinePreview = React.memo(function InlinePreview({ config }: { config: Pr
             </div>
             <div className="flex flex-wrap items-center justify-center lg:justify-end gap-3">
               {config.showFilterPrice && (
-                <div className="flex flex-col gap-1.5 min-w-[120px] sm:min-w-[140px] flex-1 sm:flex-initial">
+                <div className="flex flex-col gap-1.5 min-w-[120px] sm:min-w-[160px] flex-1 sm:flex-initial">
                   <label className="text-[9px] font-bold uppercase tracking-wider text-[#7A5C5C]/50">Mức giá</label>
-                  <div className="w-full bg-white/40 border border-[#7A5C5C]/10 rounded-xl px-3 py-2 text-xs font-medium text-[#7A5C5C] h-[38px] flex items-center">Tất cả</div>
+                  <div className="w-full bg-white/40 border border-[#7A5C5C]/10 rounded-xl px-3 py-2 text-xs font-medium text-[#7A5C5C] h-[38px] flex items-center">0₫ - 100.000.000₫</div>
                 </div>
               )}
               {config.showFilterSort && (

@@ -40,10 +40,10 @@ export function TrendingProducts() {
   const totalToShow = cols * rows;
 
   return (
-    <section className="trending-products-section w-full bg-transparent pt-12 pb-10 lg:pt-20 lg:pb-14 overflow-hidden"
+    <section className="trending-products-section mx-[calc(2rem+40px)] w-[calc(100%-4rem-80px)] bg-transparent pt-12 pb-10 lg:pt-20 lg:pb-14 overflow-hidden"
       style={{ contain: 'content', contentVisibility: 'auto' } as React.CSSProperties}>
-      <div className="px-6">
-        <div className="relative mb-16 lg:mb-20 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 border-b border-[#D4A5A5]/10 pb-8">
+      <div>
+        <div className="relative mb-4 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 border-b border-[#D4A5A5]/10 pb-8">
           {layoutConfig.showTitle && (
             <motion.div
               initial={{ opacity: 0, y: 15 }}
@@ -52,23 +52,12 @@ export function TrendingProducts() {
               transition={{ duration: 0.8 }}
               className="flex flex-col items-center lg:items-start text-center lg:text-left"
             >
-              <span className="text-[10px] font-bold uppercase text-[#D4A5A5]">
-                TOP sản phẩm được yêu thích
-              </span>
               <h2
-                className="mt-4 font-medium text-[#7A5C5C]"
+                className="font-medium text-[#7A5C5C]"
                 style={{ fontSize: `${layoutConfig.sectionTitleFontSize}px` }}
               >
                 {layoutConfig.sessions.trendingProducts.titleText}
               </h2>
-              {layoutConfig.showSubtitle && (
-                <p
-                  className="mt-3 text-[#7A5C5C] max-w-[480px] font-medium leading-relaxed"
-                  style={{ fontSize: `${layoutConfig.subtitleFontSize}px` }}
-                >
-                  {layoutConfig.sessions.trendingProducts.subtitleText}
-                </p>
-              )}
             </motion.div>
           )}
 
@@ -99,7 +88,7 @@ export function TrendingProducts() {
               <div className="col-span-full py-16 flex flex-col items-center justify-center text-center">
                 <span className="text-xs font-medium text-[#7A5C5C]/60 bg-white/60 border border-[#7A5C5C]/10 rounded-2xl px-8 py-6 shadow-sm">
                   {locale === 'vi'
-                    ? 'Chưa có sản phẩm thịnh hành nào phù hợp với bộ lọc.'
+                    ? 'Chưa có sản phẩm thịnh hành nào phù hợp với bềElọc.'
                     : 'No trending products found matching the filters.'}
                 </span>
               </div>
@@ -116,7 +105,7 @@ export function TrendingProducts() {
           <div className="mt-24 flex flex-col items-center">
             <Link href="/collections">
               <button className="explore-all-btn-luxury flex items-center gap-4 focus:outline-none">
-                <span>{locale === 'vi' ? 'Khám phá bộ sưu tập' : 'Explore All Collections'}</span>
+                <span>{locale === 'vi' ? 'Khám phá bềEsưu tập' : 'Explore All Collections'}</span>
                 <div className="arrow-circle flex h-10 w-10 items-center justify-center rounded-full">
                   <ArrowRight size={15} />
                 </div>

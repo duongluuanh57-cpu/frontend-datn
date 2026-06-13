@@ -21,7 +21,7 @@
     "usernameLabel": "Tên người dùng",
     "confirmPasswordLabel": "Xác nhận mật khẩu",
     "registerTitle": "Bắt đầu hành trình",
-    "registerSubtitle": "Trở thành một phần của cộng đồng yêu hương thơm cao cấp và nhận ngay những đặc quyền riêng biệt.",
+    "registerSubtitle": "Đăng ký để theo dõi đơn hàng và nhận ưu đãi.",
     "benefit1": "Ưu đãi đặc biệt cho bộ sưu tập mới",
     "benefit2": "Bảo hành chính hãng toàn cầu",
     "benefit3": "Tích lũy điểm thưởng mỗi đơn hàng",
@@ -58,15 +58,15 @@
   },
   "Home": {
     "bannerAria": "Banner trang chủ",
-    "bannerAlt": "L'essence — chai nước hoa và hoa hồng, không gian sang trọng",
-    "bannerTitle": "Độc bản hương thơm Niche",
-    "bannerSubtitle": "Khám phá tinh hoa mùi hương quý tộc mang đậm phong vị cá nhân từ những nhà điều chế hàng đầu thế giới.",
-    "bannerCta": "Vào cửa hàng",
+    "bannerAlt": "L'essence — nước hoa và hoa hồng",
+    "bannerTitle": "Nước hoa Niche chính hãng",
+    "bannerSubtitle": "Cam kết chính hãng từ Pháp & Ý. Giao hàng toàn quốc.",
+    "bannerCta": "Mua ngay",
     "prevSlide": "Slide trước",
     "nextSlide": "Slide sau",
     "goToSlide": "Đến slide {n}",
     "aboutUs": "Về chúng tôi",
-    "brandsTitle": "BỘ SƯU TẬP NHỮNG THƯƠNG HIỆU NƯỚC HOA THƯỢNG LƯU"
+    "brandsTitle": "THƯƠNG HIỆU ĐỐI TÁC"
   },
   "Upload": {
     "title": "Tải ảnh lên",
@@ -87,9 +87,9 @@
     "bytesSaved": "Dung lượng: {original} → {compressed} (sau nén)"
   },
   "Topbar": {
-    "announcement1": "Chào đón \"L'essence\" – Bản giao hưởng của những đóa hồng rạng rỡ",
-    "announcement2": "Miễn phí vận chuyển cho mọi đơn hàng lãng mạn từ 500k",
-    "announcement3": "Ưu đãi 10% cho lần đầu chạm ngõ L'essence – Mã: FIRSTLOVE",
+    "announcement1": "Chào đón L'essence – Bộ sưu tập nước hoa mới",
+    "announcement2": "Miễn phí vận chuyển cho đơn hàng từ 500k",
+    "announcement3": "Giảm 10% lần đầu mua – Mã: FIRSTLOVE",
     "email": "Email liên hệ",
     "phone": "Hotline",
     "changeLanguage": "Ngôn ngữ"
@@ -109,7 +109,8 @@
     "myOrders": "Quản lý đơn hàng",
     "dashboard": "Dashboard",
     "settings": "Cài đặt tài khoản",
-    "logout": "Đăng xuất"
+    "logout": "Đăng xuất",
+    "noResults": "Không tìm thấy sản phẩm"
   },
   "Admin": {
     "dashboard": {

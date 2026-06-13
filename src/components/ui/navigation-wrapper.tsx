@@ -4,18 +4,18 @@ import { usePathname } from 'next/navigation';
 import { Topbar } from '@/components/ui/topbar';
 import { Navbar } from '@/components/ui/navbar';
 import { ChatWidget } from '@/components/ui/chat-widget';
-import { ScrollToTopButton } from '@/components/ui/scroll-to-top';
 import { Footer } from '@/components/ui/footer';
 
 export function NavigationWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   
-  // Các đường dẫn không hiển thị Navigation (Admin, Login, Register)
+  // Các đường dẫn không hiển thị Navigation (Admin, Login, Register, Product Detail)
   const isAuthPage = pathname.includes('/login') || pathname.includes('/register');
   const isAdmin = pathname.includes('/admin');
   const isProfile = pathname.includes('/profile');
+  const isProductDetail = pathname.includes('/product/');
 
-  if (isAdmin || isAuthPage) {
+  if (isAdmin || isAuthPage || isProductDetail) {
     return <>{children}</>;
   }
 
@@ -27,7 +27,6 @@ export function NavigationWrapper({ children }: { children: React.ReactNode }) {
         {children}
       </main>
       {!isProfile && <Footer />}
-      {!isProfile && <ScrollToTopButton />}
       {!isProfile && <ChatWidget />}
     </div>
   );

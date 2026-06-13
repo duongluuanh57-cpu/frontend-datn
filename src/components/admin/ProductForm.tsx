@@ -63,10 +63,12 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
               priceMarkupPercentage={priceMarkupPercentage}
               dynamicSizeReport={dynamicSizeReport}
               dynamicDiscountReport={dynamicDiscountReport}
-              setIsPriceSuggestModalOpen={setIsPriceSuggestModalOpen}
+              isSuggestingPrice={isSuggestingPrice}
+              priceSuggestionData={priceSuggestionData}
               setPriceSuggestionData={setPriceSuggestionData}
+              handleRecalculatePriceMarkup={handleRecalculatePriceMarkup}
+              setIsPriceSuggestModalOpen={setIsPriceSuggestModalOpen}
               setActiveSuggestContext={setActiveSuggestContext}
-              handleOpenPriceSuggestion={handleOpenPriceSuggestion}
               setIsCategoryModalOpen={setIsCategoryModalOpen}
               setIsScentGroupModalOpen={setIsScentGroupModalOpen}
               setIsConcentrationModalOpen={setIsConcentrationModalOpen}
@@ -76,6 +78,8 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
               selectedScentGroups={selectedScentGroups}
               selectedConcentrations={selectedConcentrations}
               selectedSegments={selectedSegments}
+              parsedSizes={parsedSizes}
+              selectedSizes={selectedSizes}
             />
           </div>
 

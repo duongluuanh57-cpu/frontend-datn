@@ -39,7 +39,16 @@ export function useTaxonomyMutations({ currentTabConfig, getTaxonomyId, locale, 
   });
 
   const bulkDeleteMutation = useMutation({
-    mutationFn: async (ids: string[]) => api.post('/taxonomies/bulk-delete', { ids }),
+    mutationFn: async (ids: string[]) => {
+      if (!currentTabConfig.taxonomySlug) {
+        // Tab Tags: dùng route tags/bulk-delete
+        return api.post('/tags/bulk-delete', { ids });
+      }
+      // Tab taxonomy v2 (scent groups, concentrations, segments)
+      const taxonomyId = getTaxonomyId(currentTabConfig.taxonomySlug);
+      if (!taxonomyId) throw new Error('Taxonomy không tồn tại');
+      return api.post(`/v2/taxonomies/${taxonomyId}/terms/bulk-delete`, { ids });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [currentTabConfig.queryKey] });
       onSuccess?.();

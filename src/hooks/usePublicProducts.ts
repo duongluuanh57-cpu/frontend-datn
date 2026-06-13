@@ -19,7 +19,7 @@ export function usePublicProducts(type: 'trending' | 'new' | 'limited', translat
 
   const [selectedBrand, setSelectedBrand] = useState<string>('all');
   const [selectedCapacity, setSelectedCapacity] = useState<string>('all');
-  const [selectedPriceRange, setSelectedPriceRange] = useState<string>('all');
+  const [priceRange, setPriceRange] = useState<{ min: number; max: number } | null>(null);
   const [selectedScentGroup, setSelectedScentGroup] = useState<string>('all');
   const [selectedConcentration, setSelectedConcentration] = useState<string>('all');
   const [selectedSegment, setSelectedSegment] = useState<string>('all');
@@ -62,13 +62,16 @@ export function usePublicProducts(type: 'trending' | 'new' | 'limited', translat
     params.set('limit', '50');
     if (selectedBrand !== 'all') params.set('brand', selectedBrand);
     if (selectedCapacity !== 'all') params.set('capacity', selectedCapacity);
-    if (selectedPriceRange !== 'all') params.set('priceRange', selectedPriceRange);
+    if (priceRange) {
+      params.set('minPrice', String(priceRange.min));
+      params.set('maxPrice', String(priceRange.max));
+    }
     if (selectedScentGroup !== 'all') params.set('scentGroup', selectedScentGroup);
     if (selectedConcentration !== 'all') params.set('concentration', selectedConcentration);
     if (selectedSegment !== 'all') params.set('segment', selectedSegment);
     if (filterTag) params.set('filterTag', filterTag);
     return params.toString();
-  }, [type, selectedBrand, selectedCapacity, selectedPriceRange, selectedScentGroup, selectedConcentration, selectedSegment, selectedSort, filterTag]);
+  }, [type, selectedBrand, selectedCapacity, priceRange, selectedScentGroup, selectedConcentration, selectedSegment, selectedSort, filterTag]);
 
   const debouncedQueryParams = useDebounce(queryParams, 300);
 
@@ -88,7 +91,7 @@ export function usePublicProducts(type: 'trending' | 'new' | 'limited', translat
   const handleResetFilters = () => {
     setSelectedBrand('all');
     setSelectedCapacity('all');
-    setSelectedPriceRange('all');
+    setPriceRange(null);
     setSelectedScentGroup('all');
     setSelectedConcentration('all');
     setSelectedSegment('all');
@@ -113,8 +116,8 @@ export function usePublicProducts(type: 'trending' | 'new' | 'limited', translat
     setSelectedBrand,
     selectedCapacity,
     setSelectedCapacity,
-    selectedPriceRange,
-    setSelectedPriceRange,
+    priceRange,
+    setPriceRange,
     selectedScentGroup,
     setSelectedScentGroup,
     selectedConcentration,

@@ -4,7 +4,13 @@ import React from 'react';
 import { Tag } from 'lucide-react';
 import { SelectionModal } from '../SelectionModal';
 
-export function TagSelectionModal({ isOpen, onClose, tags, selectedTags, handleTagToggle, isVi }: any) {
+export function TagSelectionModal({ isOpen, onClose, tags, selectedTags, handleTagToggle, isVi, formData }: any) {
+  const isSaleLocked = (formData?.discountPercentage || 0) <= 10;
+  // Tìm tag Sale theo tên (không hardcode slug)
+  const saleTagSlug = (tags || []).find(
+    (t: any) => t.name?.toLowerCase() === 'sale' || t.name?.toLowerCase() === 'giảm giá'
+  )?.slug;
+  const disabledIds = isSaleLocked && saleTagSlug ? [saleTagSlug] : [];
   return (
     <SelectionModal
       isOpen={isOpen}
@@ -18,6 +24,7 @@ export function TagSelectionModal({ isOpen, onClose, tags, selectedTags, handleT
       selectedIds={selectedTags}
       onToggle={handleTagToggle}
       emptyMessage={isVi ? 'Không có nhãn nào đang hoạt động' : 'No active tags found'}
+      disabledIds={disabledIds}
     />
   );
 }

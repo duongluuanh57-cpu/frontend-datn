@@ -13,7 +13,7 @@ export function useAdminHomepageNavbarFooter() {
     if (dbConfig?.navbar) {
       const cfg = dbConfig.navbar;
       setNavbarConfig({
-        logo: { ...DEFAULT_NAVBAR_CONFIG.logo, ...cfg.logo },
+        logo: { ...DEFAULT_NAVBAR_CONFIG.logo, ...cfg.logo, image: cfg.logo?.image || DEFAULT_NAVBAR_CONFIG.logo.image },
         links: cfg.links?.length > 0
           ? cfg.links.map((l: any) => ({ ...DEFAULT_NAVBAR_CONFIG.links[0], ...l }))
           : DEFAULT_NAVBAR_CONFIG.links,

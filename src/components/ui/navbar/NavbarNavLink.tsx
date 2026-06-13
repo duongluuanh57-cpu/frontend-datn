@@ -4,7 +4,7 @@ import React from 'react';
 import { Link, usePathname } from '@/navigation';
 import { motion } from 'framer-motion';
 import type { NavbarConfig } from '@/hooks/useHomepageConfig';
-import { Home, Store, Library, BookOpen, HelpCircle } from 'lucide-react';
+import { Home, Store, Library, BookOpen, HelpCircle, Info } from 'lucide-react';
 
 function getNavIcon(href: string, size: number) {
   const map: Record<string, React.ReactNode> = {
@@ -13,6 +13,7 @@ function getNavIcon(href: string, size: number) {
     '/bo-suu-tap': <Library size={size} strokeWidth={2} />,
     '/blog': <BookOpen size={size} strokeWidth={2} />,
     '/tro-giup': <HelpCircle size={size} strokeWidth={2} />,
+    '/about': <Info size={size} strokeWidth={2} />,
   };
   return map[href] || <Store size={size} strokeWidth={2} />;
 }

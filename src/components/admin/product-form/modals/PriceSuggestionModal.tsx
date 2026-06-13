@@ -57,36 +57,35 @@ const parseExplanation = (text: string) => {
   });
 };
 
-export function SizeVariantsPanel({ isVi, selectedSizes, parsedSizes, update, setIsPriceSuggestModalOpen }: any) {
+export function SizeVariantsPanel({ isVi, selectedSizes, parsedSizes, update, inline }: any) {
   return (
     <>
-      <div className="flex justify-between items-center pb-3" style={{ borderBottom: '1px solid var(--admin-border-subtle)' }}>
+      <div className="flex justify-between items-center pb-2" style={{ borderBottom: '1px solid var(--admin-border-subtle)' }}>
         <div>
-          <h4 className="font-semibold text-lg flex items-center gap-2" style={{ color: 'var(--admin-text)' }}>
-            <Sparkles size={18} className="text-[#D4A5A5]" />
+          <h4 className="font-semibold flex items-center gap-1.5" style={{ color: 'var(--admin-text)', fontSize: inline ? '0.8125rem' : '1.125rem' }}>
             {isVi ? 'Biến thể dung tích' : 'Size Variants'}
           </h4>
-          <p className="text-[0.6875rem] mt-[2px]" style={{ color: 'var(--admin-text-muted)' }}>
-            {isVi ? 'Chọn dung tích bán và nhập giá của từng loại' : 'Select variants and set custom pricing'}
-          </p>
         </div>
       </div>
-      <div className="flex flex-col gap-5 flex-1 pr-[6px]">
+      <div className="flex flex-col flex-1 pr-[6px]" style={{ gap: inline ? '10px' : '1.25rem' }}>
         {SIZE_CATEGORIES.map((category: any) => {
           const catName = isVi ? category.name : category.nameEn;
           return (
-            <div key={category.name} className="flex flex-col gap-[10px]">
-              <p className="text-[0.6875rem] font-bold tracking-wide uppercase text-left"
-                style={{ color: 'var(--admin-text-muted)' }}>• {catName}</p>
-              <div className="flex flex-col gap-[10px]">
+            <div key={category.name} className="flex flex-col" style={{ gap: inline ? '6px' : '10px' }}>
+              <p className="font-bold tracking-wide uppercase text-left"
+                style={{ color: 'var(--admin-text-muted)', fontSize: inline ? '0.625rem' : '0.6875rem' }}>• {catName}</p>
+              <div className="flex flex-col" style={{ gap: inline ? '6px' : '10px' }}>
                 {category.sizes.map((sz: string) => {
                   const isSelected = selectedSizes.includes(sz);
                   const matched = parsedSizes.find((p: any) => p.sz === sz);
                   const sizePrice = matched ? matched.price : '';
                   return (
-                    <div key={sz} className="flex items-center gap-3 w-full">
-                      <label className="inline-flex items-center justify-center min-w-[70px] p-2 px-[14px] rounded-[var(--admin-radius)] border cursor-pointer text-sm font-medium transition-all duration-150 text-center"
+                    <div key={sz} className="flex items-center w-full" style={{ gap: inline ? '6px' : '0.75rem' }}>
+                      <label className="inline-flex items-center justify-center rounded-[var(--admin-radius)] border cursor-pointer font-medium transition-all duration-150 text-center"
                         style={{
+                          minWidth: inline ? '56px' : '70px',
+                          padding: inline ? '3px 10px' : '8px 14px',
+                          fontSize: inline ? '0.6875rem' : '0.875rem',
                           borderColor: isSelected ? 'var(--admin-accent)' : 'var(--admin-border)',
                           background: isSelected ? 'rgba(201, 169, 154, 0.1)' : 'var(--admin-surface-muted)',
                           color: isSelected ? 'var(--admin-accent-hover)' : 'var(--admin-text)',
@@ -107,23 +106,26 @@ export function SizeVariantsPanel({ isVi, selectedSizes, parsedSizes, update, se
                         {sz}
                       </label>
                       {isSelected && (
-                        <div className="flex items-center gap-[6px] flex-grow">
+                        <div className="flex items-center flex-grow" style={{ gap: inline ? '4px' : '6px' }}>
                           <div className="relative flex-grow flex items-center">
-                            <input type="number" min={0}
+                            <input type="text" inputMode="numeric"
                               placeholder={isVi ? 'Nhập giá bán...' : 'Enter price...'}
-                              value={sizePrice}
+                              value={sizePrice ? Number(sizePrice).toLocaleString('vi-VN') : ''}
                               onChange={(e) => {
-                                const newPrice = e.target.value;
-                                update({ size: parsedSizes.map((p: any) => p.sz === sz ? { ...p, price: newPrice } : p).map((p: any) => p.price ? `${p.sz}:${p.price}` : p.sz).join(', ') });
+                                const raw = e.target.value.replace(/\D/g, '');
+                                update({ size: parsedSizes.map((p: any) => p.sz === sz ? { ...p, price: raw } : p).map((p: any) => p.price ? `${p.sz}:${p.price}` : p.sz).join(', ') });
                               }}
-                              className="w-full p-[6px_12px] h-[34px] rounded-[var(--admin-radius)] text-sm outline-none transition-all duration-150"
+                              className="w-full rounded-[var(--admin-radius)] outline-none transition-all duration-150"
                               style={{
+                                padding: inline ? '4px 8px' : '6px 12px',
+                                height: inline ? '28px' : '34px',
+                                fontSize: inline ? '0.6875rem' : '0.875rem',
                                 border: '1px solid var(--admin-border-subtle)',
                                 background: 'var(--admin-surface)',
                                 color: 'var(--admin-text)',
                               }} />
                           </div>
-                          <span className="text-xs font-semibold" style={{ color: 'var(--admin-text-muted)' }}>VNĐ</span>
+                          <span className="font-semibold" style={{ color: 'var(--admin-text-muted)', fontSize: inline ? '0.625rem' : '0.75rem' }}>VNĐ</span>
                         </div>
                       )}
                     </div>
@@ -134,12 +136,6 @@ export function SizeVariantsPanel({ isVi, selectedSizes, parsedSizes, update, se
           );
         })}
       </div>
-      <div className="flex justify-end pt-4 mt-auto" style={{ borderTop: '1px solid var(--admin-border-subtle)' }}>
-        <button type="button" onClick={() => setIsPriceSuggestModalOpen(false)}
-          className="admin-btn-submit" style={{ padding: '8px 20px', fontSize: '0.75rem', width: 'auto', borderRadius: 'var(--admin-radius-lg)' }}>
-          {isVi ? 'Xác nhận dung tích' : 'Confirm Capacities'}
-        </button>
-      </div>
     </>
   );
 }
@@ -149,13 +145,9 @@ export function DiscountPanel({ isVi, formData, update, setIsPriceSuggestModalOp
     <>
       <div className="flex justify-between items-center pb-3" style={{ borderBottom: '1px solid var(--admin-border-subtle)' }}>
         <div>
-          <h4 className="font-semibold text-lg flex items-center gap-2" style={{ color: 'var(--admin-text)' }}>
-            <Sparkles size={18} className="text-[#D4A5A5]" />
-            {isVi ? 'Thiết lập chiết khấu' : 'Configure Discount'}
+          <h4 className="font-semibold text-lg" style={{ color: 'var(--admin-text)' }}>
+            {isVi ? 'Chiết khấu' : 'Discount'}
           </h4>
-          <p className="text-[0.6875rem] mt-[2px]" style={{ color: 'var(--admin-text-muted)' }}>
-            {isVi ? 'Chỉnh sửa tỷ lệ chiết khấu và lên lịch sự kiện' : 'Set discount rates and configure event schedules'}
-          </p>
         </div>
       </div>
       <div className="flex flex-col gap-5 flex-1">
@@ -229,7 +221,7 @@ export function PriceSuggestionPanel({
         <div>
           <h4 className="font-semibold text-lg flex items-center gap-2" style={{ color: 'var(--admin-text)' }}>
             <Sparkles size={18} className="text-[#D4A5A5]" />
-            {isVi ? 'Đề xuất giá bằng AI' : 'AI Price Suggestion'}
+            {isVi ? 'Đề xuất giá' : 'Price Suggestion'}
           </h4>
           <p className="text-[0.6875rem] mt-[2px]" style={{ color: 'var(--admin-text-muted)' }}>
             {isVi ? 'Phân tích thị trường nước hoa chính hãng + biên lợi nhuận' : 'Analyze authentic perfume market prices & target profit margin'}
@@ -241,7 +233,7 @@ export function PriceSuggestionPanel({
           <div className="flex flex-1 flex-col items-center justify-center gap-3 py-10">
             <Loader2 size={32} className="animate-spin text-[#D4A5A5]" />
             <p className="text-sm" style={{ color: 'var(--admin-text-muted)' }}>
-              {isVi ? 'AI đang phân tích giá thị trường...' : 'AI is analyzing market prices...'}
+              {isVi ? 'Đang phân tích giá thị trường...' : 'Analyzing market prices...'}
             </p>
           </div>
         ) : priceSuggestionData ? (

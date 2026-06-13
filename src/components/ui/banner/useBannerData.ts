@@ -30,6 +30,7 @@ export function useBannerData(previewData?: {
   useEffect(() => {
     if (previewData) {
       setImages(previewData.images);
+      setBannerTexts({ title: previewData.title || '', subtitle: previewData.subtitle || '' });
       if (previewData.label) setBannerLabel(previewData.label);
       return;
     }

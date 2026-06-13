@@ -1,9 +1,20 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { AlignLeft, Hash, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { ProductFormData, formatSizeString } from './useProductForm';
+import { InlinePriceSuggestion } from './InlinePriceSuggestion';
+import { InlineDiscountPanel } from './InlineDiscountPanel';
+import { SizeVariantsPanel } from './modals/PriceSuggestionModal';
+
+interface PriceSuggestionData {
+  marketPrice: number;
+  markupPercentage: number;
+  markupAmount: number;
+  suggestedPrice: number;
+  explanation: string;
+}
 
 interface ProductDetailsSectionProps {
   t: (key: string, values?: Record<string, string | number>) => string;
@@ -13,10 +24,12 @@ interface ProductDetailsSectionProps {
   priceMarkupPercentage: number;
   dynamicSizeReport: string;
   dynamicDiscountReport: string;
-  setIsPriceSuggestModalOpen: (v: boolean) => void;
+  isSuggestingPrice: boolean;
+  priceSuggestionData: PriceSuggestionData | null;
   setPriceSuggestionData: (data: any) => void;
+  handleRecalculatePriceMarkup: (pct: number) => void;
+  setIsPriceSuggestModalOpen: (v: boolean) => void;
   setActiveSuggestContext: (ctx: any) => void;
-  handleOpenPriceSuggestion: (size?: string, basePrice?: number, onApply?: (price: number) => void) => void;
   setIsCategoryModalOpen: (v: boolean) => void;
   setIsScentGroupModalOpen: (v: boolean) => void;
   setIsConcentrationModalOpen: (v: boolean) => void;
@@ -26,6 +39,8 @@ interface ProductDetailsSectionProps {
   selectedScentGroups: string[];
   selectedConcentrations: string[];
   selectedSegments: string[];
+  parsedSizes: { sz: string; price: string }[];
+  selectedSizes: string[];
 }
 
 const tagStyle = {
@@ -58,11 +73,16 @@ const selectBoxBase = {
 export const ProductDetailsSection = React.memo(function ProductDetailsSection({
   t, isVi, formData, update, priceMarkupPercentage,
   dynamicSizeReport, dynamicDiscountReport,
-  setIsPriceSuggestModalOpen, setPriceSuggestionData, setActiveSuggestContext,
-  handleOpenPriceSuggestion,
+  isSuggestingPrice, priceSuggestionData, setPriceSuggestionData, handleRecalculatePriceMarkup,
+  setIsPriceSuggestModalOpen, setActiveSuggestContext,
   setIsCategoryModalOpen, setIsScentGroupModalOpen, setIsConcentrationModalOpen, setIsSegmentModalOpen,
   categories, selectedCategories, selectedScentGroups, selectedConcentrations, selectedSegments,
+  parsedSizes, selectedSizes,
 }: ProductDetailsSectionProps) {
+
+  const [isPriceOpen, setIsPriceOpen] = useState(false);
+  const [isSizeOpen, setIsSizeOpen] = useState(false);
+  const [isDiscountOpen, setIsDiscountOpen] = useState(false);
 
   const handleSelectClick = (label: string, setter: (v: boolean) => void) => {
     if (!formData.name.trim()) {
@@ -99,15 +119,47 @@ export const ProductDetailsSection = React.memo(function ProductDetailsSection({
             placeholder={t('fields.descriptionPlaceholder')} className="admin-textarea" />
         </div>
 
-        <div className="admin-form-row">
+        <div className="admin-form-row" style={{ alignItems: 'start' }}>
           <div className="admin-field">
             <label className="admin-label" htmlFor="price">{t('fields.price', { currency: 'VNĐ' })}</label>
             <div className="admin-input-wrap" style={{ position: 'relative' }}>
-              <input id="price" required readOnly type="text"
+              <input id="price" required type="text"
                 value={formData.price ? formData.price.toLocaleString('vi-VN') : ''}
-                onClick={() => handleOpenPriceSuggestion(undefined, formData.price, (suggestedVal) => update({ price: suggestedVal }))}
-                className="admin-input" style={{ paddingRight: '45px', cursor: 'pointer', background: 'rgba(201, 169, 154, 0.02)' }} />
+                readOnly
+                onClick={() => {
+                  if (!priceSuggestionData) {
+                    const giaban = formData.price || 0;
+                    const defaultMarketPrice = giaban > 0
+                      ? Math.round(giaban * 100 / (100 + priceMarkupPercentage) / 10000) * 10000
+                      : 3000000;
+                    const suggestedPrice = Math.round(defaultMarketPrice * (100 + priceMarkupPercentage) / 100);
+                    setPriceSuggestionData({
+                      marketPrice: defaultMarketPrice,
+                      markupPercentage: priceMarkupPercentage,
+                      markupAmount: suggestedPrice - defaultMarketPrice,
+                      suggestedPrice,
+                      explanation: '',
+                    });
+                    update({ price: suggestedPrice });
+                  }
+                  setIsPriceOpen((v) => !v);
+                }}
+                className="admin-input" style={{ paddingRight: '45px', cursor: 'pointer' }} />
               <span className="admin-input-suffix" style={{ right: '12px' }}>VNĐ</span>
+            </div>
+            <div className="overflow-hidden transition-all duration-300 ease-in-out"
+              style={{ maxHeight: isPriceOpen ? '9999px' : '0' }}>
+              <div className="pt-3" style={{ pointerEvents: isPriceOpen ? 'auto' : 'none' }}>
+                <InlinePriceSuggestion
+                  isVi={isVi}
+                  onApplyPrice={(val) => update({ price: val })}
+                  priceMarkupPercentage={priceMarkupPercentage}
+                  priceSuggestionData={priceSuggestionData}
+                  setPriceSuggestionData={setPriceSuggestionData}
+                  handleRecalculatePriceMarkup={handleRecalculatePriceMarkup}
+                  isSuggestingPrice={isSuggestingPrice}
+                />
+              </div>
             </div>
           </div>
 
@@ -121,16 +173,25 @@ export const ProductDetailsSection = React.memo(function ProductDetailsSection({
                     toast.error(isVi ? 'Vui lòng nhập Tên sản phẩm trước.' : 'Please enter Product Name first.');
                     return;
                   }
-                  setPriceSuggestionData({
-                    marketPrice: formData.price || 3000000, markupPercentage: priceMarkupPercentage,
-                    markupAmount: 0, suggestedPrice: formData.price || 3000000,
-                    explanation: dynamicSizeReport
-                  });
-                  setActiveSuggestContext({ size: 'Dung tích', basePrice: formData.price, onApply: () => {} });
-                  setIsPriceSuggestModalOpen(true);
+                  setIsSizeOpen((v) => !v);
                 }}
-                className="admin-input" style={{ background: 'rgba(201, 169, 154, 0.02)', cursor: 'pointer', paddingRight: '45px' }} />
+                className="admin-input" style={{ cursor: 'pointer', paddingRight: '45px' }} />
               <span className="admin-input-suffix" style={{ right: '12px' }}>ML</span>
+            </div>
+            <div className="overflow-hidden transition-all duration-300 ease-in-out"
+              style={{ maxHeight: isSizeOpen ? '9999px' : '0' }}>
+              <div className="pt-3" style={{ pointerEvents: isSizeOpen ? 'auto' : 'none' }}>
+                <div className="w-full p-4 mt-3 rounded-[var(--admin-radius-lg)] flex flex-col gap-3"
+                  style={{ background: 'rgba(201, 169, 154, 0.05)', border: '1px solid var(--admin-border-subtle)' }}>
+                  <SizeVariantsPanel
+                    isVi={isVi}
+                    selectedSizes={selectedSizes}
+                    parsedSizes={parsedSizes}
+                    update={update}
+                    inline={true}
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
@@ -152,16 +213,22 @@ export const ProductDetailsSection = React.memo(function ProductDetailsSection({
                     toast.error(isVi ? 'Vui lòng nhập Tên sản phẩm trước.' : 'Please enter Product Name first.');
                     return;
                   }
-                  setPriceSuggestionData({
-                    marketPrice: formData.price || 3000000, markupPercentage: priceMarkupPercentage,
-                    markupAmount: 0, suggestedPrice: formData.price || 3000000,
-                    explanation: dynamicDiscountReport
-                  });
-                  setActiveSuggestContext({ size: 'Chiết khấu', basePrice: formData.price, onApply: () => {} });
-                  setIsPriceSuggestModalOpen(true);
+                  setIsDiscountOpen((v) => !v);
                 }}
                 className="admin-input" style={{ cursor: 'pointer', background: 'rgba(201, 169, 154, 0.02)', paddingRight: '45px' }} />
               <span className="admin-input-suffix" style={{ right: '12px' }}>%</span>
+            </div>
+            <div className="overflow-hidden transition-all duration-300 ease-in-out"
+              style={{ maxHeight: isDiscountOpen ? '9999px' : '0' }}>
+              <div className="pt-3" style={{ pointerEvents: isDiscountOpen ? 'auto' : 'none' }}>
+                <InlineDiscountPanel
+                  isVi={isVi}
+                  discountPercentage={formData.discountPercentage}
+                  discountStartDate={formData.discountStartDate}
+                  discountEndDate={formData.discountEndDate}
+                  update={update}
+                />
+              </div>
             </div>
             {formData.discountPercentage > 0 && (formData.discountStartDate || formData.discountEndDate) && (
               <p className="text-xs mt-[6px] flex items-center gap-1" style={{ color: '#D4A5A5', fontWeight: 500 }}>
@@ -225,6 +292,55 @@ export const ProductDetailsSection = React.memo(function ProductDetailsSection({
               </div>
             </div>
           ))}
+        </div>
+
+        {/* ── Longevity, Sillage, Fragrance Specs ── */}
+        <div className="admin-form-row" style={{ marginTop: '24px' }}>
+          <div className="admin-field">
+            <label className="admin-label">{isVi ? 'Thời gian lưu hương' : 'Longevity'}</label>
+            <div style={{ padding: '8px 12px', minHeight: '38px', backgroundColor: '#f9f9f9', borderRadius: '6px', color: '#7A5C5C', display: 'flex', alignItems: 'center', fontSize: '14px' }}>{formData.longevity || (isVi ? 'VD: 7 - 9 giờ' : 'e.g. 7 - 9 hours')}</div>
+          </div>
+          <div className="admin-field">
+            <label className="admin-label">{isVi ? 'Độ tỏa hương' : 'Sillage'}</label>
+            <div style={{ padding: '8px 12px', minHeight: '38px', backgroundColor: '#f9f9f9', borderRadius: '6px', color: '#7A5C5C', display: 'flex', alignItems: 'center', fontSize: '14px' }}>{formData.sillage || (isVi ? 'VD: 1m' : 'e.g. 1m')}</div>
+          </div>
+          <div className="admin-field">
+            <label className="admin-label">{isVi ? 'Độ bền mùi' : 'Durability'}</label>
+            <div style={{ padding: '8px 12px', minHeight: '38px', backgroundColor: '#f9f9f9', borderRadius: '6px', color: '#7A5C5C', display: 'flex', alignItems: 'center', fontSize: '14px' }}>{formData.durability || (isVi ? 'VD: Ổn định từ sáng tới chiều' : 'e.g. Stable from morning to afternoon')}</div>
+          </div>
+          <div className="admin-field">
+            <label className="admin-label">{isVi ? 'Vệt hương' : 'Scent Trail'}</label>
+            <div style={{ padding: '8px 12px', minHeight: '38px', backgroundColor: '#f9f9f9', borderRadius: '6px', color: '#7A5C5C', display: 'flex', alignItems: 'center', fontSize: '14px' }}>{formData.scentTrail || (isVi ? 'VD: Mịn, rõ nét' : 'e.g. Smooth, clear')}</div>
+          </div>
+        </div>
+
+        {/* ── Season & Time (AI-only) ── */}
+        <div className="admin-form-row" style={{ marginTop: '16px' }}>
+          <div className="admin-field">
+            <label className="admin-label">{isVi ? 'Mùa' : 'Season'}</label>
+            <div style={{ padding: '8px 12px', minHeight: '38px', backgroundColor: '#f9f9f9', borderRadius: '6px', color: '#7A5C5C', display: 'flex', alignItems: 'center', fontSize: '14px' }}>{formData.season || '—'}</div>
+          </div>
+          <div className="admin-field">
+            <label className="admin-label">{isVi ? 'Thời gian' : 'Time of Day'}</label>
+            <div style={{ padding: '8px 12px', minHeight: '38px', backgroundColor: '#f9f9f9', borderRadius: '6px', color: '#7A5C5C', display: 'flex', alignItems: 'center', fontSize: '14px' }}>{formData.time || '—'}</div>
+          </div>
+        </div>
+
+        <div className="admin-form-row">
+          <div className="admin-field">
+            <label className="admin-label">{isVi ? 'Phong cách' : 'Style'}</label>
+            <div style={{ padding: '8px 12px', minHeight: '38px', backgroundColor: '#f9f9f9', borderRadius: '6px', color: '#7A5C5C', display: 'flex', alignItems: 'center', fontSize: '14px' }}>{formData.style || (isVi ? 'VD: Lịch lãm, hiện đại' : 'e.g. Elegant, modern')}</div>
+          </div>
+          <div className="admin-field">
+            <label className="admin-label">{isVi ? 'Phù hợp cho' : 'Suitable For'}</label>
+            <div style={{ padding: '8px 12px', minHeight: '38px', backgroundColor: '#f9f9f9', borderRadius: '6px', color: '#7A5C5C', display: 'flex', alignItems: 'center', fontSize: '14px' }}>{formData.suitableFor || (isVi ? 'VD: item1 | item2 | item3' : 'e.g. item1 | item2 | item3')}</div>
+            <p className="text-[11px] mt-1" style={{ color: 'rgba(122, 92, 92, 0.6)' }}>{isVi ? 'Dùng | để phân cách nhiều mục' : 'Use | to separate multiple items'}</p>
+          </div>
+          <div className="admin-field">
+            <label className="admin-label">{isVi ? 'Dịp sử dụng' : 'Occasion'}</label>
+            <div style={{ padding: '8px 12px', minHeight: '38px', backgroundColor: '#f9f9f9', borderRadius: '6px', color: '#7A5C5C', display: 'flex', alignItems: 'center', fontSize: '14px' }}>{formData.occasion || (isVi ? 'VD: item1 | item2 | item3' : 'e.g. item1 | item2 | item3')}</div>
+            <p className="text-[11px] mt-1" style={{ color: 'rgba(122, 92, 92, 0.6)' }}>{isVi ? 'Dùng | để phân cách nhiều mục' : 'Use | to separate multiple items'}</p>
+          </div>
         </div>
       </div>
     </section>
