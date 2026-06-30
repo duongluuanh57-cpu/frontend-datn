@@ -242,7 +242,7 @@ export default function ProfilePage() {
       <div className="h-screen bg-background text-foreground flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-text-primary mb-4">Vui lòng đăng nhập</h1>
-          <a href="http://localhost:4000/api/auth/login" className="text-primary hover:text-primary-dark">Đăng nhập</a>
+          <a href={getBackendOrigin() + '/api/auth/login'} className="text-primary hover:text-primary-dark">Đăng nhập</a>
         </div>
       </div>
     );

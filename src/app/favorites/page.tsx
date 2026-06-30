@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Heart, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useAuthStore } from '@/store/useAuthStore';
+import { getOriginRedirectUrl } from '@/lib/api';
 import { toast } from 'sonner';
 import { useFavoriteStore } from '@/store/useFavoriteStore';
 import { getFavorites, removeFromFavorites } from '@/services/favorite.service';
@@ -65,7 +66,7 @@ export default function FavoritesPage() {
           <Heart className="w-16 h-16 text-text-muted mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-text-primary mb-2">Vui lòng đăng nhập</h2>
           <p className="text-text-secondary mb-4">Bạn cần đăng nhập để xem danh sách yêu thích</p>
-          <a href="http://localhost:4000/api/auth/login" className="btn-primary inline-block">
+          <a href={getOriginRedirectUrl('/api/auth/login')} className="btn-primary inline-block">
             Đăng nhập
           </a>
         </div>

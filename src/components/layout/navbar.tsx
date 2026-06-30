@@ -12,6 +12,7 @@ import { useCart } from '@/hooks/useCart';
 import { FlipBadge } from '@/components/shared/flip-badge';
 import { CartSidebar } from '@/components/shared/cart-sidebar';
 import { FavoritesPopup } from '@/components/shared/favorites-popup';
+import { getOriginRedirectUrl } from '@/lib/api';
 
 export function Navbar() {
   const pathname = usePathname();
@@ -201,7 +202,7 @@ export function Navbar() {
                   <User className="w-5 h-5 text-text-secondary" />
                 </Link>
               ) : (
-                <a href="http://localhost:4000/api/auth/login" className="p-2 hover:bg-surface rounded-lg transition-colors cursor-pointer inline-flex">
+                <a href={getOriginRedirectUrl('/api/auth/login')} className="p-2 hover:bg-surface rounded-lg transition-colors cursor-pointer inline-flex">
                   <User className="w-5 h-5 text-text-secondary" />
                 </a>
               )}
@@ -254,7 +255,7 @@ export function Navbar() {
             {isAuthenticated ? (
               <Link href="/profile" className="block py-2 text-text-secondary hover:text-primary">{user?.username}</Link>
             ) : (
-              <a href="http://localhost:4000/api/auth/login" className="block py-2 text-text-secondary hover:text-primary">Đăng nhập</a>
+              <a href={getOriginRedirectUrl('/api/auth/login')} className="block py-2 text-text-secondary hover:text-primary">Đăng nhập</a>
             )}
           </div>
         </div>
