@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import api from '@/lib/api';
 
 export function useProfileAddresses() {
@@ -17,10 +17,25 @@ export function useProfileAddresses() {
   const [addrDistrict, setAddrDistrict] = useState('');
   const [addrSubmitting, setAddrSubmitting] = useState(false);
   const [addrError, setAddrError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [provinces, setProvinces] = useState<Array<{ name: string; code: number }>>([]);
   const [districts, setDistricts] = useState<Array<{ name: string; code: number }>>([]);
   const [loadingProvinces, setLoadingProvinces] = useState(false);
   const [loadingDistricts, setLoadingDistricts] = useState(false);
+
+  const fetchProvinces = useCallback(() => {
+    setLoadingProvinces(true);
+    fetch('https://provinces.open-api.vn/api/p/')
+      .then((res) => res.json())
+      .then((data) => {
+        setProvinces(data || []);
+        setLoadingProvinces(false);
+      })
+      .catch((err) => {
+        console.error('Failed to fetch provinces:', err);
+        setLoadingProvinces(false);
+      });
+  }, []);
 
   const fetchDistricts = useCallback((provinceCode: number) => {
     setLoadingDistricts(true);
@@ -47,6 +62,13 @@ export function useProfileAddresses() {
       setLoadingAddresses(false);
     }
   }, []);
+
+  // Fetch provinces on mount
+  useEffect(() => {
+    if (provinces.length === 0) {
+      fetchProvinces();
+    }
+  }, [provinces.length, fetchProvinces]);
 
   const openNewAddressForm = useCallback(() => {
     setEditingAddressId(null);
@@ -107,10 +129,17 @@ export function useProfileAddresses() {
 
   const handleDeleteAddress = async (id: string) => {
     if (!confirm('Bạn có chắc muốn xóa địa chỉ này?')) return;
+    setDeleteError(null);
     try {
-      await api.delete(`/user-addresses/${id}`);
+      const res = await api.delete(`/user-addresses/${id}`);
+      if (res.data && !res.data.success) {
+        setDeleteError(res.data.message || 'Không thể xóa địa chỉ');
+        return;
+      }
       await fetchAddresses();
     } catch (err: any) {
+      const msg = err.response?.data?.message || err.message || 'Lỗi khi xóa địa chỉ';
+      setDeleteError(msg);
       console.error('Failed to delete address:', err);
     }
   };
@@ -136,12 +165,13 @@ export function useProfileAddresses() {
     addrStreet, setAddrStreet,
     addrProvince, setAddrProvince,
     addrDistrict, setAddrDistrict,
-    addrSubmitting, addrError, setAddrError,
+    addrSubmitting, addrError, setAddrError, deleteError, setDeleteError,
     provinces, setProvinces,
     districts, setDistricts,
     loadingProvinces, setLoadingProvinces,
     loadingDistricts, setLoadingDistricts,
     fetchAddresses,
+    fetchProvinces,
     openNewAddressForm,
     openEditAddressForm,
     handleSaveAddress,

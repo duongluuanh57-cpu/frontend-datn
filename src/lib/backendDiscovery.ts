@@ -10,8 +10,11 @@ let pendingDiscovery: Promise<string | null> | null = null;
 
 /** Kiểm tra nếu đang ở môi trường dev (localhost) */
 function isDev(): boolean {
-  if (typeof window === 'undefined') return false;
-  return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  if (typeof window !== 'undefined') {
+    return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  }
+  // Server-side: check NODE_ENV
+  return process.env.NODE_ENV === 'development';
 }
 
 /**

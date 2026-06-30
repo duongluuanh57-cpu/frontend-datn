@@ -8,7 +8,26 @@ interface User {
   role: 'USER' | 'ADMIN' | 'SUBADMIN';
   avatar?: string;
   tenantId: string;
-  memberTier?: 'MEMBER' | 'VIP' | 'ELITE MEMBER';
+  memberTier?: 'MEMBER' | 'Bac' | 'Vang' | 'KimCuong';
+  totalSpent?: number;
+  fullName?: string;
+  phoneNumber?: string;
+  gender?: 'MALE' | 'FEMALE' | 'OTHER' | '';
+  address?: string;
+  province?: string;
+  district?: string;
+  oauthProvider?: 'google' | 'github';
+  defaultAddress?: {
+    _id: string;
+    label?: string;
+    fullName?: string;
+    gender?: string;
+    phoneNumber?: string;
+    address?: string;
+    province?: string;
+    district?: string;
+    isDefault: boolean;
+  } | null;
   createdAt?: string;
 }
 

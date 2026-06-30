@@ -30,24 +30,6 @@ export function resolveImageUrl(url?: string): string {
   return trimmed.startsWith('/') ? `${origin}${trimmed}` : `${origin}/${trimmed}`;
 }
 
-/**
- * Ping backend một lần (GET /ping). Không ném lỗi; trả về true nếu 2xx.
- * Dùng khi frontend khởi động để đánh thức host ngủ (vd. Render).
- */
-export async function pingBackend(): Promise<boolean> {
-  const origin = await getActiveOrigin();
-  try {
-    const res = await fetch(`${origin}/ping`, {
-      method: 'GET',
-      cache: 'no-store',
-      credentials: 'omit',
-    });
-    return res.ok;
-  } catch {
-    return false;
-  }
-}
-
 // ──────────────────────────────────────────────
 // Fetch-based API wrapper (thay thế axios)
 // Tương thích 100% với Turbopack
@@ -79,7 +61,7 @@ async function refreshAccessToken(): Promise<string> {
   if (!refreshToken) {
     logout();
     if (typeof window !== 'undefined') {
-      window.location.href = '/login';
+      window.location.href = 'http://localhost:4000/api/auth/login';
     }
     throw new Error('No refresh token');
   }
@@ -102,7 +84,7 @@ async function refreshAccessToken(): Promise<string> {
   } else {
     useAuthStore.getState().logout();
     if (typeof window !== 'undefined') {
-      window.location.href = '/login';
+      window.location.href = 'http://localhost:4000/api/auth/login';
     }
     throw new Error('Refresh failed');
   }

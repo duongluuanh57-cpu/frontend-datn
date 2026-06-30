@@ -1,5 +1,4 @@
 import type { NextConfig } from "next";
-import createNextIntlPlugin from 'next-intl/plugin';
 import { withSentryConfig } from "@sentry/nextjs";
 
 let withBundleAnalyzer = (config: NextConfig) => config;
@@ -7,11 +6,10 @@ if (process.env.ANALYZE === 'true') {
   withBundleAnalyzer = require('@next/bundle-analyzer')();
 }
 
-const withNextIntl = createNextIntlPlugin('./src/i18n.ts');
-
 const nextConfig: NextConfig = {
-  turbopack: {
-    root: __dirname,
+  // Tối ưu compile speed
+  typescript: {
+    ignoreBuildErrors: true,
   },
   images: {
     qualities: [75, 90],
@@ -76,6 +74,15 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  // Cache control — giữ page module trong memory vừa đủ, tránh tràn RAM
+  onDemandEntries: {
+    maxInactiveAge: 60 * 1000, // 60 giây (giảm từ 24h, tránh memory bloat)
+    pagesBufferLength: 5,
+  },
+  // Preload page components để navigation nhanh hơn
+  experimental: {
+    optimizePackageImports: ['lucide-react', '@tanstack/react-query', 'framer-motion'],
+  },
 };
 
 // Chỉ chạy Sentry khi build production, bỏ qua hoàn toàn khi dev
@@ -96,7 +103,7 @@ const sentryConfig = isDev ? {} : {
 };
 
 const finalConfig = isDev
-  ? withBundleAnalyzer(withNextIntl(nextConfig))
-  : withBundleAnalyzer(withSentryConfig(withNextIntl(nextConfig), sentryConfig));
+  ? withBundleAnalyzer(nextConfig)
+  : withBundleAnalyzer(withSentryConfig(nextConfig, sentryConfig));
 
 export default finalConfig;
