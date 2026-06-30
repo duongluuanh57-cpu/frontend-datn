@@ -62,10 +62,20 @@ next-env.d.ts
 package-lock.json
 
 # Tests
-!src/test/
-!*.test.ts
-!*.test.tsx
+src/test/
+*.test.ts
+*.test.tsx
+vitest.config.ts
+__mocks__/
 
-# Optional: Documentation (uncomment if not needed in repo)
-# Docs-Frontend/
-# design-system/
+# Sentry (not used)
+sentry.client.config.ts
+sentry.server.config.ts
+
+# Dev tools
+pnpm-workspace.yaml
+
+# Documentation (not needed for deploy)
+Docs-Frontend/
+design-system/
+README.md
