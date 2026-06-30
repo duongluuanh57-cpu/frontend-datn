@@ -12,6 +12,7 @@ import { useCartStore } from '@/store/useCartStore';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import { resolveImageUrl } from '@/lib/api';
 
 export interface ProductData {
   _id: string;
@@ -97,7 +98,10 @@ function Stars({ reviewsCount }: { reviewsCount?: number }) {
 }
 
 const PLACEHOLDER_IMG = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400"><rect width="400" height="400" fill="#e2e8f0"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#94a3b8" font-size="14" font-family="sans-serif">No image</text></svg>');
-function safeImg(src: string | undefined | null): string { return src && src.trim() ? src : PLACEHOLDER_IMG; }
+function safeImg(src: string | undefined | null): string {
+  const resolved = resolveImageUrl(src || '');
+  return resolved || PLACEHOLDER_IMG;
+}
 
 function cleanName(name: string): string {
   return name.replace(/^Nước hoa\s*/i, '');

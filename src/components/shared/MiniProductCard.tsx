@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { Trash2, Minus, Plus, Heart, ShoppingBag } from 'lucide-react';
+import { resolveImageUrl } from '@/lib/api';
 
 export interface MiniProductItem {
   productId: string;
@@ -44,7 +45,7 @@ export function MiniProductCard({ item, variant, isRemoving, onRemove, onQuantit
       {/* Product Image */}
       <div className="w-16 h-16 bg-white rounded-md overflow-hidden flex-shrink-0 border border-border">
         {item.image ? (
-          <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+          <img src={resolveImageUrl(item.image)} alt={item.name} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             {variant === 'favorite' ? (

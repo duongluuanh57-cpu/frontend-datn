@@ -12,7 +12,7 @@ import { useCart } from '@/hooks/useCart';
 import { FlipBadge } from '@/components/shared/flip-badge';
 import { CartSidebar } from '@/components/shared/cart-sidebar';
 import { FavoritesPopup } from '@/components/shared/favorites-popup';
-import { getOriginRedirectUrl } from '@/lib/api';
+import { getOriginRedirectUrl, resolveImageUrl } from '@/lib/api';
 
 export function Navbar() {
   const pathname = usePathname();
@@ -125,7 +125,7 @@ export function Navbar() {
                             {product.image ? (
                               <div className="relative flex-shrink-0">
                                 <img
-                                  src={product.image}
+                                  src={resolveImageUrl(product.image)}
                                   alt={product.name}
                                   className="w-10 h-10 rounded-md object-cover"
                                 />

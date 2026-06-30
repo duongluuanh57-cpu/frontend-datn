@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useCartStore } from '@/store/useCartStore';
 import { getActiveOriginSync } from '@/lib/backendDiscovery';
+import { resolveImageUrl } from '@/lib/api';
 import { getCart, checkout } from '@/services/cart.service';
 import { CartItem } from '@/services/cart.service';
 import { toast } from 'sonner';
@@ -897,7 +898,7 @@ export default function CheckoutPage() {
                   <div key={item.productId} className="flex gap-3">
                     <div className="w-14 h-14 bg-background rounded-xl overflow-hidden flex-shrink-0 ring-1 ring-black/10">
                       {item.image ? (
-                        <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                        <img src={resolveImageUrl(item.image)} alt={item.name} className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
                           <div className="w-5 h-5 bg-text-muted/20 rounded" />

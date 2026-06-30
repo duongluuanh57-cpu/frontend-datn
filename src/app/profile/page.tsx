@@ -6,7 +6,7 @@ import { useProfileAddresses } from '@/hooks/profile/useProfileAddresses';
 import { getMe, updateProfile, changePassword } from '@/services/user.service';
 import { getMyOrders } from '@/services/order.service';
 import { User, Mail, Shield, MapPin, ShoppingBag, Key, LogOut, Plus, Edit2, Trash2, Check, Crown, DollarSign, Phone, UserRound, Globe, Building2, LayoutDashboard } from 'lucide-react';
-import { getBackendOrigin } from '@/lib/api';
+import { getBackendOrigin, resolveImageUrl } from '@/lib/api';
 import Link from 'next/link';
 
 export default function ProfilePage() {
@@ -50,98 +50,71 @@ export default function ProfilePage() {
     fetchDistricts,
   } = useProfileAddresses();
 
-  // Info editing state
   const [isEditingInfo, setIsEditingInfo] = useState(false);
-  const [editFullName, setEditFullName] = useState('');
-  const [editPhone, setEditPhone] = useState('');
-  const [editGender, setEditGender] = useState<'MALE' | 'FEMALE' | 'OTHER' | ''>('');
-  const [editAddress, setEditAddress] = useState('');
-  const [editProvince, setEditProvince] = useState('');
-  const [editDistrict, setEditDistrict] = useState('');
+  const [editFullName, setEditFullName] = useState(user?.fullName || '');
+  const [editPhone, setEditPhone] = useState(user?.phoneNumber || '');
+  const [editGender, setEditGender] = useState<'MALE' | 'FEMALE' | 'OTHER' | ''>(user?.gender || '');
+  const [editAddress, setEditAddress] = useState(user?.address || '');
+  const [editProvince, setEditProvince] = useState(user?.province || '');
+  const [editDistrict, setEditDistrict] = useState(user?.district || '');
   const [infoSaving, setInfoSaving] = useState(false);
   const [infoError, setInfoError] = useState('');
   const [infoSuccess, setInfoSuccess] = useState('');
 
-  // Password state
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordSaving, setPasswordSaving] = useState(false);
-  const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState('');
+  const [passwordError, setPasswordError] = useState('');
 
-  // Orders state
   const [orders, setOrders] = useState<any[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [ordersError, setOrdersError] = useState('');
-  const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [orderFilter, setOrderFilter] = useState('all');
-  const [orderSort, setOrderSort] = useState<'newest' | 'oldest' | 'highest' | 'lowest'>('newest');
+  const [orderSort, setOrderSort] = useState('newest');
 
-  // Fetch full profile on mount
-  useEffect(() => {
-    if (!accessToken) return;
-    getMe(accessToken).then(res => {
-      if (res.success && res.data) {
-        updateUser(res.data);
-      }
-    }).catch(() => {});
-  }, [accessToken]);
-
-  const handleTabChange = (tabId: string) => {
-    setActiveTab(tabId);
-    if (tabId === 'dashboard') {
-      fetchOrders();
-    }
-    if (tabId === 'addresses') {
-      fetchAddresses();
-    }
-    if (tabId === 'orders') {
-      fetchOrders();
-    }
-  };
-
-  const handleProvinceChange = (provinceName: string) => {
-    setAddrProvince(provinceName);
-    setAddrDistrict('');
-    const found = provinces.find((p) => p.name === provinceName);
-    if (found) fetchDistricts(found.code);
-  };
+  const isOAuth = Boolean(user?.provider && user.provider !== 'local');
 
   const startEditInfo = () => {
-    setEditFullName(user.fullName || '');
-    setEditPhone(user.phoneNumber || '');
-    setEditGender((user.gender as 'MALE' | 'FEMALE' | 'OTHER' | '') || '');
-    setEditAddress(user.address || '');
-    setEditProvince(user.province || '');
-    setEditDistrict(user.district || '');
+    setEditFullName(user?.fullName || '');
+    setEditPhone(user?.phoneNumber || '');
+    setEditGender(user?.gender || '');
+    setEditAddress(user?.address || '');
+    setEditProvince(user?.province || '');
+    setEditDistrict(user?.district || '');
     setIsEditingInfo(true);
     setInfoError('');
     setInfoSuccess('');
   };
 
   const saveInfo = async () => {
+    if (!accessToken) return;
     setInfoSaving(true);
     setInfoError('');
     setInfoSuccess('');
     try {
-      const res = await updateProfile(accessToken, {
+      await updateProfile(accessToken, {
         fullName: editFullName,
         phoneNumber: editPhone,
-        gender: editGender || undefined,
+        gender: editGender as any,
         address: editAddress,
         province: editProvince,
         district: editDistrict,
       });
-      if (res.success) {
-        updateUser(res.data);
-        setInfoSuccess('Cập nhật thành công!');
-        setIsEditingInfo(false);
-      } else {
-        setInfoError(res.message || 'Cập nhật thất bại');
-      }
-    } catch (e: any) {
-      setInfoError(e.message || 'Cập nhật thất bại');
+      updateUser({
+        fullName: editFullName,
+        phoneNumber: editPhone,
+        gender: editGender as any,
+        address: editAddress,
+        province: editProvince,
+        district: editDistrict,
+      });
+      setInfoSuccess('Cập nhật thông tin thành công');
+      setIsEditingInfo(false);
+    } catch (err: any) {
+      setInfoError(err?.message || 'Không thể cập nhật thông tin');
     } finally {
       setInfoSaving(false);
     }
@@ -151,60 +124,62 @@ export default function ProfilePage() {
     if (!accessToken) return;
     setPasswordError('');
     setPasswordSuccess('');
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      setPasswordError('Vui lòng nhập đầy đủ các trường');
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setPasswordError('Mật khẩu mới không khớp');
-      return;
-    }
     if (newPassword.length < 6) {
       setPasswordError('Mật khẩu mới phải có ít nhất 6 ký tự');
       return;
     }
+    if (newPassword !== confirmPassword) {
+      setPasswordError('Mật khẩu xác nhận không khớp');
+      return;
+    }
     setPasswordSaving(true);
     try {
-      const res = await changePassword(accessToken, currentPassword, newPassword);
-      if (res.success) {
-        setPasswordSuccess('Đổi mật khẩu thành công!');
-        setCurrentPassword('');
-        setNewPassword('');
-        setConfirmPassword('');
-      } else {
-        setPasswordError(res.message || 'Đổi mật khẩu thất bại');
-      }
-    } catch (e: any) {
-      setPasswordError(e.message || 'Đổi mật khẩu thất bại');
+      await changePassword(accessToken, currentPassword, newPassword);
+      setPasswordSuccess('Đổi mật khẩu thành công');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err: any) {
+      setPasswordError(err?.message || 'Không thể đổi mật khẩu');
     } finally {
       setPasswordSaving(false);
     }
   };
 
-  const fetchOrders = async () => {
-    if (!accessToken) return;
-    setLoadingOrders(true);
-    setOrdersError('');
-    try {
-      const res = await getMyOrders(accessToken);
-      if (res.success) {
-        setOrders(res.data || []);
-      } else {
-        setOrdersError(res.message || 'Không thể tải đơn hàng');
-      }
-    } catch (e: any) {
-      setOrdersError(e.message || 'Không thể tải đơn hàng');
-    } finally {
-      setLoadingOrders(false);
+  useEffect(() => {
+    if (activeTab === 'orders' && orders.length === 0) {
+      setLoadingOrders(true);
+      setOrdersError('');
+      getMyOrders(accessToken!)
+        .then((data) => {
+          setOrders(data);
+          setLoadingOrders(false);
+        })
+        .catch((err) => {
+          setOrdersError(err?.message || 'Không thể tải đơn hàng');
+          setLoadingOrders(false);
+        });
     }
+  }, [activeTab, accessToken, orders.length]);
+
+  useEffect(() => {
+    if (activeTab === 'addresses' && addresses.length === 0 && accessToken) {
+      fetchAddresses();
+    }
+  }, [activeTab, addresses.length, accessToken, fetchAddresses]);
+
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString('vi-VN', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   };
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
-  };
-
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('vi-VN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
   };
 
   const statusLabel: Record<string, string> = {
@@ -216,86 +191,78 @@ export default function ProfilePage() {
   };
 
   const statusColor: Record<string, string> = {
-    pending: 'bg-yellow-100 text-yellow-700',
+    pending: 'bg-amber-100 text-amber-700',
     processing: 'bg-blue-100 text-blue-700',
     shipped: 'bg-purple-100 text-purple-700',
     delivered: 'bg-green-100 text-green-700',
     cancelled: 'bg-red-100 text-red-700',
   };
 
-  const memberTierLabel: Record<string, string> = {
-    MEMBER: 'Thành viên',
-    Bac: 'Bạc',
-    Vang: 'Vàng',
-    KimCuong: 'Kim Cương',
-  };
-
-  const tierColor: Record<string, string> = {
-    MEMBER: 'text-text-secondary',
-    Bac: 'text-gray-400',
-    Vang: 'text-yellow-500',
-    KimCuong: 'text-cyan-400',
-  };
-
   if (!user) {
     return (
-      <div className="h-screen bg-background text-foreground flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-text-primary mb-4">Vui lòng đăng nhập</h1>
-          <a href={getBackendOrigin() + '/api/auth/login'} className="text-primary hover:text-primary-dark">Đăng nhập</a>
+          <h2 className="text-xl font-semibold text-text-primary mb-2">Vui lòng đăng nhập</h2>
+          <p className="text-text-secondary mb-4">Bạn cần đăng nhập để xem trang cá nhân</p>
+          <a href={getBackendOrigin() + '/api/auth/login'} className="btn-primary inline-block">
+            Đăng nhập
+          </a>
         </div>
       </div>
     );
   }
 
-  const isOAuth = user.oauthProvider === 'google';
-  const menuItems = [
-    { id: 'dashboard', label: 'Vào Dashboard', icon: LayoutDashboard },
-    { id: 'info', label: 'Thông tin', icon: User },
-    { id: 'addresses', label: 'Địa chỉ', icon: MapPin },
-    { id: 'orders', label: 'Đơn hàng', icon: ShoppingBag },
-    ...(isOAuth ? [] : [{ id: 'password', label: 'Mật khẩu', icon: Key }]),
-  ];
   return (
-    <div className="h-full bg-background text-foreground overflow-hidden px-4 pt-6 pb-4">
-      <div className="max-w-7xl mx-auto h-full flex flex-col bg-surface rounded-2xl border border-border shadow-xl overflow-hidden">
-        {/* Header */}
-        <div className="flex-shrink-0 border-b border-border px-4 py-5">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
-              <span className="text-2xl font-bold text-primary">{user.username[0].toUpperCase()}</span>
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold text-text-primary tracking-tight">{user.username}</h1>
-                {user.memberTier && user.memberTier !== 'MEMBER' && (
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${tierColor[user.memberTier] || 'text-text-secondary'} bg-surface border border-border`}>
-                    <Crown size={12} /> {memberTierLabel[user.memberTier] || user.memberTier}
-                  </span>
-                )}
+    <div className="min-h-screen bg-background">
+      <div className="h-screen flex flex-col pt-16 md:pt-20">
+        <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+          {/* Left Sidebar */}
+          <div className="bg-surface border-b md:border-b-0 md:border-r border-border md:w-72 lg:w-80 flex-shrink-0 flex flex-col overflow-y-auto">
+            <div className="p-5 md:p-6 space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 ring-2 ring-primary/30">
+                  {user?.avatar ? (
+                    <img src={user.avatar} alt="avatar" className="w-full h-full rounded-full object-cover" />
+                  ) : (
+                    <UserRound size={24} className="text-primary" />
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-semibold text-text-primary text-lg truncate">{user?.fullName || user?.username || 'Người dùng'}</h3>
+                  <p className="text-xs text-text-muted truncate">{user?.email}</p>
+                  {user?.role === 'ADMIN' && (
+                    <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 bg-primary/10 text-primary text-xs font-semibold rounded-full">
+                      <Crown size={10} /> ADMIN
+                    </span>
+                  )}
+                </div>
               </div>
-              <p className="text-text-secondary text-sm mt-1">{user.email}</p>
+              {user?.role === 'ADMIN' && (
+                <a href={getBackendOrigin()} target="_blank" rel="noopener noreferrer" className="w-full flex items-center gap-3 px-4 py-2.5 bg-primary text-rich-black rounded-xl text-sm font-semibold hover:bg-primary-dark transition-colors">
+                  <LayoutDashboard size={18} />
+                  Trang quản trị
+                </a>
+              )}
             </div>
-          </div>
-        </div>
 
-        {/* Main Content – Split Layout */}
-        <div className="flex-1 flex overflow-hidden">
-          {/* Left Sidebar – Menu */}
-          <div className="w-64 flex-shrink-0 bg-surface border-r border-border p-4 flex flex-col">
-            <nav className="space-y-1 flex-1">
-              {menuItems.map((item) => (
+            <nav className="flex-1 px-3 space-y-1 pb-6">
+              {[
+                { key: 'info', icon: User, label: 'Thông tin tài khoản' },
+                { key: 'orders', icon: ShoppingBag, label: 'Lịch sử đơn hàng' },
+                { key: 'addresses', icon: MapPin, label: 'Sổ địa chỉ' },
+                !isOAuth && { key: 'password', icon: Key, label: 'Đổi mật khẩu' },
+              ].filter(Boolean).map((tab: any) => (
                 <button
-                  key={item.id}
-                  onClick={item.id === 'dashboard' ? () => { const token = accessToken; if (token) { window.location.href = getBackendOrigin().replace(/\/+$/, '') + '/api/auth/set-admin-session?token=' + encodeURIComponent(token); } } : () => handleTabChange(item.id)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                    activeTab === item.id
-                      ? 'bg-primary text-rich-black'
-                      : 'text-text-secondary hover:text-text-primary hover:bg-background/50'
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 text-sm rounded-xl transition-colors ${
+                    activeTab === tab.key
+                      ? 'bg-primary/10 text-primary font-semibold'
+                      : 'text-text-secondary hover:bg-surface hover:text-text-primary'
                   }`}
                 >
-                  <item.icon size={18} />
-                  {item.label}
+                  <tab.icon size={18} />
+                  {tab.label}
                 </button>
               ))}
             </nav>
@@ -311,8 +278,6 @@ export default function ProfilePage() {
           {/* Right Content Area */}
           <div className="flex-1 overflow-y-auto bg-background/30">
             <div className="px-4 py-6 md:py-8">
-
-
 
               {activeTab === 'info' && (
                 <div className="space-y-6">
@@ -369,78 +334,37 @@ export default function ProfilePage() {
                       </div>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <InfoRow icon={User} label="Tên đăng nhập" value={user.username} />
-                      <InfoRow icon={Mail} label="Email" value={user.email} />
-                      <InfoRow icon={Shield} label="Vai trò" value={user.role === 'ADMIN' ? 'Quản trị viên' : user.role === 'SUBADMIN' ? 'Quản lý' : 'Người dùng'} />
-                      <InfoRow icon={Crown} label="Hạng thành viên" value={memberTierLabel[user.memberTier || 'MEMBER'] || user.memberTier || 'Thành viên'} />
-                      <InfoRow icon={DollarSign} label="Tổng chi tiêu" value={user.totalSpent ? formatPrice(user.totalSpent) : '0 ₫'} />
-                      <InfoRow icon={UserRound} label="Họ và tên" value={user.fullName || user.defaultAddress?.fullName || 'Chưa cập nhật'} />
-                      <InfoRow icon={Phone} label="Số điện thoại" value={user.phoneNumber || user.defaultAddress?.phoneNumber || 'Chưa cập nhật'} />
-                      <InfoRow icon={UserRound} label="Giới tính" value={user.gender === 'MALE' ? 'Nam' : user.gender === 'FEMALE' ? 'Nữ' : user.gender === 'OTHER' ? 'Khác' : 'Chưa cập nhật'} />
-                      <div className="md:col-span-2">
-                        <InfoRow icon={Building2} label="Địa chỉ" value={user.address || user.defaultAddress?.address || 'Chưa cập nhật'} />
-                      </div>
-                      <InfoRow icon={Globe} label="Tỉnh/Thành phố" value={user.province || user.defaultAddress?.province || 'Chưa cập nhật'} />
-                      <InfoRow icon={Globe} label="Quận/Huyện" value={user.district || user.defaultAddress?.district || 'Chưa cập nhật'} />
-                      <div className="md:col-span-2">
-                        <InfoRow icon={Globe} label="Đăng nhập qua" value={user.oauthProvider === 'google' ? 'Google' : 'Tài khoản website'} />
-                      </div>
+                    <div className="space-y-4">
+                      <InfoRow icon={User} label="Họ và tên" value={user?.fullName || 'Chưa cập nhật'} />
+                      <InfoRow icon={Phone} label="Số điện thoại" value={user?.phoneNumber || 'Chưa cập nhật'} />
+                      <InfoRow icon={Mail} label="Email" value={user?.email || 'Chưa cập nhật'} />
+                      <InfoRow icon={Globe} label="Giới tính" value={user?.gender === 'MALE' ? 'Nam' : user?.gender === 'FEMALE' ? 'Nữ' : user?.gender || 'Chưa cập nhật'} />
+                      <InfoRow icon={MapPin} label="Địa chỉ" value={user?.address ? `${user.address}, ${user.district || ''}, ${user.province || ''}` : 'Chưa cập nhật'} />
+                      <InfoRow icon={Shield} label="Vai trò" value={user?.role === 'ADMIN' ? 'Quản trị viên' : 'Khách hàng'} />
                     </div>
                   )}
                 </div>
               )}
 
-              {/* ============ ADMIN DASHBOARD LINK ============ */}
-              {(user?.role === 'ADMIN' || user?.role === 'SUBADMIN') && activeTab === 'info' && (
-                <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-5 mt-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-semibold text-amber-800 flex items-center gap-2">
-                        <LayoutDashboard size={20} />
-                        Bảng điều khiển Quản trị
-                      </h3>
-                      <p className="text-sm text-amber-600 mt-1">Quản lý sản phẩm, đơn hàng, người dùng và hơn thế nữa</p>
-                    </div>
-                    <button
-                      onClick={() => {
-                        const token = accessToken;
-                        if (token) {
-                          const backendUrl = getBackendOrigin();
-                          window.location.href = backendUrl.replace(/\/+$/, "") + "/api/auth/set-admin-session?token=" + encodeURIComponent(token);
-                        }
-                      }}
-                      className="flex items-center gap-2 px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-sm font-medium transition-colors"
-                    >
-                      <LayoutDashboard size={16} />
-                      Đi đến Dashboard
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* ============ TAB: ADDRESSES ============ */}
               {activeTab === 'addresses' && (
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-2xl font-semibold text-text-primary">Địa chỉ giao hàng</h2>
-                    {!isEditingAddress && (
-                      <button onClick={openNewAddressForm} className="flex items-center gap-2 px-4 py-2 bg-primary text-rich-black rounded-lg text-sm font-medium hover:bg-primary-dark transition-colors">
-                        <Plus size={16} /> Thêm địa chỉ
-                      </button>
-                    )}
+                    <h2 className="text-2xl font-semibold text-text-primary">Sổ địa chỉ</h2>
+                    <button onClick={openNewAddressForm} className="flex items-center gap-2 px-4 py-2 bg-primary text-rich-black rounded-lg text-sm font-medium hover:bg-primary-dark transition-colors">
+                      <Plus size={16} /> Thêm địa chỉ
+                    </button>
                   </div>
 
+                  {addrError && <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">{addrError}</div>}
+                  {deleteError && <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">{deleteError}</div>}
+
                   {isEditingAddress && (
-                    <div className="p-6 rounded-xl bg-surface border border-border space-y-4">
-                      <h3 className="text-lg font-semibold text-text-primary">
-                        {editingAddressId ? 'Chỉnh sửa địa chỉ' : 'Thêm địa chỉ mới'}
-                      </h3>
-                      {addrError && <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">{addrError}</div>}
+                    <div className="space-y-4 p-5 rounded-xl bg-surface border border-border">
+                      <h3 className="font-semibold text-text-primary">{editingAddressId ? 'Chỉnh sửa địa chỉ' : 'Thêm địa chỉ mới'}</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm font-medium text-text-primary mb-2">Label</label>
-                          <input type="text" value={addrLabel} onChange={e => setAddrLabel(e.target.value)} placeholder="Ví dụ: Nhà riêng, Văn phòng" className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                          <label className="block text-sm font-medium text-text-primary mb-2">Nhãn</label>
+                          <input type="text" value={addrLabel} onChange={e => setAddrLabel(e.target.value)} placeholder="Nhà riêng, Công ty..." className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-text-primary mb-2">Họ và tên</label>
@@ -459,164 +383,76 @@ export default function ProfilePage() {
                           <label className="block text-sm font-medium text-text-primary mb-2">Số điện thoại</label>
                           <input type="tel" value={addrPhoneNumber} onChange={e => setAddrPhoneNumber(e.target.value)} placeholder="0912 345 678" className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
                         </div>
-                        <div className="md:col-span-2">
-                          <label className="block text-sm font-medium text-text-primary mb-2">Địa chỉ</label>
-                          <input type="text" value={addrStreet} onChange={e => setAddrStreet(e.target.value)} placeholder="Số nhà, tên đường" className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-text-primary mb-2">Địa chỉ</label>
+                        <input type="text" value={addrStreet} onChange={e => setAddrStreet(e.target.value)} placeholder="Số nhà, tên đường" className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-text-primary mb-2">Tỉnh/Thành phố</label>
-                          <select value={addrProvince} onChange={e => handleProvinceChange(e.target.value)} disabled={loadingProvinces} className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-50">
-                            <option value="">Chọn tỉnh/thành</option>
-                            {provinces.map(p => <option key={p.code} value={p.name}>{p.name}</option>)}
+                          <select
+                            value={addrProvince}
+                            onChange={e => { setAddrProvince(e.target.value); const found = provinces.find((p: any) => p.name === e.target.value); if (found) fetchDistricts(found.code); }}
+                            disabled={loadingProvinces}
+                            className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 appearance-none disabled:opacity-50"
+                          >
+                            <option value="">{loadingProvinces ? 'Đang tải...' : 'Chọn tỉnh/thành'}</option>
+                            {provinces.map((p: any) => (
+                              <option key={p.code} value={p.name}>{p.name}</option>
+                            ))}
                           </select>
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-text-primary mb-2">Quận/Huyện</label>
-                          <select value={addrDistrict} onChange={e => setAddrDistrict(e.target.value)} disabled={loadingDistricts} className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-50">
-                            <option value="">Chọn quận/huyện</option>
-                            {districts.map(d => <option key={d.code} value={d.name}>{d.name}</option>)}
+                          <select value={addrDistrict} onChange={e => setAddrDistrict(e.target.value)} disabled={loadingDistricts || !addrProvince} className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 appearance-none disabled:opacity-50">
+                            <option value="">{loadingDistricts ? 'Đang tải...' : addrProvince ? 'Chọn quận/huyện' : 'Chọn tỉnh trước'}</option>
+                            {districts.map((d: any) => (
+                              <option key={d.code} value={d.name}>{d.name}</option>
+                            ))}
                           </select>
                         </div>
                       </div>
                       <div className="flex gap-3 pt-2">
-                        <button onClick={handleSaveAddress} disabled={addrSubmitting} className="flex items-center gap-2 px-5 py-2.5 bg-primary text-rich-black rounded-lg text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                          <Check size={16} /> {addrSubmitting ? 'Đang lưu...' : 'Lưu địa chỉ'}
+                        <button onClick={handleSaveAddress} disabled={addrSubmitting} className="flex items-center gap-2 px-5 py-2.5 bg-primary text-rich-black rounded-lg text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-50">
+                          <Check size={16} /> {addrSubmitting ? 'Đang lưu...' : 'Lưu'}
                         </button>
-                        <button onClick={() => { setIsEditingAddress(false); setAddrError(null); }} className="px-5 py-2.5 bg-surface border border-border text-text-secondary rounded-lg text-sm font-medium hover:bg-background transition-colors">Hủy</button>
+                        <button onClick={() => { setIsEditingAddress(false); setAddrError(''); }} className="px-5 py-2.5 bg-surface border border-border text-text-secondary rounded-lg text-sm font-medium hover:bg-background transition-colors">Hủy</button>
                       </div>
                     </div>
                   )}
 
-                  {!isEditingAddress && (
-                    <div className="space-y-3">
-                      {loadingAddresses ? (
-                        <div className="text-center py-12 text-text-muted">Đang tải địa chỉ...</div>
-                      ) : addresses.length === 0 ? (
-                        <div className="text-center py-12">
-                          <MapPin className="mx-auto text-text-muted mb-3" size={48} />
-                          <p className="text-text-secondary text-sm">Chưa có địa chỉ nào. Thêm địa chỉ đầu tiên của bạn.</p>
+                  <div className="space-y-3">
+                    {addresses.map((addr: any) => (
+                      <div key={addr._id} className="p-5 rounded-xl bg-surface border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="font-semibold text-text-primary text-sm">{addr.label}</span>
+                            {addr.isDefault && (
+                              <span className="px-2 py-0.5 bg-primary/10 text-primary text-xs font-medium rounded-full">Mặc định</span>
+                            )}
+                          </div>
+                          <p className="text-sm text-text-secondary">{addr.fullName} · {addr.phoneNumber}</p>
+                          <p className="text-sm text-text-muted mt-1">{addr.address}, {addr.district}, {addr.province}</p>
                         </div>
-                      ) : (
-                        <>
-                          {deleteError && (
-                            <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm flex items-center justify-between">
-                              <span>{deleteError}</span>
-                              <button onClick={() => setDeleteError(null)} className="text-red-400 hover:text-red-600 ml-2">&times;</button>
-                            </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          {!addr.isDefault && (
+                            <button onClick={() => handleSetDefault(addr._id)} className="px-3 py-1.5 text-xs font-medium text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors">Đặt mặc định</button>
                           )}
-                          {addresses.map((addr: any) => (
-                            <div key={addr._id} className={`p-5 rounded-xl border transition-all ${addr.isDefault ? 'bg-primary/5 border-primary/30' : 'bg-surface border-border/50 hover:border-border'}`}>
-                              <div className="flex items-start justify-between gap-4">
-                                <div className="flex-1 space-y-2">
-                                  <div className="flex items-center gap-2">
-                                    <h4 className="font-semibold text-text-primary">{addr.label}</h4>
-                                    {addr.isDefault && (
-                                      <span className="px-2 py-0.5 bg-primary/10 text-primary text-xs font-medium rounded-full">Mặc định</span>
-                                    )}
-                                  </div>
-                                  <p className="text-sm text-text-primary font-medium">{addr.fullName}</p>
-                                  <p className="text-sm text-text-secondary">{addr.phoneNumber}</p>
-                                  <p className="text-sm text-text-secondary">{addr.address}, {addr.district && `${addr.district}, `}{addr.province}</p>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  {!addr.isDefault && (
-                                    <button onClick={() => handleSetDefault(addr._id)} className="p-2 text-text-muted hover:text-primary hover:bg-primary/10 rounded-lg transition-colors" title="Đặt làm mặc định">
-                                      <Check size={16} />
-                                    </button>
-                                  )}
-                                  <button onClick={() => openEditAddressForm(addr)} className="p-2 text-text-muted hover:text-primary hover:bg-primary/10 rounded-lg transition-colors" title="Chỉnh sửa">
-                                    <Edit2 size={16} />
-                                  </button>
-                                  {!addr.isDefault && (
-                                    <button onClick={() => handleDeleteAddress(addr._id)} className="p-2 text-text-muted hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Xoá">
-                                      <Trash2 size={16} />
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </>
-                      )}
-                    </div>
-                  )}
+                          <button onClick={() => openEditAddressForm(addr)} className="p-2 text-text-muted hover:text-text-primary transition-colors">
+                            <Edit2 size={16} />
+                          </button>
+                          <button onClick={() => handleDeleteAddress(addr._id)} className="p-2 text-text-muted hover:text-red-500 transition-colors">
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
-              {/* ============ TAB: ORDERS ============ */}
               {activeTab === 'orders' && (() => {
-                // ===== Detail View =====
-                if (selectedOrder) {
-                  const order = selectedOrder;
-                  const subtotal = order.items?.reduce((sum: number, i: any) => sum + i.price * i.quantity, 0) || 0;
-                  return (
-                    <div className="space-y-6">
-                      <button onClick={() => setSelectedOrder(null)} className="flex items-center gap-2 text-sm text-text-secondary hover:text-primary transition-colors">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-                        Quay lại danh sách đơn hàng
-                      </button>
-
-                      {/* Order header */}
-                      <div className="rounded-xl bg-surface border border-border p-6">
-                        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-                          <div>
-                            <div className="flex items-center gap-3">
-                              <h2 className="text-xl font-bold text-text-primary">Đơn hàng #{order._id?.slice(-8).toUpperCase()}</h2>
-                              <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColor[order.status] || 'bg-gray-100'}`}>
-                                {statusLabel[order.status] || order.status}
-                              </span>
-                            </div>
-                            <p className="text-sm text-text-secondary mt-1">{formatDate(order.createdAt)}</p>
-                          </div>
-                          <p className="text-2xl font-bold text-text-primary">{formatPrice(order.totalAmount)}</p>
-                        </div>
-
-                        {/* Info grid */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm border-t border-border pt-4">
-                          <div><p className="text-xs text-text-muted mb-1">Phương thức</p><p className="font-medium text-text-primary">{order.paymentMethod === 'cod' ? 'COD' : order.paymentMethod === 'bank_transfer' ? 'Chuyển khoản' : order.paymentMethod === 'momo' ? 'MoMo' : order.paymentMethod === 'zalopay' ? 'ZaloPay' : order.paymentMethod?.toUpperCase() || ''}</p></div>
-                          <div><p className="text-xs text-text-muted mb-1">Thanh toán</p><p className={`font-medium ${order.paymentStatus === 'paid' ? 'text-green-600' : order.paymentStatus === 'refunded' ? 'text-orange-500' : 'text-yellow-600'}`}>{order.paymentStatus === 'paid' ? 'Đã thanh toán' : order.paymentStatus === 'refunded' ? 'Đã hoàn tiền' : 'Chưa thanh toán'}</p></div>
-                          <div><p className="text-xs text-text-muted mb-1">Người nhận</p><p className="font-medium text-text-primary">{order.customerName || ''}</p></div>
-                          <div><p className="text-xs text-text-muted mb-1">SĐT</p><p className="font-medium text-text-primary">{order.customerPhone || ''}</p></div>
-                        </div>
-                        {order.customerAddress && (
-                          <div className="mt-3 text-sm border-t border-border pt-3">
-                            <p className="text-xs text-text-muted mb-1">Địa chỉ giao hàng</p>
-                            <p className="font-medium text-text-primary">{order.customerAddress}</p>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Items list */}
-                      <div className="rounded-xl bg-surface border border-border overflow-hidden">
-                        <div className="px-5 py-3 border-b border-border bg-background/30">
-                          <h3 className="font-semibold text-text-primary text-sm">{order.items?.length || 0} sản phẩm</h3>
-                        </div>
-                        <div className="divide-y divide-border">
-                          {order.items?.map((item: any, idx: number) => (
-                            <div key={idx} className="flex items-center gap-4 px-5 py-4">
-                              <div className="w-16 h-16 rounded-lg bg-surface border border-border overflow-hidden flex-shrink-0">
-                                {item.image ? <img src={item.image} alt={item.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-text-muted"><ShoppingBag size={18} /></div>}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <Link href={`/product/${item.productId}`} className="text-sm font-semibold text-text-primary hover:text-primary truncate block">{item.name}</Link>
-                                {item.brand && <p className="text-xs text-text-muted mt-0.5">{item.brand}</p>}
-                                <p className="text-xs text-text-secondary mt-1">{formatPrice(item.price)} ×{item.quantity}</p>
-                              </div>
-                              <p className="text-sm font-semibold text-text-primary flex-shrink-0">{formatPrice(item.price * item.quantity)}</p>
-                            </div>
-                          ))}
-                        </div>
-                        <div className="px-5 py-4 bg-surface/50 border-t border-border space-y-1.5 text-sm">
-                          <div className="flex justify-between text-text-secondary"><span>Tạm tính</span><span>{formatPrice(subtotal)}</span></div>
-                          {order.discountAmount > 0 && <div className="flex justify-between text-green-600"><span>Giảm giá</span><span>-{formatPrice(order.discountAmount)}</span></div>}
-                          <div className="flex justify-between pt-1 border-t border-border text-text-primary font-bold text-base"><span>Tổng cộng</span><span>{formatPrice(order.totalAmount)}</span></div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                }
-
-                // ===== Order List =====
                 const filterTabs = [
                   { key: 'all', label: 'Tất cả' },
                   { key: 'pending', label: 'Chờ xác nhận' },
@@ -636,6 +472,85 @@ export default function ProfilePage() {
                       default: return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
                     }
                   });
+
+                if (selectedOrder) {
+                  const order = selectedOrder;
+                  return (
+                    <div className="space-y-6">
+                      <button onClick={() => setSelectedOrder(null)} className="flex items-center gap-2 text-sm text-primary hover:text-primary-dark font-medium">
+                        ← Quay lại danh sách
+                      </button>
+                      <div className="space-y-4">
+                        <div className="bg-surface rounded-xl p-5 border border-border">
+                          <div className="flex items-center justify-between mb-4">
+                            <div>
+                              <h3 className="font-semibold text-text-primary">Đơn hàng #{order._id?.slice(-8).toUpperCase()}</h3>
+                              <p className="text-xs text-text-muted mt-1">{formatDate(order.createdAt)}</p>
+                            </div>
+                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColor[order.status] || 'bg-gray-100'}`}>
+                              {statusLabel[order.status] || order.status}
+                            </span>
+                          </div>
+                          <div className="border-t border-border pt-4 space-y-2">
+                            <p className="text-sm"><span className="text-text-muted">Người nhận:</span> <span className="text-text-primary font-medium">{order.shippingAddress?.fullName || order.customerName}</span></p>
+                            <p className="text-sm"><span className="text-text-muted">Điện thoại:</span> <span className="text-text-primary font-medium">{order.shippingAddress?.phone || order.customerPhone}</span></p>
+                            <p className="text-sm"><span className="text-text-muted">Địa chỉ:</span> <span className="text-text-primary font-medium">{order.shippingAddress?.address || order.customerAddress}</span></p>
+                            {order.note && <p className="text-sm"><span className="text-text-muted">Ghi chú:</span> <span className="text-text-primary">{order.note}</span></p>}
+                          </div>
+                        </div>
+
+                        <div className="bg-surface rounded-xl border border-border overflow-hidden">
+                          <div className="px-5 py-4 border-b border-border">
+                            <h3 className="font-semibold text-text-primary text-sm">Sản phẩm ({order.items?.length || 0})</h3>
+                          </div>
+                          <div className="divide-y divide-border">
+                            {order.items?.map((item: any, idx: number) => (
+                              <div key={idx} className="flex items-center gap-4 px-5 py-4">
+                                <div className="w-16 h-16 rounded-lg bg-surface border border-border overflow-hidden flex-shrink-0">
+                                  {item.image ? <img src={resolveImageUrl(item.image)} alt={item.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-text-muted"><ShoppingBag size={18} /></div>}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <Link href={`/product/${item.productId}`} className="text-sm font-semibold text-text-primary hover:text-primary truncate block">{item.name}</Link>
+                                  {item.brand && <p className="text-xs text-text-muted mt-0.5">{item.brand}</p>}
+                                  <div className="flex items-center gap-3 mt-1.5">
+                                    <span className="text-xs text-text-muted">SL: {item.quantity}</span>
+                                    {item.variantSize && <span className="text-xs text-text-muted">{item.variantSize}</span>}
+                                  </div>
+                                </div>
+                                <p className="font-semibold text-text-primary text-sm">{formatPrice(item.price * (item.quantity || 1))}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="bg-surface rounded-xl p-5 border border-border">
+                          <div className="space-y-2">
+                            <div className="flex justify-between text-sm">
+                              <span className="text-text-secondary">Tạm tính</span>
+                              <span className="font-medium text-text-primary">{formatPrice(order.totalAmount)}</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                              <span className="text-text-secondary">Phí vận chuyển</span>
+                              <span className={`font-medium ${order.shippingFee === 0 ? 'text-green-600' : 'text-text-primary'}`}>
+                                {order.shippingFee === 0 ? 'Miễn phí' : formatPrice(order.shippingFee || 0)}
+                              </span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                              <span className="text-text-secondary">Phương thức</span>
+                              <span className="font-medium text-text-primary">{order.paymentMethod === 'cod' ? 'COD' : order.paymentMethod === 'bank_transfer' ? 'Chuyển khoản' : order.paymentMethod}</span>
+                            </div>
+                            <div className="border-t border-border pt-2 mt-2">
+                              <div className="flex justify-between items-baseline">
+                                <span className="font-semibold text-text-primary">Tổng cộng</span>
+                                <span className="text-xl font-bold text-primary">{formatPrice(order.finalAmount || order.totalAmount)}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
 
                 return (
                   <div className="space-y-6">
