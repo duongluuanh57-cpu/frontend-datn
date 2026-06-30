@@ -1,5 +1,11 @@
 import { getActiveOrigin, getActiveApiUrl, getActiveOriginSync } from './backendDiscovery';
 
+/** Helper: get redirect URL for backend routes */
+export function getOriginRedirectUrl(path: string): string {
+  const origin = getActiveOriginSync();
+  return `${origin.replace(/\/+$/, '')}${path}`;
+}
+
 /** Lấy base URL từ cache (sync) — fallback về Render */
 export function getBackendOrigin(): string {
   return getActiveOriginSync();
@@ -61,7 +67,7 @@ async function refreshAccessToken(): Promise<string> {
   if (!refreshToken) {
     logout();
     if (typeof window !== 'undefined') {
-      window.location.href = 'http://localhost:4000/api/auth/login';
+      window.location.href = getOriginRedirectUrl('/api/auth/login');
     }
     throw new Error('No refresh token');
   }
@@ -84,7 +90,7 @@ async function refreshAccessToken(): Promise<string> {
   } else {
     useAuthStore.getState().logout();
     if (typeof window !== 'undefined') {
-      window.location.href = 'http://localhost:4000/api/auth/login';
+      window.location.href = getOriginRedirectUrl('/api/auth/login');
     }
     throw new Error('Refresh failed');
   }

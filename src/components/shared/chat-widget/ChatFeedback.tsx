@@ -38,7 +38,7 @@ export function ChatFeedback({ messageId, initialRating, onRatingSubmit, imagePa
     setIsLoading(true);
 
     try {
-      const baseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api').replace(/\/$/, '');
+      const baseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://backend-datn-y78s.onrender.com').replace(/\/$/, '');
       const res = await fetch(`${baseUrl}/ai/feedback`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'text/plain' },

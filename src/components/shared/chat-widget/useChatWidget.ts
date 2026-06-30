@@ -61,12 +61,9 @@ export function useChatWidget() {
     setIsLoading(true);
 
     try {
-      let baseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api').replace(/\/$/, '');
-      if (baseUrl.includes('127.0.0.1')) {
-        baseUrl = baseUrl.replace('127.0.0.1', 'localhost');
-      }
+      const baseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://backend-datn-y78s.onrender.com').replace(/\/$/, '');
       
-      const fetchUrl = `${baseUrl}/ai/chat`;
+      const fetchUrl = `${baseUrl}/api/ai/chat`;
       const response = await fetch(fetchUrl, {
         method: 'POST',
         headers: { 
