@@ -1,8 +1,10 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Trash2, Minus, Plus, Heart, ShoppingBag } from 'lucide-react';
+import { Trash2, Minus, Plus, Heart, ShoppingBag, ChevronDown } from 'lucide-react';
 import { resolveImageUrl } from '@/lib/api';
+import { useState, useRef, useEffect } from 'react';
+import type { VariantInfo } from '@/services/cart.service';
 
 export interface MiniProductItem {
   productId: string;
@@ -16,19 +18,32 @@ export interface MiniProductItem {
 }
 
 interface MiniProductCardProps {
-  item: MiniProductItem;
+  item: MiniProductItem & { availableVariants?: VariantInfo[] };
   variant: 'cart' | 'favorite';
   isRemoving?: boolean;
   onRemove: (productId: string, variantSize?: string) => void;
   onQuantityChange?: (productId: string, newQuantity: number, variantSize?: string) => void;
+  onVariantChange?: (productId: string, currentVariantSize: string | undefined, newVariantSize: string) => void;
 }
 
 function formatPrice(price: number) {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 }
 
-export function MiniProductCard({ item, variant, isRemoving, onRemove, onQuantityChange }: MiniProductCardProps) {
+export function MiniProductCard({ item, variant, isRemoving, onRemove, onQuantityChange, onVariantChange }: MiniProductCardProps) {
   const itemKey = item.productId + '-' + (item.variantSize || '50ml');
+  const [variantOpen, setVariantOpen] = useState(false);
+  const variantRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (variantRef.current && !variantRef.current.contains(e.target as Node)) {
+        setVariantOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
     <motion.div
@@ -63,9 +78,44 @@ export function MiniProductCard({ item, variant, isRemoving, onRemove, onQuantit
           <div className="flex-1 min-w-0">
             <h3 className="text-sm font-semibold text-text-primary line-clamp-2">{item.name}</h3>
             <div className="flex items-center gap-2 mt-1">
-              {item.variantSize && (
+              {variant === 'cart' && item.availableVariants?.length && item.availableVariants.length > 1 && onVariantChange ? (
+                <div className="relative" ref={variantRef}>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setVariantOpen(!variantOpen); }}
+                    className="flex items-center gap-1 text-xs text-text-muted bg-gray-100 hover:bg-gray-200 px-2 py-0.5 rounded transition-colors"
+                  >
+                    {item.variantSize || '50ml'}
+                    <ChevronDown size={12} />
+                  </button>
+                  {variantOpen && (
+                    <div className="absolute top-full left-0 mt-1 bg-white border border-border rounded-lg shadow-lg z-50 min-w-[140px] overflow-hidden">
+                      {item.availableVariants.map((v) => {
+                        const isCurrent = v.size === (item.variantSize || '50ml');
+                        return (
+                          <button
+                            key={v.size}
+                            disabled={isCurrent || !v.inStock}
+                            onClick={() => {
+                              if (!isCurrent && v.inStock) {
+                                onVariantChange(item.productId, item.variantSize, v.size);
+                                setVariantOpen(false);
+                              }
+                            }}
+                            className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-surface transition-colors ${
+                              isCurrent ? 'bg-primary/10 text-primary font-semibold' : 'text-text-primary'
+                            } ${!v.inStock ? 'opacity-40 cursor-not-allowed' : ''}`}
+                          >
+                            <span>{v.size}</span>
+                            <span className="text-text-muted">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(v.price)}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              ) : item.variantSize ? (
                 <span className="text-xs text-text-muted bg-gray-100 px-2 py-0.5 rounded">{item.variantSize}</span>
-              )}
+              ) : null}
               {Number(item.discount || 0) > 0 && (
                 <span className="inline-block px-1.5 py-0.5 bg-red-100 text-red-600 text-xs font-bold rounded">
                   -{item.discount}%

@@ -1,5 +1,12 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
+export interface VariantInfo {
+  size: string;
+  price: number;
+  inStock: boolean;
+  isDefault: boolean;
+}
+
 export interface CartItem {
   _id?: string;
   productId: string;
@@ -10,6 +17,7 @@ export interface CartItem {
   discount?: number;
   quantity: number;
   variantSize?: string;
+  availableVariants?: VariantInfo[];
 }
 
 export interface CartResponse {
@@ -70,6 +78,24 @@ export async function updateCartItem(token: string, productId: string, quantity:
   if (!res.ok) {
     const error = await res.json();
     throw new Error(error.message || 'Không thể cập nhật giỏ hàng');
+  }
+
+  return res.json();
+}
+
+export async function updateCartItemVariant(token: string, productId: string, currentVariantSize: string | undefined, newVariantSize: string): Promise<CartResponse> {
+  const res = await fetch(`${API_BASE}/api/cart/item/variant`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ productId, currentVariantSize, newVariantSize }),
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.message || 'Không thể đổi biến thể');
   }
 
   return res.json();

@@ -12,7 +12,8 @@ export async function getMe(token: string) {
     const err = await res.json().catch(() => ({ message: 'Failed to fetch profile' }));
     throw new Error(err.message || 'Failed to fetch profile');
   }
-  return res.json();
+  const json = await res.json();
+  return json.data;
 }
 
 /**

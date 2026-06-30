@@ -37,7 +37,7 @@ export default function RootLayout({
   const isProduction = process.env.NODE_ENV === 'production';
 
   return (
-    <html lang="vi" suppressHydrationWarning data-scroll-behavior="smooth">
+    <html lang="vi" suppressHydrationWarning data-scroll-behavior="smooth" className="h-full">
       <head>
         <link rel="preconnect" href="https://pub-51942afe81314369ba1985f0493bce19.r2.dev" />
         <link rel="dns-prefetch" href="https://pub-51942afe81314369ba1985f0493bce19.r2.dev" />

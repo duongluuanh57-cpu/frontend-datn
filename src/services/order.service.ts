@@ -12,5 +12,6 @@ export async function getMyOrders(token: string) {
     const err = await res.json().catch(() => ({ message: 'Failed to fetch orders' }));
     throw new Error(err.message || 'Failed to fetch orders');
   }
-  return res.json();
+  const json = await res.json();
+  return json.data;
 }
