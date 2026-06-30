@@ -1,3 +1,0 @@
-# CodeGraph temporary files - track the database but not WAL/SHM
-*.db-shm
-*.db-wal

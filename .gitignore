@@ -79,3 +79,18 @@ pnpm-workspace.yaml
 Docs-Frontend/
 design-system/
 README.md
+
+# E2E tests
+e2e/
+playwright.config.ts
+
+# AI coding cache
+.codegraph/
+
+# Default Next.js placeholder SVGs
+public/file.svg
+public/globe.svg
+public/next.svg
+public/placeholder.svg
+public/vercel.svg
+public/window.svg
