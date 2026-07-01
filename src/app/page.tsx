@@ -41,7 +41,10 @@ export default async function HomePage() {
           layout="marquee"
           maxProducts={8}
           enablePriceFilter={sale.length > 0}
+<<<<<<< HEAD
           viewAllHref="/products?tag=sale&sortBy=bestSeller"
+=======
+>>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
         />
       </SectionReveal>
 
@@ -55,7 +58,10 @@ export default async function HomePage() {
           layout="horizontal"
           showNavigation={true}
           enablePriceFilter={true}
+<<<<<<< HEAD
           viewAllHref="/products?tag=new&sortBy=newest"
+=======
+>>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
         />
       </SectionReveal>
 
@@ -69,7 +75,10 @@ export default async function HomePage() {
           layout="grid"
           maxProducts={10}
           enablePriceFilter={true}
+<<<<<<< HEAD
           viewAllHref="/products?tag=hot&sortBy=bestSeller"
+=======
+>>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
         />
       </SectionReveal>
 
@@ -83,7 +92,10 @@ export default async function HomePage() {
           layout="grid"
           maxProducts={10}
           enablePriceFilter={true}
+<<<<<<< HEAD
           viewAllHref="/products?tag=limited"
+=======
+>>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
         />
       </SectionReveal>
 
@@ -97,7 +109,10 @@ export default async function HomePage() {
           layout="stagger"
           maxProducts={10}
           enablePriceFilter={true}
+<<<<<<< HEAD
           viewAllHref="/products"
+=======
+>>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
         />
       </SectionReveal>
 

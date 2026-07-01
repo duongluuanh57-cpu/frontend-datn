@@ -33,6 +33,19 @@ export function TokenHandler() {
               avatar: userData.avatar || '',
               tenantId: userData.tenantId || 'default',
               memberTier: userData.memberTier || 'MEMBER',
+<<<<<<< HEAD
+=======
+              totalSpent: userData.totalSpent ?? 0,
+              fullName: userData.fullName || '',
+              phoneNumber: userData.phoneNumber || '',
+              gender: userData.gender || '',
+              address: userData.address || '',
+              province: userData.province || '',
+              district: userData.district || '',
+              status: userData.status || 'active',
+              oauthProvider: userData.oauthProvider || undefined,
+              defaultAddress: userData.defaultAddress || null,
+>>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
               createdAt: userData.createdAt || '',
             };
             setAuth(user, accessToken, refreshToken);

@@ -14,8 +14,13 @@ export default function HomeLoading() {
         </div>
       </div>
 
+<<<<<<< HEAD
       {/* Product sections skeleton — 3 sections matching homepage */}
       {[...Array(3)].map((_, section) => (
+=======
+      {/* 5 Product sections — matching page.tsx: Flash Sale, Sản Phẩm Mới, Bán Chạy Nhất, Phiên Bản Giới Hạn, Bộ Sưu Tập */}
+      {[...Array(5)].map((_, section) => (
+>>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
         <div key={section} className="max-w-7xl mx-auto px-4 py-10">
           {/* Section title + filter button */}
           <div className="flex items-center justify-between mb-6">
@@ -41,6 +46,23 @@ export default function HomeLoading() {
         </div>
       ))}
 
+<<<<<<< HEAD
+=======
+      {/* AboutUs skeleton */}
+      <div className="max-w-7xl mx-auto px-4 py-12">
+        <div className="flex flex-col md:flex-row gap-8 items-center">
+          <div className="w-full md:w-1/2 aspect-video bg-surface rounded-2xl animate-pulse" />
+          <div className="w-full md:w-1/2 space-y-4">
+            <div className="h-8 w-48 bg-surface rounded-lg animate-pulse" />
+            <div className="h-4 w-full bg-surface rounded animate-pulse" />
+            <div className="h-4 w-full bg-surface rounded animate-pulse" />
+            <div className="h-4 w-3/4 bg-surface rounded animate-pulse" />
+            <div className="h-10 w-32 bg-surface rounded-lg animate-pulse mt-4" />
+          </div>
+        </div>
+      </div>
+
+>>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
       {/* USP section skeleton */}
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

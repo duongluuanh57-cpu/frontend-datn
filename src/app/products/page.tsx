@@ -1,7 +1,11 @@
 'use client';
 
+<<<<<<< HEAD
 import { useState, useMemo, useCallback, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+=======
+import { useState, useMemo, useCallback } from 'react';
+>>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight, SearchX, Package } from 'lucide-react';
@@ -13,12 +17,16 @@ interface ProductItem {
   _id: string; name: string; brand: string; price: number;
   originalPrice?: number; image: string; tag?: string;
   discount?: number; reviewsCount?: number; soldCount?: number;
+<<<<<<< HEAD
   categories?: string;
+=======
+>>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
 }
 
 type SortOption = 'newest' | 'priceAsc' | 'priceDesc' | 'bestSeller';
 const PER_PAGE = 20;
 
+<<<<<<< HEAD
 const SESSION_SLUGS: Record<string, string[]> = {
   hot: ['hot', 'ban-chay', 'thinh-hanh', 'trending'],
   new: ['new', 'san-pham-moi'],
@@ -27,11 +35,15 @@ const SESSION_SLUGS: Record<string, string[]> = {
   sale: ['sale', 'giam-gia'],
 };
 
+=======
+/** Giá thực sau discount */
+>>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
 function realPrice(p: ProductItem): number {
   if (p.discount && p.discount > 0) return Math.round(p.price * (1 - p.discount / 100));
   return p.price;
 }
 
+<<<<<<< HEAD
 function ProductsPageContent() {
   const searchParams = useSearchParams();
   const tagFromUrl = searchParams.get('tag') || '';
@@ -44,12 +56,20 @@ function ProductsPageContent() {
   const [selectedTag, setSelectedTag] = useState(tagFromUrl);
   const [selectedBrand, setSelectedBrand] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(categoryFromUrl);
+=======
+export default function ProductsPage() {
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sortBy, setSortBy] = useState<SortOption>('newest');
+  const [selectedBrand, setSelectedBrand] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
+>>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
   const [priceMin, setPriceMin] = useState<number | undefined>(undefined);
   const [priceMax, setPriceMax] = useState<number | undefined>(undefined);
   const [brandOpen, setBrandOpen] = useState(false);
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [priceOpen, setPriceOpen] = useState(false);
 
+<<<<<<< HEAD
   // Sync state khi URL params thay đổi (client-side navigation)
   useEffect(() => {
     setSelectedTag(searchParams.get('tag') || '');
@@ -67,11 +87,19 @@ function ProductsPageContent() {
       const params: Record<string, string | number> = { page: 1, limit: 500, sortBy };
       if (selectedCategory) params.category = selectedCategory;
       const { data } = await api.get('/products', { params });
+=======
+  // Fetch tối đa 500 sản phẩm để sort + filter client-side
+  const { data: pd, isLoading, error } = useQuery({
+    queryKey: ['products-all', sortBy],
+    queryFn: async () => {
+      const { data } = await api.get('/products', { params: { page: 1, limit: 500, sortBy } });
+>>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
       return data.data as { items: ProductItem[]; total: number };
     },
     staleTime: 30_000,
   });
 
+<<<<<<< HEAD
   const sessionType = selectedTag || (sortBy === 'bestSeller' ? 'hot' : sortBy === 'newest' ? 'new' : undefined);
   const raw: ProductItem[] = pd?.items || [];
   const totalAll = pd?.total || 0;
@@ -94,6 +122,26 @@ function ProductsPageContent() {
     return arr;
   }, [raw, selectedTag, selectedBrand, selectedCategory, sortBy, priceMin, priceMax]);
 
+=======
+  const raw: ProductItem[] = pd?.items || [];
+  const totalAll = pd?.total || 0;
+
+  // Client-side filter + sort
+  const processed = useMemo(() => {
+    let arr = [...raw];
+    if (selectedBrand) arr = arr.filter(p => p.brand === selectedBrand);
+    if (selectedCategory) arr = arr.filter(p => (p as any).category === selectedCategory);
+    // Sort by discounted price
+    if (sortBy === 'priceAsc') arr.sort((a, b) => realPrice(a) - realPrice(b));
+    else if (sortBy === 'priceDesc') arr.sort((a, b) => realPrice(b) - realPrice(a));
+    // newest và bestSeller đã được backend sort
+    if (priceMin !== undefined) arr = arr.filter(p => realPrice(p) >= priceMin);
+    if (priceMax !== undefined) arr = arr.filter(p => realPrice(p) <= priceMax);
+    return arr;
+  }, [raw, selectedBrand, selectedCategory, sortBy, priceMin, priceMax]);
+
+  // Client-side pagination
+>>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
   const totalPages = Math.max(1, Math.ceil(processed.length / PER_PAGE));
   const products = processed.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
 
@@ -126,6 +174,10 @@ function ProductsPageContent() {
 
   return (
     <div className="min-h-screen bg-background">
+<<<<<<< HEAD
+=======
+      {/* Header */}
+>>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
       <div className="bg-surface border-b border-border">
         <div className="max-w-7xl mx-auto px-4 py-6">
           <nav className="flex items-center gap-2 text-sm text-text-muted mb-3">
@@ -139,6 +191,10 @@ function ProductsPageContent() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-6">
+<<<<<<< HEAD
+=======
+        {/* Filter Bar */}
+>>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
         <ProductFilterBar
           sortBy={sortBy}
           onSortChange={(v) => { setSortBy(v); resetPage(); }}
@@ -160,6 +216,10 @@ function ProductsPageContent() {
           onClearAll={clearAll}
         />
 
+<<<<<<< HEAD
+=======
+        {/* Loading */}
+>>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
         {isLoading && (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {Array.from({ length: 8 }).map((_, i) => (
@@ -175,6 +235,10 @@ function ProductsPageContent() {
           </div>
         )}
 
+<<<<<<< HEAD
+=======
+        {/* Error */}
+>>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
         {error && !isLoading && (
           <div className="flex flex-col items-center justify-center py-20">
             <SearchX size={32} className="text-red-400 mb-4" />
@@ -186,6 +250,10 @@ function ProductsPageContent() {
           </div>
         )}
 
+<<<<<<< HEAD
+=======
+        {/* Empty */}
+>>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
         {!isLoading && !error && products.length === 0 && (
           <div className="flex flex-col items-center justify-center py-20">
             <Package size={32} className="text-text-muted mb-4" />
@@ -199,13 +267,21 @@ function ProductsPageContent() {
           </div>
         )}
 
+<<<<<<< HEAD
+=======
+        {/* Products */}
+>>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
         {!isLoading && !error && products.length > 0 && (
           <>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
               {products.map((product, idx) => (
                 <div key={product._id} className="animate-fade-up opacity-0"
                   style={{ animationDelay: `${idx * 0.05}s` }}>
+<<<<<<< HEAD
                   <ProductCard product={product} sessionType={sessionType} cardIndex={idx} />
+=======
+                  <ProductCard product={product} sessionType="standard" cardIndex={idx} />
+>>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
                 </div>
               ))}
             </div>
@@ -242,6 +318,7 @@ function ProductsPageContent() {
     </div>
   );
 }
+<<<<<<< HEAD
 
 export default function ProductsPage() {
   return (
@@ -273,3 +350,5 @@ export default function ProductsPage() {
     </Suspense>
   );
 }
+=======
+>>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f

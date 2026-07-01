@@ -1,9 +1,14 @@
 'use client';
 
+<<<<<<< HEAD
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Heart, User, Users, ArrowRight } from 'lucide-react';
 import api from '@/lib/api';
+=======
+import { motion } from 'framer-motion';
+import { Heart, User, Users, ArrowRight } from 'lucide-react';
+>>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
 import Link from 'next/link';
 
 const USPS = [
@@ -11,18 +16,27 @@ const USPS = [
     icon: Heart,
     title: 'NƯỚC HOA NỮ',
     desc: 'Hương thơm quyến rũ, mềm mại và sang trọng phong cách dành cho nữ.',
+<<<<<<< HEAD
     keyword: 'nữ',
+=======
+    href: '/collections?gender=nu'
+>>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
   },
   {
     icon: User,
     title: 'NƯỚC HOA NAM',
     desc: 'Tầng hương ấm áp, cay nồng và gỗ trầm, tạo nên phong thái lịch lãm.',
+<<<<<<< HEAD
     keyword: 'nam',
+=======
+    href: '/collections'
+>>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
   },
   {
     icon: Users,
     title: 'UNISEX',
     desc: 'Pha trộn cân bằng cho cả nam và nữ với cảm hứng tự do và nghệ thuật.',
+<<<<<<< HEAD
     keyword: 'unisex',
   },
 ];
@@ -56,6 +70,14 @@ export function BrandUsp() {
         : `/products?category=${usp.keyword}`,
     };
   });
+=======
+    href: '/collections'
+  }
+];
+
+export function BrandUsp() {
+  const currentUsps = USPS;
+>>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
 
   return (
     <section className="relative mx-auto max-w-7xl bg-transparent pt-12 pb-10 lg:pt-20 lg:pb-14 overflow-hidden"
@@ -103,4 +125,8 @@ export function BrandUsp() {
       </div>
     </section>
   );
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f

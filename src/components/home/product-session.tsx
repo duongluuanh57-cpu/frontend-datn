@@ -2,7 +2,10 @@
 
 import { motion, useReducedMotion } from 'framer-motion';
 import React, { useState, useMemo } from 'react';
+<<<<<<< HEAD
 import Link from 'next/link';
+=======
+>>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
 import { ProductCard } from '@/components/shared/product-card';
 import { PriceFilterPopup } from '@/components/shared/price-filter-popup';
 
@@ -17,7 +20,10 @@ interface ProductSessionProps {
   maxProducts?: number;
   showNavigation?: boolean;
   enablePriceFilter?: boolean;
+<<<<<<< HEAD
   viewAllHref?: string;
+=======
+>>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
 }
 
 const SESSION_NAMES: Record<string, { title: string }> = {
@@ -167,7 +173,11 @@ function StaggerLayout({ products, sessionType }: { products: any[]; sessionType
 export function ProductSession({
   type, title, id, hideWhenEmpty = false, emptyMessage,
   layout = 'grid', products = [], maxProducts = 10, showNavigation = false,
+<<<<<<< HEAD
   enablePriceFilter = false, viewAllHref,
+=======
+  enablePriceFilter = false,
+>>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
 }: ProductSessionProps) {
   const hasCustomTitle = title !== '';
   const t = hasCustomTitle ? (title || SESSION_NAMES[type]?.title || type) : '';
@@ -274,6 +284,7 @@ export function ProductSession({
             })()}
             {t && (
               <div className="flex justify-center mt-8">
+<<<<<<< HEAD
                 {viewAllHref ? (
                   <Link href={viewAllHref} className="px-6 py-3 bg-surface border border-border rounded-lg text-sm font-medium text-text-secondary hover:border-primary hover:text-primary transition-colors cursor-pointer inline-block">
                     Xem tất cả
@@ -283,6 +294,11 @@ export function ProductSession({
                     Xem tất cả
                   </button>
                 )}
+=======
+                <button className="px-6 py-3 bg-surface border border-border rounded-lg text-sm font-medium text-text-secondary hover:border-primary hover:text-primary transition-colors cursor-pointer">
+                  Xem tất cả
+                </button>
+>>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
               </div>
             )}
           </>

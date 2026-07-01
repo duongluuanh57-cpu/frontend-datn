@@ -7,7 +7,11 @@ import Link from 'next/link';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useCartStore } from '@/store/useCartStore';
 import { useQueryClient } from '@tanstack/react-query';
+<<<<<<< HEAD
 import { getCart, removeFromCart, updateCartItem } from '@/services/cart.service';
+=======
+import { getCart, removeFromCart, updateCartItem, updateCartItemVariant } from '@/services/cart.service';
+>>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
 import { CartItem } from '@/services/cart.service';
 import { toast } from 'sonner';
 import { MiniProductCard } from './MiniProductCard';
@@ -188,6 +192,24 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
     }
   };
 
+<<<<<<< HEAD
+=======
+  const handleVariantChange = async (productId: string, currentVariantSize: string | undefined, newVariantSize: string) => {
+    if (!accessToken) return;
+    try {
+      const result = await updateCartItemVariant(accessToken, productId, currentVariantSize, newVariantSize);
+      if (result.success && result.data) {
+        setCart(result.data);
+        queryClient.invalidateQueries({ queryKey: ['cart'] });
+        toast.success('Đã đổi biến thể sản phẩm');
+      }
+    } catch (error) {
+      console.error('Failed to change variant:', error);
+      toast.error('Không thể đổi biến thể');
+    }
+  };
+
+>>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
   const handleCheckout = () => {
     onClose();
     window.location.href = '/checkout';
@@ -236,8 +258,30 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
           {/* Content */}
           <div className="flex-1 overflow-y-auto p-4">
             {loading ? (
+<<<<<<< HEAD
               <div className="flex items-center justify-center h-full">
                 <div className="text-text-secondary">Đang tải...</div>
+=======
+              <div className="space-y-4">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="bg-surface rounded-lg p-3 flex gap-3 animate-pulse">
+                    <div className="w-16 h-16 bg-surface/80 rounded-md flex-shrink-0" />
+                    <div className="flex-1 min-w-0 space-y-2">
+                      <div className="h-4 w-3/4 bg-surface/80 rounded" />
+                      <div className="h-3 w-1/2 bg-surface/80 rounded" />
+                      <div className="flex items-center gap-2 mt-2">
+                        <div className="w-7 h-7 bg-surface/80 rounded" />
+                        <div className="w-7 h-5 bg-surface/80 rounded" />
+                        <div className="w-7 h-7 bg-surface/80 rounded" />
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                      <div className="w-5 h-5 bg-surface/80 rounded" />
+                      <div className="h-4 w-16 bg-surface/80 rounded mt-4" />
+                    </div>
+                  </div>
+                ))}
+>>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
               </div>
             ) : !cart || cart.items.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center">
@@ -261,6 +305,10 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                     isRemoving={removingItem === item.productId}
                     onRemove={handleRemove}
                     onQuantityChange={handleQuantityChange}
+<<<<<<< HEAD
+=======
+                    onVariantChange={handleVariantChange}
+>>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
                   />
                 ))}
               </div>
