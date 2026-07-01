@@ -20,6 +20,11 @@ export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [cartSidebarOpen, setCartSidebarOpen] = useState(false);
   const [favoritesPopupOpen, setFavoritesPopupOpen] = useState(false);
+  const [loginUrl, setLoginUrl] = useState('http://localhost:4000/api/auth/login');
+
+  useEffect(() => {
+    setLoginUrl(getOriginRedirectUrl('/api/auth/login'));
+  }, []);
   const favoriteCount = useFavoriteStore((state) => state.favoriteCount);
   const setFavoriteCount = useFavoriteStore((state) => state.setFavoriteCount);
   const { totalItems: cartCount } = useCart();
@@ -202,7 +207,7 @@ export function Navbar() {
                   <User className="w-5 h-5 text-text-secondary" />
                 </Link>
               ) : (
-                <a href={getOriginRedirectUrl('/api/auth/login')} className="p-2 hover:bg-surface rounded-lg transition-colors cursor-pointer inline-flex">
+                <a href={loginUrl} className="p-2 hover:bg-surface rounded-lg transition-colors cursor-pointer inline-flex">
                   <User className="w-5 h-5 text-text-secondary" />
                 </a>
               )}
@@ -255,7 +260,7 @@ export function Navbar() {
             {isAuthenticated ? (
               <Link href="/profile" className="block py-2 text-text-secondary hover:text-primary">{user?.username}</Link>
             ) : (
-              <a href={getOriginRedirectUrl('/api/auth/login')} className="block py-2 text-text-secondary hover:text-primary">Đăng nhập</a>
+              <a href={loginUrl} className="block py-2 text-text-secondary hover:text-primary">Đăng nhập</a>
             )}
           </div>
         </div>

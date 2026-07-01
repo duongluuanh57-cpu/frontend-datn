@@ -1,6 +1,11 @@
 const RENDER_URL = 'https://backend-datn-y78s.onrender.com';
-const LOCAL_URL = 'http://127.0.0.1:4000';
-const BACKENDS = [LOCAL_URL, RENDER_URL];
+const DEV_PORT = '4000';
+const BACKENDS = [RENDER_URL];
+
+function getLocalUrl(): string {
+  const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+  return `http://${hostname}:${DEV_PORT}`;
+}
 
 const STORAGE_KEY = 'backend_active_url';
 const DISCOVERY_INTERVAL = 30_000; // re-check sau 30s
@@ -8,12 +13,12 @@ let lastDiscovery = 0;
 let cachedUrl: string | null = null;
 let pendingDiscovery: Promise<string | null> | null = null;
 
-/** Kiểm tra nếu đang ở môi trường dev (localhost) */
+/** Kiểm tra nếu đang ở môi trường dev (localhost hoặc LAN) */
 function isDev(): boolean {
   if (typeof window !== 'undefined') {
-    return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const h = window.location.hostname;
+    return h === 'localhost' || h === '127.0.0.1' || /^192\.168\./.test(h) || /^10\./.test(h) || /^172\.(1[6-9]|2\d|3[01])\./.test(h);
   }
-  // Server-side: check NODE_ENV
   return process.env.NODE_ENV === 'development';
 }
 
@@ -24,7 +29,7 @@ function isDev(): boolean {
  * Nếu đang dev local, chỉ ping local, không ping Render để tránh wake-up delay.
  */
 async function pingAll(): Promise<string | null> {
-  const backendsToPing = isDev() ? [LOCAL_URL] : BACKENDS;
+  const backendsToPing = isDev() ? [getLocalUrl()] : BACKENDS;
 
   const results = await Promise.allSettled(
     backendsToPing.map(async (origin) => {
@@ -51,8 +56,8 @@ async function pingAll(): Promise<string | null> {
 export function getActiveOriginSync(): string {
   if (cachedUrl) return cachedUrl;
   if (isDev()) {
-    cachedUrl = LOCAL_URL;
-    return LOCAL_URL;
+    cachedUrl = getLocalUrl();
+    return cachedUrl;
   }
   const stored = typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEY) : null;
   if (stored) {
@@ -84,7 +89,7 @@ export async function getActiveOrigin(): Promise<string> {
 
   // Nếu đang dev, ưu tiên local luôn không cần ping
   if (isDev()) {
-    cachedUrl = LOCAL_URL;
+    cachedUrl = getLocalUrl();
     lastDiscovery = now;
     return cachedUrl;
   }
@@ -132,7 +137,7 @@ export function resetDiscovery(): void {
 if (typeof window !== 'undefined') {
   // Đánh thức backend — local nếu dev, Render nếu production
   if (isDev()) {
-    cachedUrl = LOCAL_URL;
+    cachedUrl = getLocalUrl();
     lastDiscovery = Date.now();
   } else {
     getActiveOrigin().catch(() => {});
