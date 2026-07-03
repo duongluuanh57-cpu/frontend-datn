@@ -110,10 +110,10 @@ export default function PaymentReturnPage() {
         {/* Status Card */}
         <div className="bg-surface rounded-2xl shadow-sm ring-1 ring-black/5 p-8 text-center">
           {status === 'loading' && (
-            <div className="space-y-4">
-              <Loader2 className="w-16 h-16 text-primary mx-auto animate-spin" />
-              <h2 className="text-xl font-bold text-text-primary">Đang xác thực thanh toán...</h2>
-              <p className="text-sm text-text-secondary">Vui lòng đợi trong giây lát</p>
+            <div className="space-y-4 animate-pulse">
+              <div className="w-16 h-16 rounded-full bg-text-muted/10 mx-auto" />
+              <div className="h-7 w-56 bg-text-muted/10 rounded-lg mx-auto" />
+              <div className="h-4 w-40 bg-text-muted/10 rounded mx-auto" />
             </div>
           )}
 
@@ -160,7 +160,7 @@ export default function PaymentReturnPage() {
 
               <div className="flex flex-col gap-3 pt-2">
                 <Link
-                  href="/orders"
+                  href="/profile"
                   className="w-full py-3 bg-primary hover:bg-primary-dark active:scale-[0.98] text-rich-black font-semibold rounded-xl transition-all text-sm text-center"
                 >
                   Xem đơn hàng

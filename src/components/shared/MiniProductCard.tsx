@@ -1,15 +1,10 @@
 'use client';
 
 import { motion } from 'framer-motion';
-<<<<<<< HEAD
-import { Trash2, Minus, Plus, Heart, ShoppingBag } from 'lucide-react';
-import { resolveImageUrl } from '@/lib/api';
-=======
 import { Trash2, Minus, Plus, Heart, ShoppingBag, ChevronDown } from 'lucide-react';
 import { resolveImageUrl } from '@/lib/api';
 import { useState, useRef, useEffect } from 'react';
 import type { VariantInfo } from '@/services/cart.service';
->>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
 
 export interface MiniProductItem {
   productId: string;
@@ -23,29 +18,18 @@ export interface MiniProductItem {
 }
 
 interface MiniProductCardProps {
-<<<<<<< HEAD
-  item: MiniProductItem;
-=======
   item: MiniProductItem & { availableVariants?: VariantInfo[] };
->>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
   variant: 'cart' | 'favorite';
   isRemoving?: boolean;
   onRemove: (productId: string, variantSize?: string) => void;
   onQuantityChange?: (productId: string, newQuantity: number, variantSize?: string) => void;
-<<<<<<< HEAD
-=======
   onVariantChange?: (productId: string, currentVariantSize: string | undefined, newVariantSize: string) => void;
->>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
 }
 
 function formatPrice(price: number) {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 }
 
-<<<<<<< HEAD
-export function MiniProductCard({ item, variant, isRemoving, onRemove, onQuantityChange }: MiniProductCardProps) {
-  const itemKey = item.productId + '-' + (item.variantSize || '50ml');
-=======
 export function MiniProductCard({ item, variant, isRemoving, onRemove, onQuantityChange, onVariantChange }: MiniProductCardProps) {
   const itemKey = item.productId + '-' + (item.variantSize || '50ml');
   const [variantOpen, setVariantOpen] = useState(false);
@@ -60,7 +44,6 @@ export function MiniProductCard({ item, variant, isRemoving, onRemove, onQuantit
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
->>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
 
   return (
     <motion.div
@@ -95,11 +78,6 @@ export function MiniProductCard({ item, variant, isRemoving, onRemove, onQuantit
           <div className="flex-1 min-w-0">
             <h3 className="text-sm font-semibold text-text-primary line-clamp-2">{item.name}</h3>
             <div className="flex items-center gap-2 mt-1">
-<<<<<<< HEAD
-              {item.variantSize && (
-                <span className="text-xs text-text-muted bg-gray-100 px-2 py-0.5 rounded">{item.variantSize}</span>
-              )}
-=======
               {variant === 'cart' && item.availableVariants?.length && item.availableVariants.length > 1 && onVariantChange ? (
                 <div className="relative" ref={variantRef}>
                   <button
@@ -138,7 +116,6 @@ export function MiniProductCard({ item, variant, isRemoving, onRemove, onQuantit
               ) : item.variantSize ? (
                 <span className="text-xs text-text-muted bg-gray-100 px-2 py-0.5 rounded">{item.variantSize}</span>
               ) : null}
->>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
               {Number(item.discount || 0) > 0 && (
                 <span className="inline-block px-1.5 py-0.5 bg-red-100 text-red-600 text-xs font-bold rounded">
                   -{item.discount}%

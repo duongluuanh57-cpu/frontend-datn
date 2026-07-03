@@ -5,11 +5,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useProfileAddresses } from '@/hooks/profile/useProfileAddresses';
 import { getMe, updateProfile, changePassword } from '@/services/user.service';
 import { getMyOrders } from '@/services/order.service';
-<<<<<<< HEAD
-import { User, Mail, Shield, MapPin, ShoppingBag, Key, LogOut, Plus, Edit2, Trash2, Check, Crown, DollarSign, Phone, UserRound, Globe, Building2, LayoutDashboard } from 'lucide-react';
-=======
 import { User, Mail, Shield, MapPin, ShoppingBag, Key, LogOut, Plus, Edit2, Trash2, Check, Crown, DollarSign, Phone, UserRound, Globe, Building2, LayoutDashboard, CalendarDays, AtSign, BadgeCheck } from 'lucide-react';
->>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
 import { getBackendOrigin, resolveImageUrl } from '@/lib/api';
 import Link from 'next/link';
 
@@ -58,12 +54,7 @@ export default function ProfilePage() {
   const [editFullName, setEditFullName] = useState(user?.fullName || '');
   const [editPhone, setEditPhone] = useState(user?.phoneNumber || '');
   const [editGender, setEditGender] = useState<'MALE' | 'FEMALE' | 'OTHER' | ''>(user?.gender || '');
-<<<<<<< HEAD
-  const [editAddress, setEditAddress] = useState(user?.address || '');
-  const [editProvince, setEditProvince] = useState(user?.province || '');
-  const [editDistrict, setEditDistrict] = useState(user?.district || '');
-=======
->>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
+
   const [infoSaving, setInfoSaving] = useState(false);
   const [infoError, setInfoError] = useState('');
   const [infoSuccess, setInfoSuccess] = useState('');
@@ -88,12 +79,7 @@ export default function ProfilePage() {
     setEditFullName(user?.fullName || '');
     setEditPhone(user?.phoneNumber || '');
     setEditGender(user?.gender || '');
-<<<<<<< HEAD
-    setEditAddress(user?.address || '');
-    setEditProvince(user?.province || '');
-    setEditDistrict(user?.district || '');
-=======
->>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
+
     setIsEditingInfo(true);
     setInfoError('');
     setInfoSuccess('');
@@ -109,23 +95,11 @@ export default function ProfilePage() {
         fullName: editFullName,
         phoneNumber: editPhone,
         gender: editGender as any,
-<<<<<<< HEAD
-        address: editAddress,
-        province: editProvince,
-        district: editDistrict,
-=======
->>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
       });
       updateUser({
         fullName: editFullName,
         phoneNumber: editPhone,
         gender: editGender as any,
-<<<<<<< HEAD
-        address: editAddress,
-        province: editProvince,
-        district: editDistrict,
-=======
->>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
       });
       setInfoSuccess('Cập nhật thông tin thành công');
       setIsEditingInfo(false);
@@ -163,8 +137,6 @@ export default function ProfilePage() {
   };
 
   useEffect(() => {
-<<<<<<< HEAD
-=======
     if (accessToken) {
       getMe(accessToken)
         .then((userData) => {
@@ -181,7 +153,6 @@ export default function ProfilePage() {
   }, [accessToken, updateUser]);
 
   useEffect(() => {
->>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
     if (activeTab === 'orders' && orders.length === 0) {
       setLoadingOrders(true);
       setOrdersError('');
@@ -248,13 +219,8 @@ export default function ProfilePage() {
   }
 
   return (
-<<<<<<< HEAD
-    <div className="min-h-screen bg-background">
-      <div className="h-screen flex flex-col pt-16 md:pt-20">
-=======
     <div className="h-full bg-background max-w-7xl mx-auto px-4 py-4">
       <div className="h-full flex flex-col border border-border rounded-2xl overflow-hidden">
->>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
         <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
           {/* Left Sidebar */}
           <div className="bg-surface border-b md:border-b-0 md:border-r border-border md:w-72 lg:w-80 flex-shrink-0 flex flex-col overflow-y-auto">
@@ -278,11 +244,7 @@ export default function ProfilePage() {
                 </div>
               </div>
               {user?.role === 'ADMIN' && (
-<<<<<<< HEAD
-                <a href={getBackendOrigin() + '/admin'} target="_blank" rel="noopener noreferrer" className="w-full flex items-center gap-3 px-4 py-2.5 bg-primary text-rich-black rounded-xl text-sm font-semibold hover:bg-primary-dark transition-colors">
-=======
                 <a href={`${getBackendOrigin()}/api/auth/set-admin-session?token=${encodeURIComponent(accessToken || '')}`} target="_blank" rel="noopener noreferrer" className="w-full flex items-center gap-3 px-4 py-2.5 bg-primary text-rich-black rounded-xl text-sm font-semibold hover:bg-primary-dark transition-colors">
->>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
                   <LayoutDashboard size={18} />
                   Trang quản trị
                 </a>
@@ -320,11 +282,7 @@ export default function ProfilePage() {
           </div>
 
           {/* Right Content Area */}
-<<<<<<< HEAD
-          <div className="flex-1 overflow-y-auto bg-background/30">
-=======
           <div className="flex-1 min-h-0 overflow-y-auto bg-background/30">
->>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
             <div className="px-4 py-6 md:py-8">
 
               {activeTab === 'info' && (
@@ -361,21 +319,7 @@ export default function ProfilePage() {
                             <option value="OTHER">Khác</option>
                           </select>
                         </div>
-<<<<<<< HEAD
-                        <div>
-                          <label className="block text-sm font-medium text-text-primary mb-2">Địa chỉ</label>
-                          <input type="text" value={editAddress} onChange={e => setEditAddress(e.target.value)} placeholder="Số nhà, tên đường" className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-text-primary mb-2">Tỉnh/Thành phố</label>
-                          <input type="text" value={editProvince} onChange={e => setEditProvince(e.target.value)} placeholder="Hồ Chí Minh" className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-text-primary mb-2">Quận/Huyện</label>
-                          <input type="text" value={editDistrict} onChange={e => setEditDistrict(e.target.value)} placeholder="Quận 1" className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-                        </div>
-=======
->>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
+
                       </div>
                       <div className="flex gap-3 pt-2">
                         <button onClick={saveInfo} disabled={infoSaving} className="flex items-center gap-2 px-5 py-2.5 bg-primary text-rich-black rounded-lg text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-50">
@@ -385,20 +329,13 @@ export default function ProfilePage() {
                       </div>
                     </div>
                   ) : (
-<<<<<<< HEAD
-                    <div className="space-y-4">
-=======
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <InfoRow icon={AtSign} label="Tên đăng nhập" value={user?.username || 'Chưa cập nhật'} />
->>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
                       <InfoRow icon={User} label="Họ và tên" value={user?.fullName || 'Chưa cập nhật'} />
                       <InfoRow icon={Phone} label="Số điện thoại" value={user?.phoneNumber || 'Chưa cập nhật'} />
                       <InfoRow icon={Mail} label="Email" value={user?.email || 'Chưa cập nhật'} />
                       <InfoRow icon={Globe} label="Giới tính" value={user?.gender === 'MALE' ? 'Nam' : user?.gender === 'FEMALE' ? 'Nữ' : user?.gender || 'Chưa cập nhật'} />
                       <InfoRow icon={MapPin} label="Địa chỉ" value={user?.address ? `${user.address}, ${user.district || ''}, ${user.province || ''}` : 'Chưa cập nhật'} />
-<<<<<<< HEAD
-                      <InfoRow icon={Shield} label="Vai trò" value={user?.role === 'ADMIN' ? 'Quản trị viên' : 'Khách hàng'} />
-=======
                       <InfoRow icon={Shield} label="Vai trò" value={user?.role === 'ADMIN' ? 'Quản trị viên' : user?.role === 'SUBADMIN' ? 'Phó quản trị' : 'Khách hàng'} />
                       <InfoRow icon={Crown} label="Hạng thành viên" value={user?.memberTier === 'KimCuong' ? 'Kim Cương' : user?.memberTier === 'Vang' ? 'Vàng' : user?.memberTier === 'Bac' ? 'Bạc' : 'Thành viên'} />
                       <InfoRow icon={DollarSign} label="Tổng chi tiêu" value={user?.totalSpent != null ? formatPrice(user.totalSpent) : '0 ₫'} />
@@ -407,7 +344,6 @@ export default function ProfilePage() {
                       {user?.oauthProvider && (
                         <InfoRow icon={Globe} label="Đăng nhập qua" value={user.oauthProvider === 'google' ? 'Google' : user.oauthProvider === 'github' ? 'GitHub' : user.oauthProvider} />
                       )}
->>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
                     </div>
                   )}
                 </div>

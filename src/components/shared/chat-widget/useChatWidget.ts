@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useChatStore } from '@/store/useChatStore';
+import { useAuthStore } from '@/store/useAuthStore';
+import { getActiveOriginSync } from '@/lib/backendDiscovery';
 
 export function useChatWidget() {
   const { 
@@ -61,9 +63,10 @@ export function useChatWidget() {
     setIsLoading(true);
 
     try {
-      const baseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://backend-datn-y78s.onrender.com').replace(/\/$/, '');
+      const baseUrl = getActiveOriginSync().replace(/\/$/, '');
       
       const fetchUrl = `${baseUrl}/api/ai/chat`;
+      const tenantId = useAuthStore.getState().user?.tenantId || 'default';
       const response = await fetch(fetchUrl, {
         method: 'POST',
         headers: { 
@@ -72,7 +75,8 @@ export function useChatWidget() {
         },
         body: JSON.stringify({ 
           messages: [...messages, newMessage], 
-          image: selectedImage 
+          image: selectedImage,
+          tenantId,
         }),
       });
 

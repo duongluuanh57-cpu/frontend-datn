@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, Suspense, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Star, Heart, ShoppingBag, Minus, Plus, ArrowLeft, ChevronDown, Sparkles, Eye, Clock, Wind, ShieldCheck, Zap, Droplets, Percent, Tag } from 'lucide-react';
+import { Star, Heart, ShoppingBag, Minus, Plus, ArrowLeft, ChevronDown, Sparkles, Eye, Clock, Wind, ShieldCheck, Zap, Droplets, Percent } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useFavoriteStore } from '@/store/useFavoriteStore';
 import { addToFavorites, removeFromFavorites, checkFavorite } from '@/services/favorite.service';
@@ -12,7 +12,7 @@ import { useCartStore } from '@/store/useCartStore';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { fetchProductDetail } from '@/lib/graphql';
-import api, { resolveImageUrl } from '@/lib/api';
+import { resolveImageUrl } from '@/lib/api';
 
 function formatPrice(price: number) {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
@@ -63,8 +63,6 @@ function ProductDetailContent() {
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [addingToCart, setAddingToCart] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
-  const [mouseOverImage, setMouseOverImage] = useState(false);
-  const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
 
   const accessToken = useAuthStore((state) => state.accessToken);
   const addFavoriteId = useFavoriteStore((state) => state.addFavoriteId);
@@ -161,13 +159,6 @@ function ProductDetailContent() {
     } catch { toast.error('Không thể thêm vào giỏ hàng'); }
   }, [accessToken, id, quantity, selectedVariant, router]);
 
-  const handleImageMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-    setMousePos({ x, y });
-  }, []);
-
   if (loading) return <ProductDetailSkeleton />;
 
   if (error || !product) {
@@ -199,11 +190,11 @@ function ProductDetailContent() {
       {/* Breadcrumb */}
       <div className="max-w-7xl mx-auto px-4 pt-24 pb-2">
         <nav className="flex items-center gap-1.5 text-xs text-text-muted overflow-x-auto whitespace-nowrap">
-          <Link href="/" className="hover:text-primary transition-colors font-medium">Nước hoa</Link>
+          <Link href="/products" className="hover:text-primary transition-colors font-medium">Nước hoa</Link>
           {product.brand && (
             <>
               <span className="text-border/60 mx-0.5">/</span>
-              <Link href="/" className="hover:text-primary transition-colors font-medium">{product.brand}</Link>
+              <Link href="/products" className="hover:text-primary transition-colors font-medium">{product.brand}</Link>
             </>
           )}
           <span className="text-border/60 mx-0.5">/</span>
@@ -212,7 +203,7 @@ function ProductDetailContent() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-2">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 md:gap-16">
           {/* Left — Images */}
           <div className="space-y-4">
             <div className="flex gap-4">
@@ -236,26 +227,17 @@ function ProductDetailContent() {
               )}
 
               {/* Main Image */}
-              <div
-                className="relative flex-1 rounded-2xl overflow-hidden bg-gradient-to-br from-surface via-background to-surface border border-border/50 shadow-sm group cursor-crosshair"
-                onMouseEnter={() => setMouseOverImage(true)}
-                onMouseLeave={() => setMouseOverImage(false)}
-                onMouseMove={handleImageMove}
-              >
+              <div className="relative flex-1 rounded-2xl overflow-hidden bg-gradient-to-br from-surface via-background to-surface border border-border/50 shadow-sm group cursor-crosshair">
                 <div className="aspect-square">
                   <img
                     src={validImages[selectedImage] || '/placeholder.svg'}
                     alt={product.name}
-                    className="w-full h-full object-contain p-8 md:p-12 transition-transform duration-500"
-                    style={mouseOverImage ? {
-                      transform: 'scale(1.8)',
-                      transformOrigin: `${mousePos.x}% ${mousePos.y}%`,
-                    } : {}}
+                    className="w-full h-full object-contain p-8 md:p-12 transition-[transform,opacity] duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-[1.8]"
                   />
                 </div>
                 <button
                   onClick={handleToggleFavorite}
-                  className={`absolute top-4 right-4 p-2.5 rounded-full border transition-all duration-300 z-10 ${
+                  className={`absolute top-4 right-4 p-2.5 rounded-full border transition-[transform,box-shadow,background-color] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] z-10 active:scale-[0.92] ${
                     isFavorite
                       ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20'
                       : 'bg-background/80 backdrop-blur-sm border-border/60 text-text-muted hover:border-primary/40 hover:shadow-md'
@@ -292,7 +274,7 @@ function ProductDetailContent() {
           </div>
 
           {/* Right — Info */}
-          <div className="space-y-6">
+          <div className="space-y-8">
             {/* Brand + Name + Rating */}
             <div>
               {product.brand && (
@@ -323,8 +305,8 @@ function ProductDetailContent() {
               {hasDiscount && (
                 <>
                   <span className="text-lg text-text-muted line-through">{formatPrice(variantPrice)}</span>
-                  <span className="text-sm font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">
-                    Tiết kiệm {formatPrice(savings)}
+                  <span className="text-[11px] font-semibold text-primary bg-primary/10 px-2.5 py-0.5 rounded-full">
+                    -{formatPrice(savings)}
                   </span>
                 </>
               )}
@@ -351,8 +333,8 @@ function ProductDetailContent() {
 
             {/* Variant Selection */}
             {product.variants && product.variants.length > 0 && (
-              <div className="py-5 border-t border-border/60">
-                <p className="text-sm font-medium text-text-primary mb-3">Dung tích</p>
+              <div className="py-6 border-t border-border/60">
+                <p className="text-sm font-medium text-text-primary mb-4">Dung tích</p>
                 <div className="flex flex-wrap gap-2">
                 {product.variants.map((v: any) => {
                   const isSelected = selectedVariant?._id === v._id || (!selectedVariant && v.size === '50ml');
@@ -360,9 +342,9 @@ function ProductDetailContent() {
                     <button
                       key={v._id}
                       onClick={() => setSelectedVariant(v)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 active:scale-[0.98] ${
                         isSelected
-                          ? 'bg-primary text-rich-black shadow-sm shadow-primary/20'
+                          ? 'bg-primary text-rich-black shadow-sm shadow-primary/20 ring-1 ring-black/10'
                           : 'bg-surface border border-border text-text-secondary hover:border-primary/40'
                       }`}
                     >
@@ -375,7 +357,7 @@ function ProductDetailContent() {
             )}
 
             {/* Quantity + Add to Cart (Desktop) */}
-            <div className="hidden lg:block py-5 border-t border-border/60">
+            <div className="hidden lg:block py-6 border-t border-border/60">
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                 <div className="flex items-center border border-border/60 rounded-xl overflow-hidden self-start sm:self-auto bg-background">
                   <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="px-3.5 py-3 text-text-muted hover:text-text-primary hover:bg-surface transition-colors"><Minus size={14} /></button>
@@ -385,12 +367,12 @@ function ProductDetailContent() {
                 <button
                   onClick={handleAddToCart}
                   disabled={outOfStock || addingToCart}
-                  className={`flex-1 flex items-center justify-center gap-2.5 py-3.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-all duration-300 ${
+                  className={`flex-1 flex items-center justify-center gap-2.5 py-3.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-[transform,box-shadow,background-color,color] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
                     outOfStock
                       ? 'bg-surface text-text-muted cursor-not-allowed'
                       : addedToCart
                         ? 'bg-green-500 text-white shadow-lg shadow-green-500/20'
-                        : 'bg-rich-black text-white hover:bg-foreground shadow-lg hover:shadow-xl active:scale-[0.98]'
+                        : 'bg-rich-black text-white hover:bg-foreground shadow-lg hover:shadow-xl active:scale-[0.98] hover:-translate-y-[1px]'
                   }`}
                 >
                   <ShoppingBag size={16} />
@@ -399,10 +381,10 @@ function ProductDetailContent() {
                 <button
                   onClick={handleBuyNow}
                   disabled={outOfStock}
-                  className={`flex-1 flex items-center justify-center gap-2.5 py-3.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-all duration-300 ${
+                  className={`flex-1 flex items-center justify-center gap-2.5 py-3.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-[transform,box-shadow,background-color] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
                     outOfStock
                       ? 'bg-surface text-text-muted cursor-not-allowed'
-                      : 'bg-primary text-white shadow-lg shadow-primary/20 hover:shadow-xl hover:bg-primary-dark active:scale-[0.98]'
+                      : 'bg-primary text-white shadow-lg shadow-primary/20 hover:shadow-xl hover:bg-primary-dark active:scale-[0.98] hover:-translate-y-[1px]'
                   }`}
                 >
                   <Eye size={16} /> Mua ngay
@@ -414,7 +396,7 @@ function ProductDetailContent() {
             </div>
 
             {/* Accordion Details */}
-            <div className="border border-border/60 rounded-xl divide-y divide-border/60 overflow-hidden bg-surface/30">
+            <div className="divide-y divide-border/60 overflow-hidden">
               <AccordionRow title="Chi tiết sản phẩm" defaultOpen>
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   {product.brand && <DetailItem label="Thương hiệu" value={product.brand} />}
@@ -450,10 +432,9 @@ function ProductDetailContent() {
 
         {/* Full Description */}
         {product.description && (
-          <div className="mt-16 max-w-4xl mx-auto">
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.03] via-surface to-[#F5EDE8]/30 rounded-3xl" />
-              <div className="relative bg-surface/80 backdrop-blur-sm rounded-3xl p-8 md:p-10 border border-border/50">
+          <ScrollReveal className="mt-20 max-w-4xl mx-auto">
+            <div className="p-1.5 rounded-[2rem] ring-1 ring-black/5">
+              <div className="bg-surface rounded-[calc(2rem-0.375rem)] p-8 md:p-10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)]">
                 <div className="flex items-center gap-4 mb-6">
                   <div className="w-px h-8 bg-gradient-to-b from-primary to-primary/30" />
                   <h2 className="text-lg md:text-xl font-semibold text-text-primary">Mô tả sản phẩm</h2>
@@ -463,12 +444,12 @@ function ProductDetailContent() {
                 </div>
               </div>
             </div>
-          </div>
+          </ScrollReveal>
         )}
 
         {/* Product Suggestions */}
         {suggestions.length > 0 && (
-          <div className="mt-20">
+          <ScrollReveal className="mt-24">
             <div className="flex items-center gap-3 mb-8">
               <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border/50 to-transparent" />
               <h2 className="text-lg font-semibold text-text-primary flex items-center gap-2 whitespace-nowrap">
@@ -494,7 +475,7 @@ function ProductDetailContent() {
                       href={`/product/${item._id}`}
                       className="group w-[180px] md:w-[220px] bg-background rounded-2xl border border-border/50 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex-shrink-0"
                     >
-                      <div className="aspect-square bg-gradient-to-br from-surface to-[#F5EDE8]/50 relative overflow-hidden">
+                      <div className="aspect-square bg-surface relative overflow-hidden">
                         <img
                           src={resolveImageUrl(item.image) || '/placeholder.svg'}
                           alt={item.name}
@@ -526,7 +507,7 @@ function ProductDetailContent() {
                 })}
               </div>
             </div>
-          </div>
+          </ScrollReveal>
         )}
 
         {/* Mobile Sticky Add to Cart */}
@@ -540,7 +521,7 @@ function ProductDetailContent() {
             <button
               onClick={handleAddToCart}
               disabled={outOfStock || addingToCart}
-              className={`flex-1 py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-all duration-300 ${
+              className={`flex-1 py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-[transform,background-color,color] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
                 outOfStock
                   ? 'bg-surface text-text-muted'
                   : addedToCart
@@ -553,7 +534,7 @@ function ProductDetailContent() {
             <button
               onClick={handleBuyNow}
               disabled={outOfStock}
-              className={`flex-1 py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-all duration-300 ${
+              className={`flex-1 py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-[transform,background-color] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
                 outOfStock
                   ? 'bg-surface text-text-muted'
                   : 'bg-primary text-white active:scale-[0.98]'
@@ -570,13 +551,42 @@ function ProductDetailContent() {
 
 // Helper Components
 
+function ScrollReveal({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect(); } },
+      { threshold: 0.15 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      className={`${className} transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+        visible ? 'translate-y-0 opacity-100 blur-0' : 'translate-y-8 opacity-0 blur-sm'
+      }`}
+    >
+      {children}
+    </div>
+  );
+}
+
 function SpecCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="flex items-center gap-3 p-3 rounded-xl bg-surface border border-border/50">
-      <div className="text-primary">{icon}</div>
-      <div>
-        <p className="text-[10px] text-text-muted uppercase tracking-wide">{label}</p>
-        <p className="text-sm font-medium text-text-primary">{value}</p>
+    <div className="p-1 rounded-xl ring-1 ring-black/5">
+      <div className="flex items-center gap-3 p-3 rounded-[calc(0.75rem-0.25rem)] bg-surface shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)]">
+        <div className="text-primary shrink-0">{icon}</div>
+        <div className="min-w-0">
+          <p className="text-[10px] text-text-muted uppercase tracking-wide">{label}</p>
+          <p className="text-sm font-medium text-text-primary truncate">{value}</p>
+        </div>
       </div>
     </div>
   );

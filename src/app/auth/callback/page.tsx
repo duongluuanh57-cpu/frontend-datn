@@ -4,7 +4,6 @@ import { useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
 import api, { getBackendOrigin } from '@/lib/api';
-import { Loader2 } from 'lucide-react';
 
 function CallbackHandler() {
   const searchParams = useSearchParams();
@@ -74,10 +73,13 @@ function CallbackHandler() {
   }, [searchParams, router, setAuth]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <div className="flex flex-col items-center gap-4">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-muted-foreground">Đang đăng nhập...</p>
+    <div className="flex min-h-screen items-center justify-center px-4">
+      <div className="bg-surface rounded-2xl shadow-sm ring-1 ring-black/5 p-8 text-center max-w-sm w-full">
+        <div className="space-y-4 animate-pulse">
+          <div className="w-14 h-14 rounded-full bg-text-muted/10 mx-auto" />
+          <div className="h-6 w-40 bg-text-muted/10 rounded-lg mx-auto" />
+          <div className="h-4 w-28 bg-text-muted/10 rounded mx-auto" />
+        </div>
       </div>
     </div>
   );
@@ -87,10 +89,13 @@ export default function AuthCallbackPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center">
-          <div className="flex flex-col items-center gap-4">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-muted-foreground">Đang xử lý...</p>
+        <div className="flex min-h-screen items-center justify-center px-4">
+          <div className="bg-surface rounded-2xl shadow-sm ring-1 ring-black/5 p-8 text-center max-w-sm w-full">
+            <div className="space-y-4 animate-pulse">
+              <div className="w-14 h-14 rounded-full bg-text-muted/10 mx-auto" />
+              <div className="h-6 w-40 bg-text-muted/10 rounded-lg mx-auto" />
+              <div className="h-4 w-28 bg-text-muted/10 rounded mx-auto" />
+            </div>
           </div>
         </div>
       }

@@ -10,10 +10,7 @@ interface User {
   tenantId: string;
   memberTier?: 'MEMBER' | 'Bac' | 'Vang' | 'KimCuong';
   totalSpent?: number;
-<<<<<<< HEAD
-=======
   status?: 'active' | 'inactive' | 'suspended';
->>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
   fullName?: string;
   phoneNumber?: string;
   gender?: 'MALE' | 'FEMALE' | 'OTHER' | '';

@@ -1,14 +1,7 @@
 'use client';
 
-<<<<<<< HEAD
-import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Heart, User, Users, ArrowRight } from 'lucide-react';
-import api from '@/lib/api';
-=======
-import { motion } from 'framer-motion';
-import { Heart, User, Users, ArrowRight } from 'lucide-react';
->>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
 import Link from 'next/link';
 
 const USPS = [
@@ -16,68 +9,24 @@ const USPS = [
     icon: Heart,
     title: 'NƯỚC HOA NỮ',
     desc: 'Hương thơm quyến rũ, mềm mại và sang trọng phong cách dành cho nữ.',
-<<<<<<< HEAD
-    keyword: 'nữ',
-=======
-    href: '/collections?gender=nu'
->>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
+    href: '/products?category=Nữ'
   },
   {
     icon: User,
     title: 'NƯỚC HOA NAM',
     desc: 'Tầng hương ấm áp, cay nồng và gỗ trầm, tạo nên phong thái lịch lãm.',
-<<<<<<< HEAD
-    keyword: 'nam',
-=======
-    href: '/collections'
->>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
+    href: '/products?category=Nam'
   },
   {
     icon: Users,
     title: 'UNISEX',
     desc: 'Pha trộn cân bằng cho cả nam và nữ với cảm hứng tự do và nghệ thuật.',
-<<<<<<< HEAD
-    keyword: 'unisex',
-  },
-];
-
-function findCategory(categories: any[], keyword: string): string | null {
-  const lower = keyword.toLowerCase();
-  const match = categories.find(
-    (c: any) => c.status === 'active' && c.name.toLowerCase().includes(lower)
-  );
-  return match ? match.name : null;
-}
-
-export function BrandUsp() {
-  const { data: categoryData } = useQuery({
-    queryKey: ['brand-usp-categories'],
-    queryFn: async () => {
-      const { data } = await api.get('/categories');
-      return (data.data || []) as any[];
-    },
-    staleTime: 300_000,
-  });
-
-  const activeCategories = (categoryData || []).filter((c: any) => c.status === 'active');
-
-  const currentUsps = USPS.map((usp) => {
-    const dbName = findCategory(activeCategories, usp.keyword);
-    return {
-      ...usp,
-      href: dbName
-        ? `/products?category=${encodeURIComponent(dbName)}`
-        : `/products?category=${usp.keyword}`,
-    };
-  });
-=======
-    href: '/collections'
+    href: '/products?category=Unisex'
   }
 ];
 
 export function BrandUsp() {
   const currentUsps = USPS;
->>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
 
   return (
     <section className="relative mx-auto max-w-7xl bg-transparent pt-12 pb-10 lg:pt-20 lg:pb-14 overflow-hidden"
@@ -125,8 +74,4 @@ export function BrandUsp() {
       </div>
     </section>
   );
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f

@@ -407,8 +407,79 @@ export default function CheckoutPage() {
 
   if (loading) {
     return (
-      <div className="min-h-[100dvh] bg-background flex items-center justify-center">
-        <div className="text-text-secondary">Đang tải...</div>
+      <div className="min-h-screen bg-background animate-pulse">
+        <div className="flex-shrink-0 border-b border-border bg-surface">
+          <div className="max-w-7xl mx-auto px-4 lg:px-6 py-4 lg:py-5">
+            <div className="h-3 bg-text-muted/10 rounded w-32 mb-3" />
+            <div className="flex items-start gap-3">
+              <div className="w-1 h-7 bg-primary/20 rounded-full flex-shrink-0 mt-1" />
+              <div className="space-y-2">
+                <div className="h-8 w-48 bg-text-muted/10 rounded" />
+                <div className="h-4 w-64 bg-text-muted/10 rounded" />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="max-w-7xl mx-auto w-full flex px-4 lg:px-6">
+          <div className="flex-1 py-5 lg:py-6 pr-4 lg:pr-6">
+            <div className="max-w-3xl space-y-5">
+              <div className="bg-surface rounded-xl p-5 lg:p-6 shadow-sm ring-1 ring-black/5">
+                <div className="h-5 w-40 bg-text-muted/10 rounded mb-4" />
+                <div className="h-10 bg-text-muted/10 rounded-xl" />
+              </div>
+              <div className="bg-surface rounded-xl p-5 lg:p-6 shadow-sm ring-1 ring-black/5 space-y-4">
+                <div className="h-5 w-44 bg-text-muted/10 rounded" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="h-[52px] bg-text-muted/10 rounded-xl" />
+                  <div className="h-[52px] bg-text-muted/10 rounded-xl" />
+                </div>
+                <div className="h-[52px] bg-text-muted/10 rounded-xl" />
+                <div className="h-[52px] bg-text-muted/10 rounded-xl" />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="h-[52px] bg-text-muted/10 rounded-xl" />
+                  <div className="h-[52px] bg-text-muted/10 rounded-xl" />
+                  <div className="h-[52px] bg-text-muted/10 rounded-xl" />
+                </div>
+              </div>
+              <div className="bg-surface rounded-xl p-5 lg:p-6 shadow-sm ring-1 ring-black/5 space-y-3">
+                <div className="h-5 w-48 bg-text-muted/10 rounded" />
+                <div className="h-16 bg-text-muted/10 rounded-xl" />
+                <div className="h-16 bg-text-muted/10 rounded-xl" />
+              </div>
+            </div>
+          </div>
+          <div className="w-[360px] lg:w-[400px] flex-shrink-0 border-l border-border bg-surface p-5 lg:p-6">
+            <div className="h-5 w-40 bg-text-muted/10 rounded mb-5" />
+            <div className="h-10 bg-text-muted/10 rounded-xl mb-4" />
+            <div className="space-y-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="flex gap-3">
+                  <div className="w-14 h-14 bg-text-muted/10 rounded-xl flex-shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 w-3/4 bg-text-muted/10 rounded" />
+                    <div className="h-3 w-12 bg-text-muted/10 rounded" />
+                    <div className="h-4 w-20 bg-text-muted/10 rounded" />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="border-t border-border pt-4 mt-4 space-y-3">
+              <div className="flex justify-between">
+                <div className="h-4 w-16 bg-text-muted/10 rounded" />
+                <div className="h-4 w-20 bg-text-muted/10 rounded" />
+              </div>
+              <div className="flex justify-between">
+                <div className="h-4 w-24 bg-text-muted/10 rounded" />
+                <div className="h-4 w-16 bg-text-muted/10 rounded" />
+              </div>
+              <div className="border-t border-border pt-3 flex justify-between">
+                <div className="h-5 w-20 bg-text-muted/10 rounded" />
+                <div className="h-7 w-28 bg-text-muted/10 rounded" />
+              </div>
+              <div className="h-12 bg-text-muted/10 rounded-xl mt-3" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

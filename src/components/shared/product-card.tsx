@@ -57,10 +57,6 @@ const SESSION_SLUGS: Record<string, string[]> = {
   new: ['new', 'san-pham-moi'],
   limited: ['limited', 'gioi-han', 'gioi-han-dac-biet'],
   standard: ['standard'],
-<<<<<<< HEAD
-  sale: ['sale', 'giam-gia'],
-=======
->>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
 };
 
 const SESSION_COLORS: Record<string, string> = {
@@ -80,12 +76,7 @@ function getBadgeTags(rawTag: string, sessionType?: string): string[] {
     return slugs.filter(s => primary.includes(s));
   }
 
-<<<<<<< HEAD
-  const valid = Object.keys(TAG_MAP);
-  return slugs.filter(s => valid.includes(s));
-=======
   return [];
->>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
 }
 
 function Stars({ reviewsCount }: { reviewsCount?: number }) {

@@ -1,7 +1,5 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
-<<<<<<< HEAD
-=======
 export interface VariantInfo {
   size: string;
   price: number;
@@ -9,7 +7,6 @@ export interface VariantInfo {
   isDefault: boolean;
 }
 
->>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
 export interface CartItem {
   _id?: string;
   productId: string;
@@ -20,10 +17,7 @@ export interface CartItem {
   discount?: number;
   quantity: number;
   variantSize?: string;
-<<<<<<< HEAD
-=======
   availableVariants?: VariantInfo[];
->>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
 }
 
 export interface CartResponse {
@@ -89,8 +83,6 @@ export async function updateCartItem(token: string, productId: string, quantity:
   return res.json();
 }
 
-<<<<<<< HEAD
-=======
 export async function updateCartItemVariant(token: string, productId: string, currentVariantSize: string | undefined, newVariantSize: string): Promise<CartResponse> {
   const res = await fetch(`${API_BASE}/api/cart/item/variant`, {
     method: 'PATCH',
@@ -109,7 +101,7 @@ export async function updateCartItemVariant(token: string, productId: string, cu
   return res.json();
 }
 
->>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
+
 export async function removeFromCart(token: string, productId: string, variantSize?: string): Promise<CartResponse> {
   const params = new URLSearchParams();
   if (variantSize) params.set('variantSize', variantSize);

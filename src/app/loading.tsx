@@ -14,13 +14,8 @@ export default function HomeLoading() {
         </div>
       </div>
 
-<<<<<<< HEAD
-      {/* Product sections skeleton — 3 sections matching homepage */}
-      {[...Array(3)].map((_, section) => (
-=======
       {/* 5 Product sections — matching page.tsx: Flash Sale, Sản Phẩm Mới, Bán Chạy Nhất, Phiên Bản Giới Hạn, Bộ Sưu Tập */}
       {[...Array(5)].map((_, section) => (
->>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
         <div key={section} className="max-w-7xl mx-auto px-4 py-10">
           {/* Section title + filter button */}
           <div className="flex items-center justify-between mb-6">
@@ -46,8 +41,6 @@ export default function HomeLoading() {
         </div>
       ))}
 
-<<<<<<< HEAD
-=======
       {/* AboutUs skeleton */}
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="flex flex-col md:flex-row gap-8 items-center">
@@ -62,7 +55,7 @@ export default function HomeLoading() {
         </div>
       </div>
 
->>>>>>> cddd00e0c81a4a7a2d991419b29d3f708439261f
+
       {/* USP section skeleton */}
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
