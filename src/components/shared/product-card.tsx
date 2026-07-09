@@ -2,16 +2,16 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import Link from 'next/link';
 import { Star, Heart } from 'lucide-react';
-import { FavoriteButton } from './favorites-popup';
+import { FavoriteButton } from './favorite-button';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useFavoriteStore } from '@/store/useFavoriteStore';
-import { addToFavorites, removeFromFavorites } from '@/services/favorite.service';
+import { addToFavorites, removeFromFavorites, invalidateFavoriteIdsCache } from '@/services/favorite.service';
 import { addToCart as addToCartAPI } from '@/services/cart.service';
 import { useCartStore } from '@/store/useCartStore';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { useRouter } from 'next/navigation';
 import { resolveImageUrl } from '@/lib/api';
 
 export interface ProductData {
@@ -57,6 +57,7 @@ const SESSION_SLUGS: Record<string, string[]> = {
   new: ['new', 'san-pham-moi'],
   limited: ['limited', 'gioi-han', 'gioi-han-dac-biet'],
   standard: ['standard'],
+  sale: ['sale', 'giam-gia'],
 };
 
 const SESSION_COLORS: Record<string, string> = {
@@ -121,7 +122,6 @@ function calcOriginalPrice(discountedPrice: number, discountPercentage?: number)
 }
 
 export function ProductCard({ product, variant = 'default', onAddToCart, onFavoriteToggle, sessionType, cardIndex }: ProductCardProps) {
-  const router = useRouter();
   const [isFavorite, setIsFavorite] = useState(false);
   const [floatHearts, setFloatHearts] = useState<{ id: number; x: number; y: number }[]>([]);
   const floatIdRef = useRef(0);
@@ -169,6 +169,8 @@ export function ProductCard({ product, variant = 'default', onAddToCart, onFavor
       badgeDelayRef.current = 0;
       setIsFavorite(next);
       if (next) addFavoriteId(product._id); else removeFavoriteId(product._id);
+      invalidateFavoriteIdsCache();
+      queryClient.invalidateQueries({ queryKey: ['favorites'] });
       onFavoriteToggle?.(product._id, next);
     } catch (error) {
       console.error('Failed to toggle favorite:', error);
@@ -235,9 +237,10 @@ export function ProductCard({ product, variant = 'default', onAddToCart, onFavor
   }
 
   return (
-    <div
+    <Link
+      href={`/product/${product._id}`}
+      scroll={true}
       className="h-full bg-surface rounded-lg overflow-hidden hover:shadow-lg transition-shadow cursor-pointer border border-transparent hover:border-primary/20 group flex flex-col relative"
-      onClick={() => router.push(`/product/${product._id}`)}
     >
       <div className="relative aspect-square bg-surface overflow-hidden">
         <img
@@ -334,6 +337,6 @@ export function ProductCard({ product, variant = 'default', onAddToCart, onFavor
           )}
         </div>
       </div>
-    </div>
+    </Link>
   );
 }

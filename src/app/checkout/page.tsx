@@ -1,7 +1,11 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { MapPin, Phone, User, Mail, CreditCard, Truck, Shield, ArrowLeft, CheckCircle, ChevronDown, Building2, Loader2 } from 'lucide-react';
+import { MapPin, Phone, User, Mail, CreditCard, Truck, Shield, ArrowLeft, CheckCircle, Building2, Loader2 } from 'lucide-react';
+import { TextInput } from '@astryxdesign/core/TextInput';
+import { Selector } from '@astryxdesign/core/Selector';
+import { Button } from '@astryxdesign/core/Button';
+import { TextArea } from '@astryxdesign/core/TextArea';
 import Link from 'next/link';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useCartStore } from '@/store/useCartStore';
@@ -565,25 +569,26 @@ export default function CheckoutPage() {
                   <span className="w-1 h-4 bg-primary rounded-full" />
                   Chọn địa chỉ giao hàng
                 </h2>
-                <div className="relative">
-                  <select
-                    value={selectedAddressId}
-                    onChange={(e) => handleAddressSelect(e.target.value)}
-                    className="w-full px-4 py-3 bg-background border border-border rounded-xl text-sm text-text-primary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 appearance-none transition-shadow"
-                  >
-                    <option value="default">
-                      {addresses.find((a: any) => a.isDefault)
+                <Selector
+                  label="Chọn địa chỉ giao hàng"
+                  isLabelHidden
+                  value={selectedAddressId}
+                  onChange={(val) => val && handleAddressSelect(val)}
+                  options={[
+                    {
+                      value: 'default',
+                      label: addresses.find((a: any) => a.isDefault)
                         ? `Mặc định: ${addresses.find((a: any) => a.isDefault).fullName} - ${addresses.find((a: any) => a.isDefault).address}`
-                        : 'Sử dụng thông tin tài khoản'}
-                    </option>
-                    {addresses.filter(a => !a.isDefault).map((addr: any) => (
-                      <option key={addr._id} value={addr._id}>
-                        {addr.label}: {addr.fullName} - {addr.address}, {addr.district && `${addr.district}, `}{addr.province}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" />
-                </div>
+                        : 'Sử dụng thông tin tài khoản'
+                    },
+                    ...addresses.filter((a: any) => !a.isDefault).map((addr: any) => ({
+                      value: addr._id,
+                      label: `${addr.label}: ${addr.fullName} - ${addr.address}, ${addr.district && `${addr.district}, `}${addr.province}`
+                    }))
+                  ]}
+                  placeholder="Chọn địa chỉ"
+                  size="md"
+                />
               </section>
             )}
 
@@ -634,146 +639,86 @@ export default function CheckoutPage() {
               ) : (
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[11px] font-medium uppercase tracking-wider text-text-secondary mb-1.5">
-                        Họ và tên <span className="text-red-500">*</span>
-                      </label>
-                      <div className="relative">
-                        <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted/50" />
-                        <input
-                          type="text"
-                          name="fullName"
-                          value={formData.fullName}
-                          onChange={handleInputChange}
-                          required
-                          className="w-full pl-9 pr-4 py-2.5 bg-background border border-border rounded-xl text-sm text-text-primary placeholder:text-text-muted/50 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-shadow"
-                          placeholder="Nguyễn Văn A"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-medium uppercase tracking-wider text-text-secondary mb-1.5">
-                        Số điện thoại <span className="text-red-500">*</span>
-                      </label>
-                      <div className="relative">
-                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted/50" />
-                        <input
-                          type="tel"
-                          name="phone"
-                          value={formData.phone}
-                          onChange={handleInputChange}
-                          required
-                          className="w-full pl-9 pr-4 py-2.5 bg-background border border-border rounded-xl text-sm text-text-primary placeholder:text-text-muted/50 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-shadow"
-                          placeholder="0912345678"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-medium uppercase tracking-wider text-text-secondary mb-1.5">Email</label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted/50" />
-                      <input
-                        type="email"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleInputChange}
-                        className="w-full pl-9 pr-4 py-2.5 bg-background border border-border rounded-xl text-sm text-text-primary placeholder:text-text-muted/50 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-shadow"
-                        placeholder="email@example.com"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-medium uppercase tracking-wider text-text-secondary mb-1.5">
-                      Địa chỉ<span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="address"
-                      value={formData.address}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full px-4 py-2.5 bg-background border border-border rounded-xl text-sm text-text-primary placeholder:text-text-muted/50 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-shadow"
-                      placeholder="123 Đường ABC"
+                    <TextInput
+                      label="Họ và tên"
+                      isRequired
+                      value={formData.fullName}
+                      onChange={(val) => setFormData(prev => ({ ...prev, fullName: val }))}
+                      placeholder="Nguyễn Văn A"
+                      startIcon={<User size={16} />}
+                      size="md"
+                    />
+                    <TextInput
+                      label="Số điện thoại"
+                      isRequired
+                      value={formData.phone}
+                      onChange={(val) => setFormData(prev => ({ ...prev, phone: val }))}
+                      placeholder="0912345678"
+                      startIcon={<Phone size={16} />}
+                      size="md"
                     />
                   </div>
+                  <TextInput
+                    label="Email"
+                    value={formData.email}
+                    onChange={(val) => setFormData(prev => ({ ...prev, email: val }))}
+                    placeholder="email@example.com"
+                    startIcon={<Mail size={16} />}
+                    size="md"
+                  />
+                  <TextInput
+                    label="Địa chỉ"
+                    isRequired
+                    value={formData.address}
+                    onChange={(val) => setFormData(prev => ({ ...prev, address: val }))}
+                    placeholder="123 Đường ABC"
+                    size="md"
+                  />
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="relative">
-                      <label className="block text-[11px] font-medium uppercase tracking-wider text-text-secondary mb-1.5">
-                        Tỉnh/Thành phố<span className="text-red-500">*</span>
-                      </label>
-                      <div className="relative">
-                        <select
-                          value={formData.city}
-                          onChange={(e) => handleProvinceChange(e.target.value)}
-                          disabled={loadingProvinces}
-                          required
-                          className="w-full px-4 py-2.5 bg-background border border-border rounded-xl text-sm text-text-primary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-shadow appearance-none disabled:opacity-50 pr-10"
-                        >
-                          <option value="">{loadingProvinces ? 'Đang tải...' : 'Chọn tỉnh/thành'}</option>
-                          {provinces.map((p) => (
-                            <option key={p.code} value={p.name}>{p.name}</option>
-                          ))}
-                        </select>
-                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" />
-                      </div>
-                    </div>
-                    <div className="relative">
-                      <label className="block text-[11px] font-medium uppercase tracking-wider text-text-secondary mb-1.5">
-                        Quận/Huyện <span className="text-red-500">*</span>
-                      </label>
-                      <div className="relative">
-                        <select
-                          value={formData.district}
-                          onChange={(e) => handleDistrictChange(e.target.value)}
-                          disabled={loadingDistricts || !formData.city}
-                          required
-                          className="w-full px-4 py-2.5 bg-background border border-border rounded-xl text-sm text-text-primary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-shadow appearance-none disabled:opacity-50 pr-10"
-                        >
-                          <option value="">{loadingDistricts ? 'Đang tải...' : formData.city ? 'Chọn quận/huyện' : 'Chọn tỉnh trước'}</option>
-                          {districts.map((d) => (
-                            <option key={d.code} value={d.name}>{d.name}</option>
-                          ))}
-                        </select>
-                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" />
-                      </div>
-                    </div>
-                    <div className="relative">
-                      <label className="block text-[11px] font-medium uppercase tracking-wider text-text-secondary mb-1.5">
-                        Phường/Xã <span className="text-red-500">*</span>
-                      </label>
-                      <div className="relative">
-                        <select
-                          name="ward"
-                          value={formData.ward}
-                          onChange={(e) => setFormData(prev => ({ ...prev, ward: e.target.value }))}
-                          disabled={loadingWards || !formData.district}
-                          required
-                          className="w-full px-4 py-2.5 bg-background border border-border rounded-xl text-sm text-text-primary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-shadow appearance-none disabled:opacity-50 pr-10"
-                        >
-                          <option value="">{loadingWards ? 'Đang tải...' : formData.district ? 'Chọn phường/xã' : 'Chọn quận trước'}</option>
-                          {wards.map((w) => (
-                            <option key={w.code} value={w.name}>{w.name}</option>
-                          ))}
-                        </select>
-                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" />
-                      </div>
-                    </div>
+                    <Selector
+                      label="Tỉnh/Thành phố"
+                      isRequired
+                      value={formData.city}
+                      onChange={(val) => handleProvinceChange(val || '')}
+                      options={provinces.map((p) => ({ value: p.name, label: p.name }))}
+                      placeholder="Chọn tỉnh/thành"
+                      isDisabled={loadingProvinces}
+                      isLoading={loadingProvinces}
+                      size="md"
+                    />
+                    <Selector
+                      label="Quận/Huyện"
+                      isRequired
+                      value={formData.district}
+                      onChange={(val) => handleDistrictChange(val || '')}
+                      options={districts.map((d) => ({ value: d.name, label: d.name }))}
+                      placeholder={formData.city ? 'Chọn quận/huyện' : 'Chọn tỉnh trước'}
+                      isDisabled={loadingDistricts || !formData.city}
+                      isLoading={loadingDistricts}
+                      size="md"
+                    />
+                    <Selector
+                      label="Phường/Xã"
+                      isRequired
+                      value={formData.ward}
+                      onChange={(val) => setFormData(prev => ({ ...prev, ward: val || '' }))}
+                      options={wards.map((w) => ({ value: w.name, label: w.name }))}
+                      placeholder={formData.district ? 'Chọn phường/xã' : 'Chọn quận trước'}
+                      isDisabled={loadingWards || !formData.district}
+                      isLoading={loadingWards}
+                      size="md"
+                    />
                   </div>
                 </div>
               )}
 
-              {/* Note */}
               <div className="mt-4">
-                <label className="block text-[11px] font-medium uppercase tracking-wider text-text-secondary mb-1.5">
-                  Ghi chú
-                </label>
-                <textarea
-                  name="note"
+                <TextArea
+                  label="Ghi chú"
+                  isLabelHidden
                   value={formData.note}
-                  onChange={handleInputChange}
+                  onChange={(val) => setFormData(prev => ({ ...prev, note: val }))}
                   rows={3}
-                  className="w-full px-4 py-2.5 bg-background border border-border rounded-xl text-sm text-text-primary placeholder:text-text-muted/50 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-shadow resize-none"
                   placeholder="Ghi chú về đơn hàng, ví dụ: giao hàng vào giờ hành chính"
                 />
               </div>
@@ -917,27 +862,24 @@ export default function CheckoutPage() {
                 )}
                 {!cart.voucherCode ? (
                   <div className="flex gap-2">
-                    <input
-                      type="text"
+                    <TextInput
+                      label="Mã giảm giá"
+                      isLabelHidden
                       value={voucherInput}
-                      onChange={(e) => setVoucherInput(e.target.value.toUpperCase())}
+                      onChange={(val) => setVoucherInput(val.toUpperCase())}
                       placeholder="Nhập mã giảm giá"
-                      className="flex-1 px-3 py-2 bg-background border border-border rounded-xl text-sm text-text-primary placeholder:text-text-muted/50 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-shadow"
                       onFocus={() => fetchVouchers()}
                       onBlur={() => setTimeout(() => setShowVoucherPopup(false), 200)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleApplyVoucher()}
+                      onEnter={() => handleApplyVoucher()}
+                      size="md"
                     />
-                    <button
+                    <Button
+                      label="Áp dụng"
+                      variant="primary"
+                      isDisabled={applyingVoucher || !voucherInput.trim()}
+                      isLoading={applyingVoucher}
                       onClick={() => handleApplyVoucher()}
-                      disabled={applyingVoucher || !voucherInput.trim()}
-                      className="px-4 py-2 bg-primary hover:bg-primary-dark active:scale-[0.98] text-rich-black text-sm font-semibold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
-                    >
-                      {applyingVoucher ? (
-                        <span className="flex items-center gap-1">
-                          <span className="w-3 h-3 border-2 border-rich-black/30 border-t-rich-black rounded-full animate-spin" />
-                        </span>
-                      ) : 'Áp dụng'}
-                    </button>
+                    />
                   </div>
                 ) : (
                   <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-3 py-2.5">
@@ -948,12 +890,12 @@ export default function CheckoutPage() {
                         -{formatPrice(voucherDiscount || 0)}
                       </span>
                     </div>
-                    <button
+                    <Button
+                      label="Hủy"
+                      variant="ghost"
                       onClick={handleRemoveVoucher}
-                      className="text-xs text-red-500 hover:text-red-700 font-medium px-2 py-1 rounded-lg hover:bg-red-50 transition-colors"
-                    >
-                      Hủy
-                    </button>
+                      size="sm"
+                    />
                   </div>
                 )}
                 {voucherMsg && (
@@ -1015,18 +957,14 @@ export default function CheckoutPage() {
                   </div>
                 </div>
 
-                <button
+                <Button
                   type="submit"
-                  disabled={submitting}
-                  className="w-full py-3 mt-3 bg-primary hover:bg-primary-dark active:scale-[0.98] text-rich-black font-semibold rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 shadow-sm shadow-primary/20"
-                >
-                  {submitting ? (
-                    <span className="flex items-center gap-2">
-                      <span className="w-4 h-4 border-2 border-rich-black/30 border-t-rich-black rounded-full animate-spin" />
-                      Đang xử lý...
-                    </span>
-                  ) : 'Đặt hàng'}
-                </button>
+                  variant="primary"
+                  isDisabled={submitting}
+                  isLoading={submitting}
+                  label={submitting ? 'Đang xử lý...' : 'Đặt hàng'}
+                  className="w-full mt-3"
+                />
 
                 <div className="flex items-center justify-center gap-2 text-xs text-text-muted/60 pt-1">
                   <Shield className="w-3.5 h-3.5" />

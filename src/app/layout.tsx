@@ -1,3 +1,4 @@
+import '@astryxdesign/core/astryx.css';
 import './globals.css';
 import type { Metadata } from 'next';
 import Script from 'next/script';
@@ -8,6 +9,8 @@ import QueryProvider from '@/providers/QueryProvider';
 import { Suspense } from 'react';
 import { TokenHandler } from '@/components/shared/token-handler';
 import { TrackVisit } from '@/components/shared/track-visit';
+import { ScrollToTop } from '@/components/shared/ScrollToTop';
+import AstryxProvider from '@/providers/AstryxProvider';
 
 
 const inter = Inter({
@@ -61,15 +64,18 @@ export default function RootLayout({
         )}
 
         <QueryProvider>
-          <Suspense fallback={null}>
-            <TokenHandler />
-          </Suspense>
-          <TrackVisit />
-          <Navbar />
-          <Toaster position="top-center" richColors />
-          <div className="flex-1 pt-16 md:pt-20 min-h-0">
-            {children}
-          </div>
+          <AstryxProvider>
+            <ScrollToTop />
+            <Suspense fallback={null}>
+              <TokenHandler />
+            </Suspense>
+            <TrackVisit />
+            <Navbar />
+            <Toaster position="top-center" richColors />
+            <div className="flex-1 pt-16 md:pt-20 min-h-0">
+              {children}
+            </div>
+          </AstryxProvider>
         </QueryProvider>
       </body>
     </html>

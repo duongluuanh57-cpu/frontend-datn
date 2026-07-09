@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { ChevronLeft, ChevronRight, SearchX, Package } from 'lucide-react';
 import { ProductCard } from '@/components/shared/product-card';
 import { ProductFilterBar } from '@/components/products/product-filter-bar';
-import { PriceFilterSidebar } from '@/components/products/price-filter-sidebar';
+import { BrandStrip } from '@/components/products/brand-strip';
 import api from '@/lib/api';
 
 interface ProductItem {
@@ -40,11 +40,12 @@ function ProductsPageContent() {
   const sortByFromUrl = (searchParams.get('sortBy') as SortOption) && ['newest', 'priceAsc', 'priceDesc', 'bestSeller'].includes(searchParams.get('sortBy') as string)
     ? (searchParams.get('sortBy') as SortOption) : 'newest';
   const categoryFromUrl = searchParams.get('category') || '';
+  const brandFromUrl = searchParams.get('brand') || '';
 
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState<SortOption>(sortByFromUrl);
   const [selectedTag, setSelectedTag] = useState(tagFromUrl);
-  const [selectedBrand, setSelectedBrand] = useState('');
+  const [selectedBrand, setSelectedBrand] = useState(brandFromUrl);
   const [selectedCategory, setSelectedCategory] = useState(categoryFromUrl);
   const [priceMin, setPriceMin] = useState<number | undefined>(undefined);
   const [priceMax, setPriceMax] = useState<number | undefined>(undefined);
@@ -58,6 +59,7 @@ function ProductsPageContent() {
       setSortBy(sort as SortOption);
     }
     setSelectedCategory(searchParams.get('category') || '');
+    setSelectedBrand(searchParams.get('brand') || '');
     setCurrentPage(1);
   }, [searchParams]);
 
@@ -144,28 +146,33 @@ function ProductsPageContent() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* Filter Bar */}
-        <ProductFilterBar
-          sortBy={sortBy}
-          onSortChange={(v) => { setSortBy(v); resetPage(); }}
-          selectedBrand={selectedBrand}
-          onBrandSelect={(b) => { setSelectedBrand(b); resetPage(); setBrandOpen(false); }}
-          brandOpen={brandOpen}
-          onBrandToggle={() => setBrandOpen(!brandOpen)}
-          hasActiveFilters={hasActive}
-          onClearAll={clearAll}
-        />
-
-        <div className="flex gap-6">
-          <PriceFilterSidebar
+      {/* Sticky Filter Bar */}
+      <div className="sticky top-16 md:top-20 z-40 bg-background border-b border-border">
+        <div className="max-w-7xl mx-auto px-4 py-3">
+          <ProductFilterBar
+            sortBy={sortBy}
+            onSortChange={(v) => { setSortBy(v); resetPage(); }}
+            selectedBrand={selectedBrand}
+            onBrandSelect={(b) => { setSelectedBrand(b); resetPage(); setBrandOpen(false); }}
+            brandOpen={brandOpen}
+            onBrandToggle={() => setBrandOpen(!brandOpen)}
+            selectedCategory={selectedCategory}
+            onCategorySelect={(c) => { setSelectedCategory(c); resetPage(); }}
             priceMin={priceMin}
             priceMax={priceMax}
-            onApply={(min, max) => { setPriceMin(min > 0 ? min : undefined); setPriceMax(max < Infinity ? max : undefined); resetPage(); }}
-            onClear={() => { setPriceMin(undefined); setPriceMax(undefined); resetPage(); }}
+            onPriceApply={(min, max) => { setPriceMin(min > 0 ? min : undefined); setPriceMax(max < Infinity ? max : undefined); resetPage(); }}
+            onPriceClear={() => { setPriceMin(undefined); setPriceMax(undefined); resetPage(); }}
+            hasActiveFilters={hasActive}
+            onClearAll={clearAll}
           />
+        </div>
+      </div>
 
-          <div className="flex-1 min-w-0">
+      {/* Brand Strip */}
+      <BrandStrip selectedBrand={selectedBrand} onSelect={(b) => { setSelectedBrand(b); resetPage(); setBrandOpen(false); }} />
+
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="mt-6">
         {/* Loading */}
         {isLoading && (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
@@ -248,9 +255,8 @@ function ProductsPageContent() {
             )}
           </>
         )}
+        </div>
       </div>
-    </div>
-    </div>
     </div>
   );
 }

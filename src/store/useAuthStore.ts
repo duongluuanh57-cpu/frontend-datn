@@ -7,7 +7,6 @@ interface User {
   email: string;
   role: 'USER' | 'ADMIN' | 'SUBADMIN';
   avatar?: string;
-  tenantId: string;
   memberTier?: 'MEMBER' | 'Bac' | 'Vang' | 'KimCuong';
   totalSpent?: number;
   status?: 'active' | 'inactive' | 'suspended';

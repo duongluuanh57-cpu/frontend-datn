@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, Suspense, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Star, Heart, ShoppingBag, Minus, Plus, ArrowLeft, ChevronDown, Sparkles, Eye, Clock, Wind, ShieldCheck, Zap, Droplets, Percent } from 'lucide-react';
+import { Star, Heart, ShoppingBag, Minus, Plus, ArrowLeft, ChevronDown, Sparkles, Eye, Percent, ShieldCheck } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useFavoriteStore } from '@/store/useFavoriteStore';
 import { addToFavorites, removeFromFavorites, checkFavorite } from '@/services/favorite.service';
@@ -52,6 +52,8 @@ function ProductDetailContent() {
   const { id } = useParams<{ id: string }>();
   const suggestionRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+
+
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -99,10 +101,13 @@ function ProductDetailContent() {
         setImages(imgs.length > 0 ? imgs : ['']);
 
         if (p.variants && p.variants.length > 0) {
-          const defaultVariant = p.variants.find((v: any) => v.isDefault)
-            || p.variants.find((v: any) => v.size === '50ml')
-            || p.variants[0];
-          setSelectedVariant(defaultVariant);
+          const inStockVariants = p.variants.filter((v: any) => v.quantityInStock > 0);
+          if (inStockVariants.length > 0) {
+            const defaultVariant = inStockVariants.find((v: any) => v.isDefault)
+              || inStockVariants.find((v: any) => v.size === '50ml')
+              || inStockVariants[0];
+            setSelectedVariant(defaultVariant);
+          }
         }
 
         // Suggestions (trending products, exclude current product)
@@ -179,7 +184,8 @@ function ProductDetailContent() {
   const variantPrice = activeVariant?.price || product.price || 0;
   const hasDiscount = discountPct > 0;
   const finalPrice = hasDiscount ? Math.round(variantPrice * (1 - discountPct / 100)) : variantPrice;
-  const outOfStock = product.quantityInStock === 0;
+  const inStockVariants = product.variants?.filter((v: any) => v.quantityInStock > 0) || [];
+  const outOfStock = inStockVariants.length === 0;
   const savings = hasDiscount ? variantPrice - finalPrice : 0;
   const totalPrice = finalPrice * quantity;
   const reviewCount = product.reviewsCount || 0;
@@ -188,13 +194,13 @@ function ProductDetailContent() {
   return (
     <div className="min-h-screen bg-background">
       {/* Breadcrumb */}
-      <div className="max-w-7xl mx-auto px-4 pt-24 pb-2">
+      <div className="max-w-7xl mx-auto px-4 pt-4 pb-2">
         <nav className="flex items-center gap-1.5 text-xs text-text-muted overflow-x-auto whitespace-nowrap">
           <Link href="/products" className="hover:text-primary transition-colors font-medium">Nước hoa</Link>
           {product.brand && (
             <>
               <span className="text-border/60 mx-0.5">/</span>
-              <Link href="/products" className="hover:text-primary transition-colors font-medium">{product.brand}</Link>
+              <Link href={`/products?brand=${encodeURIComponent(product.brand)}`} className="hover:text-primary transition-colors font-medium">{product.brand}</Link>
             </>
           )}
           <span className="text-border/60 mx-0.5">/</span>
@@ -312,49 +318,34 @@ function ProductDetailContent() {
               )}
             </div>
 
-            {/* Specs Grid */}
-            <div className="grid grid-cols-2 gap-3">
-              {product.longevity && (
-                <SpecCard icon={<Clock size={16} />} label="Lưu hương" value={product.longevity} />
-              )}
-              {product.sillage && (
-                <SpecCard icon={<Wind size={16} />} label="Tỏa hương" value={product.sillage} />
-              )}
-              {product.durability && (
-                <SpecCard icon={<ShieldCheck size={16} />} label="Độ bền" value={product.durability} />
-              )}
-              {product.scentTrail && (
-                <SpecCard icon={<Zap size={16} />} label="Vệt hương" value={product.scentTrail} />
-              )}
-              {product.season && (
-                <SpecCard icon={<Droplets size={16} />} label="Mùa" value={product.season} />
-              )}
-            </div>
-
-            {/* Variant Selection */}
-            {product.variants && product.variants.length > 0 && (
-              <div className="py-6 border-t border-border/60">
-                <p className="text-sm font-medium text-text-primary mb-4">Dung tích</p>
-                <div className="flex flex-wrap gap-2">
-                {product.variants.map((v: any) => {
-                  const isSelected = selectedVariant?._id === v._id || (!selectedVariant && v.size === '50ml');
-                  return (
-                    <button
-                      key={v._id}
-                      onClick={() => setSelectedVariant(v)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 active:scale-[0.98] ${
-                        isSelected
-                          ? 'bg-primary text-rich-black shadow-sm shadow-primary/20 ring-1 ring-black/10'
-                          : 'bg-surface border border-border text-text-secondary hover:border-primary/40'
-                      }`}
-                    >
-                      {v.size} {v.size === '50ml' && '(Mặc định)'}
-                    </button>
-                  );
-                })}
+            {/* Variant Selection — chỉ show dung tích còn hàng */}
+            {(() => {
+              const inStockVariants = product.variants?.filter((v: any) => v.quantityInStock > 0);
+              if (!inStockVariants || inStockVariants.length === 0) return null;
+              return (
+                <div className="py-6 border-t border-border/60">
+                  <p className="text-sm font-medium text-text-primary mb-4">Dung tích</p>
+                  <div className="flex flex-wrap gap-2">
+                  {inStockVariants.map((v: any) => {
+                    const isSelected = selectedVariant?._id === v._id || (!selectedVariant && v.size === '50ml');
+                    return (
+                      <button
+                        key={v._id}
+                        onClick={() => setSelectedVariant(v)}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 active:scale-[0.98] ${
+                          isSelected
+                            ? 'bg-primary text-rich-black shadow-sm shadow-primary/20 ring-1 ring-black/10'
+                            : 'bg-surface border border-border text-text-secondary hover:border-primary/40'
+                        }`}
+                      >
+                        {v.size}
+                      </button>
+                    );
+                  })}
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Quantity + Add to Cart (Desktop) */}
             <div className="hidden lg:block py-6 border-t border-border/60">
@@ -574,20 +565,6 @@ function ScrollReveal({ children, className = '' }: { children: React.ReactNode;
       }`}
     >
       {children}
-    </div>
-  );
-}
-
-function SpecCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
-  return (
-    <div className="p-1 rounded-xl ring-1 ring-black/5">
-      <div className="flex items-center gap-3 p-3 rounded-[calc(0.75rem-0.25rem)] bg-surface shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)]">
-        <div className="text-primary shrink-0">{icon}</div>
-        <div className="min-w-0">
-          <p className="text-[10px] text-text-muted uppercase tracking-wide">{label}</p>
-          <p className="text-sm font-medium text-text-primary truncate">{value}</p>
-        </div>
-      </div>
     </div>
   );
 }

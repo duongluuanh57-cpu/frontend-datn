@@ -31,7 +31,6 @@ export function TokenHandler() {
               email: userData.email || '',
               role: userData.role || 'USER',
               avatar: userData.avatar || '',
-              tenantId: userData.tenantId || 'default',
               memberTier: userData.memberTier || 'MEMBER',
               totalSpent: userData.totalSpent ?? 0,
               fullName: userData.fullName || '',

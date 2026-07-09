@@ -66,7 +66,6 @@ export function useChatWidget() {
       const baseUrl = getActiveOriginSync().replace(/\/$/, '');
       
       const fetchUrl = `${baseUrl}/api/ai/chat`;
-      const tenantId = useAuthStore.getState().user?.tenantId || 'default';
       const response = await fetch(fetchUrl, {
         method: 'POST',
         headers: { 
@@ -76,7 +75,6 @@ export function useChatWidget() {
         body: JSON.stringify({ 
           messages: [...messages, newMessage], 
           image: selectedImage,
-          tenantId,
         }),
       });
 

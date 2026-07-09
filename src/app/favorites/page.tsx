@@ -1,57 +1,29 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Heart, Trash2 } from 'lucide-react';
+import { Heart } from 'lucide-react';
 import Link from 'next/link';
 import { useAuthStore } from '@/store/useAuthStore';
 import { getOriginRedirectUrl } from '@/lib/api';
-import { toast } from 'sonner';
-import { useFavoriteStore } from '@/store/useFavoriteStore';
-import { getFavorites, removeFromFavorites } from '@/services/favorite.service';
+import { getFavorites } from '@/services/favorite.service';
+import { useQuery } from '@tanstack/react-query';
 import { ProductCard } from '@/components/shared/product-card';
 
 export default function FavoritesPage() {
-  const [favorites, setFavorites] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const accessToken = useAuthStore((state) => state.accessToken);
-  const removeFavoriteId = useFavoriteStore((state) => state.removeFavoriteId);
 
-  useEffect(() => {
-    const fetchFavorites = async () => {
-      if (!accessToken) {
-        setLoading(false);
-        return;
-      }
+  const { data: favorites, isLoading } = useQuery({
+    queryKey: ['favorites', accessToken],
+    queryFn: async () => {
+      const result = await getFavorites(accessToken!);
+      if (result.success && result.data) return result.data;
+      throw new Error(result.message || 'Không thể tải danh sách yêu thích');
+    },
+    enabled: !!accessToken,
+  });
 
-      try {
-        const result = await getFavorites(accessToken);
-        if (result.success && result.data) {
-          setFavorites(result.data);
-        }
-      } catch (error) {
-        console.error('Failed to fetch favorites:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const favoritesList = favorites || [];
 
-    fetchFavorites();
-  }, [accessToken]);
-
-  const handleRemove = async (productId: string) => {
-    if (!accessToken) return;
-
-    try {
-      await removeFromFavorites(productId, accessToken);
-      setFavorites(prev => prev.filter(item => (item.productId?._id || item._id) !== productId));
-      removeFavoriteId(productId);
-    } catch (error) {
-      console.error('Failed to remove favorite:', error);
-      toast.error('Không thể xóa sản phẩm khỏi danh sách yêu thích');
-    }
-  };
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-background py-8 animate-pulse">
         <div className="max-w-7xl mx-auto px-4">
@@ -97,13 +69,13 @@ export default function FavoritesPage() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-text-primary mb-2">Sản phẩm yêu thích</h1>
           <p className="text-text-secondary">
-            {favorites.length > 0 
-              ? `Bạn có ${favorites.length} sản phẩm yêu thích`
+            {favoritesList.length > 0 
+              ? `Bạn có ${favoritesList.length} sản phẩm yêu thích`
               : 'Chưa có sản phẩm yêu thích nào'}
           </p>
         </div>
 
-        {favorites.length === 0 ? (
+        {favoritesList.length === 0 ? (
           <div className="text-center py-16">
             <Heart className="w-20 h-20 text-text-muted mx-auto mb-4" />
             <h3 className="text-lg font-medium text-text-primary mb-2">Chưa có sản phẩm yêu thích</h3>
@@ -114,36 +86,23 @@ export default function FavoritesPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-            {favorites.map((fav) => {
+            {favoritesList.map((fav: any) => {
               const product = fav.productId || fav;
               const productId = product._id;
               return (
-              <div key={fav._id} className="relative">
-                <ProductCard 
-                  product={{
-                    _id: productId,
-                    name: product.name,
-                    brand: product.brand || '',
-                    price: product.price,
-                    image: product.image || product.images?.[0] || '',
-                    discount: product.discount,
-                    reviewsCount: product.reviewsCount,
-                    soldCount: product.soldCount,
-                  }}
-                  onFavoriteToggle={(favProductId, isFavorite) => {
-                    if (!isFavorite) {
-                      setFavorites(prev => prev.filter(item => (item.productId?._id || item._id) !== favProductId));
-                    }
-                  }}
-                />
-                <button
-                  onClick={() => handleRemove(productId)}
-                  className="absolute top-2 right-2 z-30 p-2 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-lg transition-colors cursor-pointer"
-                  aria-label="Xóa khỏi yêu thích"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
+              <ProductCard 
+                key={fav._id}
+                product={{
+                  _id: productId,
+                  name: product.name,
+                  brand: product.brand || '',
+                  price: product.price,
+                  image: product.image || product.images?.[0] || '',
+                  discount: product.discount,
+                  reviewsCount: product.reviewsCount,
+                  soldCount: product.soldCount,
+                }}
+              />
               );
             })}
           </div>

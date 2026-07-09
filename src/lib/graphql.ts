@@ -81,8 +81,8 @@ export interface NavbarData {
 }
 
 const HOMEPAGE_QUERY = `#graphql
-  query Homepage($tenantId: String) {
-    homepage(tenantId: $tenantId) {
+  query Homepage {
+    homepage {
       sale { _id name brand price originalPrice image tag discount reviewsCount soldCount quantityInStock }
       new { _id name brand price originalPrice image tag discount reviewsCount soldCount quantityInStock }
       hot { _id name brand price originalPrice image tag discount reviewsCount soldCount quantityInStock }
@@ -94,8 +94,8 @@ const HOMEPAGE_QUERY = `#graphql
 `;
 
 const NAVBAR_QUERY = `#graphql
-  query Navbar($tenantId: String) {
-    navbar(tenantId: $tenantId) {
+  query Navbar {
+    navbar {
       trending { _id name brand price originalPrice discount image quantityInStock }
       brandNames
     }
@@ -106,7 +106,7 @@ const EMPTY_HOMEPAGE: HomepageData = {
   sale: [], new: [], hot: [], limited: [], standard: [], brands: [],
 };
 
-export async function fetchHomepage(tenantId = 'default-tenant'): Promise<HomepageData> {
+export async function fetchHomepage(): Promise<HomepageData> {
   const origin = getActiveOriginSync();
   const url = `${origin.replace(/\/+$/, '')}/api/graphql`;
 
@@ -117,7 +117,6 @@ export async function fetchHomepage(tenantId = 'default-tenant'): Promise<Homepa
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         query: HOMEPAGE_QUERY,
-        variables: { tenantId },
       }),
     });
   } catch (e) {
@@ -146,7 +145,7 @@ export async function fetchHomepage(tenantId = 'default-tenant'): Promise<Homepa
   return json.data.homepage as HomepageData;
 }
 
-export async function fetchNavbarData(tenantId = 'default-tenant'): Promise<NavbarData> {
+export async function fetchNavbarData(): Promise<NavbarData> {
   const origin = getActiveOriginSync();
   const url = `${origin.replace(/\/+$/, '')}/api/graphql`;
 
@@ -157,7 +156,6 @@ export async function fetchNavbarData(tenantId = 'default-tenant'): Promise<Navb
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         query: NAVBAR_QUERY,
-        variables: { tenantId },
       }),
     });
   } catch (e) {
@@ -181,8 +179,8 @@ export async function fetchNavbarData(tenantId = 'default-tenant'): Promise<Navb
   return json.data.navbar as NavbarData;
 }
 const PRODUCT_DETAIL_QUERY = `#graphql
-  query ProductDetail($id: ID!, $tenantId: String) {
-    productDetail(id: $id, tenantId: $tenantId) {
+  query ProductDetail($id: ID!) {
+    productDetail(id: $id) {
       _id name brand
       brandInfo { name logo description origin }
       price originalPrice image images description tag
@@ -193,13 +191,13 @@ const PRODUCT_DETAIL_QUERY = `#graphql
       longevity sillage durability scentTrail
       style suitableFor occasion season time
     }
-    trendingProducts(tenantId: $tenantId, limit: 8) {
+    trendingProducts(limit: 8) {
       _id name brand price originalPrice image tag discount reviewsCount soldCount quantityInStock
     }
   }
 `;
 
-export async function fetchProductDetail(id: string, tenantId = 'default-tenant') {
+export async function fetchProductDetail(id: string) {
   const origin = getActiveOriginSync();
   const url = `${origin.replace(/\/+$/, '')}/api/graphql`;
 
@@ -209,7 +207,7 @@ export async function fetchProductDetail(id: string, tenantId = 'default-tenant'
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         query: PRODUCT_DETAIL_QUERY,
-        variables: { id, tenantId },
+        variables: { id },
       }),
     });
 

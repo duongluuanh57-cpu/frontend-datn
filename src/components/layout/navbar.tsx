@@ -9,17 +9,18 @@ import { useFavoriteStore } from '@/store/useFavoriteStore';
 import { useSearchSuggestions, ProductSuggestion } from '@/hooks/useSearchSuggestions';
 import { getFavoriteIds } from '@/services/favorite.service';
 import { useCart } from '@/hooks/useCart';
-import { FlipBadge } from '@/components/shared/flip-badge';
 import { CartSidebar } from '@/components/shared/cart-sidebar';
-import { FavoritesPopup } from '@/components/shared/favorites-popup';
 import { getOriginRedirectUrl, resolveImageUrl } from '@/lib/api';
+import { Badge } from '@astryxdesign/core/Badge';
+import { IconButton } from '@astryxdesign/core/IconButton';
+import { TextInput } from '@astryxdesign/core/TextInput';
 
 export function Navbar() {
   const pathname = usePathname();
   const { user, isAuthenticated, accessToken } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [cartSidebarOpen, setCartSidebarOpen] = useState(false);
-  const [favoritesPopupOpen, setFavoritesPopupOpen] = useState(false);
+  const [sidebarTab, setSidebarTab] = useState<'cart' | 'favorites'>('cart');
   const [loginUrl, setLoginUrl] = useState('http://localhost:4000/api/auth/login');
 
   useEffect(() => {
@@ -63,12 +64,9 @@ export function Navbar() {
     fetchFavoriteIds();
   }, [accessToken]);
 
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setQuery(e.target.value);
-  }, [setQuery]);
-
   const handleCartClose = useCallback(() => setCartSidebarOpen(false), []);
-  const handleFavoritesClose = useCallback(() => setFavoritesPopupOpen(false), []);
+  const handleCartOpen = useCallback(() => { setSidebarTab('cart'); setCartSidebarOpen(true); }, []);
+  const handleFavoritesOpen = useCallback(() => { setSidebarTab('favorites'); setCartSidebarOpen(true); }, []);
 
   const handleProductClick = useCallback((product: ProductSuggestion) => {
     close();
@@ -100,17 +98,17 @@ export function Navbar() {
             {/* Search Bar with Suggestions */}
             <div className="flex-1 max-w-2xl hidden md:block" ref={containerRef}>
               <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Tìm nước hoa, thương hiệu..."
+                <TextInput
+                  label="Tìm kiếm"
+                  isLabelHidden
                   value={query}
-                  onChange={handleSearchChange}
+                  onChange={setQuery}
                   onFocus={open}
-                  className="w-full py-2.5 pl-4 pr-12 bg-surface border border-border rounded-lg text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                  onEnter={() => {}}
+                  placeholder="Tìm nước hoa, thương hiệu..."
+                  startIcon={<Search size={16} />}
+                  size="md"
                 />
-                <button className="absolute right-1 top-1/2 -translate-y-1/2 p-1.5 bg-primary hover:bg-primary-dark text-white rounded-md transition-colors cursor-pointer">
-                  <Search className="w-4 h-4" />
-                </button>
 
                 {/* Suggestions Dropdown */}
                 {isOpen && (
@@ -175,49 +173,58 @@ export function Navbar() {
             
             {/* Actions */}
             <div className="flex items-center gap-1 md:gap-2">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setFavoritesPopupOpen(prev => !prev);
-                }}
-                className="p-2 hover:bg-surface rounded-lg transition-colors cursor-pointer relative"
-                aria-label="Yêu thích"
-              >
-                <Heart className={`w-5 h-5 text-text-secondary transition-all duration-300 ${favoriteCount > 0 ? 'scale-110' : ''}`} />
+              <div className="relative">
+                <IconButton
+                  label="Yêu thích"
+                  icon={<Heart className={`w-6 h-6 text-text-secondary transition-all duration-300 ${favoriteCount > 0 ? 'scale-110' : ''}`} />}
+                  variant="ghost"
+                  onClick={handleFavoritesOpen}
+                />
                 {favoriteCount > 0 && (
-                  <span className="absolute top-0 right-0 w-5 h-5 bg-primary text-rich-black text-xs font-bold rounded-full flex items-center justify-center min-w-[20px] min-h-[20px]">
-                    <FlipBadge value={favoriteCount} />
-                  </span>
+                  <Badge
+                    label={favoriteCount > 99 ? '99+' : favoriteCount}
+                    variant="info"
+                    className="absolute -top-1 -right-1 z-10"
+                  />
                 )}
-              </button>
-              <button
-                onClick={() => setCartSidebarOpen(true)}
-                className="p-2 hover:bg-surface rounded-lg transition-colors cursor-pointer relative"
-                aria-label="Giỏ hàng"
-              >
-                <ShoppingCart className="w-5 h-5 text-text-secondary" />
+              </div>
+              <div className="relative">
+                <IconButton
+                  label="Giỏ hàng"
+                  icon={<ShoppingCart className="w-6 h-6 text-text-secondary" />}
+                  variant="ghost"
+                  onClick={handleCartOpen}
+                />
                 {cartCount > 0 && (
-                  <span className="absolute top-0 right-0 w-5 h-5 bg-primary text-rich-black text-xs font-bold rounded-full flex items-center justify-center min-w-[20px] min-h-[20px]">
-                    <FlipBadge value={cartCount} />
-                  </span>
+                  <Badge
+                    label={cartCount > 99 ? '99+' : cartCount}
+                    variant="info"
+                    className="absolute -top-1 -right-1 z-10"
+                  />
                 )}
-              </button>
+              </div>
               {isAuthenticated ? (
-                <Link href="/profile" className="p-2 hover:bg-surface rounded-lg transition-colors cursor-pointer">
-                  <User className="w-5 h-5 text-text-secondary" />
-                </Link>
+                <IconButton
+                  label="Tài khoản"
+                  icon={<User className="w-6 h-6 text-text-secondary" />}
+                  variant="ghost"
+                  href="/profile"
+                />
               ) : (
-                <a href={loginUrl} className="p-2 hover:bg-surface rounded-lg transition-colors cursor-pointer inline-flex">
-                  <User className="w-5 h-5 text-text-secondary" />
-                </a>
+                <IconButton
+                  label="Đăng nhập"
+                  icon={<User className="w-6 h-6 text-text-secondary" />}
+                  variant="ghost"
+                  href={loginUrl}
+                />
               )}
-              <button
-                className="md:hidden p-2 hover:bg-surface rounded-lg transition-colors cursor-pointer"
-                aria-label="Menu"
+              <IconButton
+                label="Menu"
+                icon={<Menu className="w-5 h-5 text-text-secondary" />}
+                variant="ghost"
+                className="md:hidden"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              >
-                <Menu className="w-5 h-5 text-text-secondary" />
-              </button>
+              />
             </div>
           </div>
         </div>
@@ -229,18 +236,19 @@ export function Navbar() {
           <div className="max-w-7xl mx-auto px-4 py-4 space-y-3">
             {/* Mobile Search */}
             <div className="relative">
-              <input
-                type="text"
+              <TextInput
+                label="Tìm kiếm"
+                isLabelHidden
+                value={query}
+                onChange={setQuery}
                 placeholder="Tìm nước hoa, thương hiệu..."
-                className="w-full py-2.5 pl-4 pr-12 bg-surface border border-border rounded-lg text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                startIcon={<Search size={16} />}
+                size="sm"
               />
-              <button className="absolute right-1 top-1/2 -translate-y-1/2 p-1.5 bg-primary hover:bg-primary-dark text-white rounded-md transition-colors cursor-pointer">
-                <Search className="w-4 h-4" />
-              </button>
             </div>
             <button
               onClick={() => {
-                setFavoritesPopupOpen(true);
+                handleFavoritesOpen();
                 setMobileMenuOpen(false);
               }}
               className="block w-full text-left py-2 text-text-secondary hover:text-primary"
@@ -249,7 +257,7 @@ export function Navbar() {
             </button>
             <button
               onClick={() => {
-                setCartSidebarOpen(true);
+                handleCartOpen();
                 setMobileMenuOpen(false);
               }}
               className="block w-full text-left py-2 text-text-secondary hover:text-primary"
@@ -266,16 +274,11 @@ export function Navbar() {
         </div>
       )}
 
-      {/* Favorites Popup */}
-      <FavoritesPopup
-        isOpen={favoritesPopupOpen}
-        onClose={handleFavoritesClose}
-      />
-
       {/* Cart Sidebar */}
       <CartSidebar
         isOpen={cartSidebarOpen}
         onClose={handleCartClose}
+        initialTab={sidebarTab}
       />
     </>
   );

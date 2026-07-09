@@ -28,7 +28,6 @@ function CallbackHandler() {
               email: userData.email || '',
               role: userData.role || 'USER',
               avatar: userData.avatar || '',
-              tenantId: 'default',
               memberTier: 'MEMBER' as const,
             };
             setAuth(user, accessToken, refreshToken);
@@ -48,7 +47,6 @@ function CallbackHandler() {
                 email: userData.email || '',
                 role: userData.role || 'USER',
                 avatar: userData.avatar || '',
-                tenantId: userData.tenantId || 'default',
                 memberTier: userData.memberTier || 'MEMBER',
                 createdAt: userData.createdAt || '',
               };

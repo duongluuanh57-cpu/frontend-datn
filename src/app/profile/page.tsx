@@ -6,6 +6,9 @@ import { useProfileAddresses } from '@/hooks/profile/useProfileAddresses';
 import { getMe, updateProfile, changePassword } from '@/services/user.service';
 import { getMyOrders } from '@/services/order.service';
 import { User, Mail, Shield, MapPin, ShoppingBag, Key, LogOut, Plus, Edit2, Trash2, Check, Crown, DollarSign, Phone, UserRound, Globe, Building2, LayoutDashboard, CalendarDays, AtSign, BadgeCheck } from 'lucide-react';
+import { TextInput } from '@astryxdesign/core/TextInput';
+import { Selector } from '@astryxdesign/core/Selector';
+import { Button } from '@astryxdesign/core/Button';
 import { getBackendOrigin, resolveImageUrl } from '@/lib/api';
 import Link from 'next/link';
 
@@ -290,9 +293,12 @@ export default function ProfilePage() {
                   <div className="flex items-center justify-between">
                     <h2 className="text-2xl font-semibold text-text-primary">Thông tin tài khoản</h2>
                     {!isEditingInfo && (
-                      <button onClick={startEditInfo} className="flex items-center gap-2 px-4 py-2 bg-primary text-rich-black rounded-lg text-sm font-medium hover:bg-primary-dark transition-colors">
-                        <Edit2 size={16} /> Chỉnh sửa
-                      </button>
+                      <Button
+                        label="Chỉnh sửa"
+                        variant="primary"
+                        icon={<Edit2 size={16} />}
+                        onClick={startEditInfo}
+                      />
                     )}
                   </div>
 
@@ -302,30 +308,48 @@ export default function ProfilePage() {
                   {isEditingInfo ? (
                     <div className="space-y-4 p-5 rounded-xl bg-surface border border-border">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-text-primary mb-2">Họ và tên</label>
-                          <input type="text" value={editFullName} onChange={e => setEditFullName(e.target.value)} placeholder="Nguyễn Văn A" className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-text-primary mb-2">Số điện thoại</label>
-                          <input type="tel" value={editPhone} onChange={e => setEditPhone(e.target.value)} placeholder="0912 345 678" className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-text-primary mb-2">Giới tính</label>
-                          <select value={editGender} onChange={e => setEditGender(e.target.value as any)} className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
-                            <option value="">Chọn giới tính</option>
-                            <option value="MALE">Nam</option>
-                            <option value="FEMALE">Nữ</option>
-                            <option value="OTHER">Khác</option>
-                          </select>
-                        </div>
-
+                        <TextInput
+                          label="Họ và tên"
+                          value={editFullName}
+                          onChange={setEditFullName}
+                          placeholder="Nguyễn Văn A"
+                          size="md"
+                        />
+                        <TextInput
+                          label="Số điện thoại"
+                          value={editPhone}
+                          onChange={setEditPhone}
+                          placeholder="0912 345 678"
+                          size="md"
+                        />
+                        <Selector
+                          label="Giới tính"
+                          value={editGender || null}
+                          onChange={(val) => setEditGender((val || '') as any)}
+                          options={[
+                            { value: '', label: 'Chọn giới tính' },
+                            { value: 'MALE', label: 'Nam' },
+                            { value: 'FEMALE', label: 'Nữ' },
+                            { value: 'OTHER', label: 'Khác' },
+                          ]}
+                          placeholder="Chọn giới tính"
+                          size="md"
+                        />
                       </div>
                       <div className="flex gap-3 pt-2">
-                        <button onClick={saveInfo} disabled={infoSaving} className="flex items-center gap-2 px-5 py-2.5 bg-primary text-rich-black rounded-lg text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-50">
-                          <Check size={16} /> {infoSaving ? 'Đang lưu...' : 'Lưu'}
-                        </button>
-                        <button onClick={() => { setIsEditingInfo(false); setInfoError(''); }} className="px-5 py-2.5 bg-surface border border-border text-text-secondary rounded-lg text-sm font-medium hover:bg-background transition-colors">Hủy</button>
+                        <Button
+                          label={infoSaving ? 'Đang lưu...' : 'Lưu'}
+                          variant="primary"
+                          isDisabled={infoSaving}
+                          isLoading={infoSaving}
+                          icon={<Check size={16} />}
+                          onClick={saveInfo}
+                        />
+                        <Button
+                          label="Hủy"
+                          variant="secondary"
+                          onClick={() => { setIsEditingInfo(false); setInfoError(''); }}
+                        />
                       </div>
                     </div>
                   ) : (
@@ -353,9 +377,12 @@ export default function ProfilePage() {
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
                     <h2 className="text-2xl font-semibold text-text-primary">Sổ địa chỉ</h2>
-                    <button onClick={openNewAddressForm} className="flex items-center gap-2 px-4 py-2 bg-primary text-rich-black rounded-lg text-sm font-medium hover:bg-primary-dark transition-colors">
-                      <Plus size={16} /> Thêm địa chỉ
-                    </button>
+                    <Button
+                      label="Thêm địa chỉ"
+                      variant="primary"
+                      icon={<Plus size={16} />}
+                      onClick={openNewAddressForm}
+                    />
                   </div>
 
                   {addrError && <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">{addrError}</div>}
@@ -365,62 +392,88 @@ export default function ProfilePage() {
                     <div className="space-y-4 p-5 rounded-xl bg-surface border border-border">
                       <h3 className="font-semibold text-text-primary">{editingAddressId ? 'Chỉnh sửa địa chỉ' : 'Thêm địa chỉ mới'}</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-text-primary mb-2">Nhãn</label>
-                          <input type="text" value={addrLabel} onChange={e => setAddrLabel(e.target.value)} placeholder="Nhà riêng, Công ty..." className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-text-primary mb-2">Họ và tên</label>
-                          <input type="text" value={addrFullName} onChange={e => setAddrFullName(e.target.value)} placeholder="Nguyễn Văn A" className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-text-primary mb-2">Giới tính</label>
-                          <select value={addrGender} onChange={e => setAddrGender(e.target.value as any)} className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
-                            <option value="">Chọn giới tính</option>
-                            <option value="MALE">Nam</option>
-                            <option value="FEMALE">Nữ</option>
-                            <option value="OTHER">Khác</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-text-primary mb-2">Số điện thoại</label>
-                          <input type="tel" value={addrPhoneNumber} onChange={e => setAddrPhoneNumber(e.target.value)} placeholder="0912 345 678" className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-                        </div>
+                        <TextInput
+                          label="Nhãn"
+                          value={addrLabel}
+                          onChange={setAddrLabel}
+                          placeholder="Nhà riêng, Công ty..."
+                          size="md"
+                        />
+                        <TextInput
+                          label="Họ và tên"
+                          value={addrFullName}
+                          onChange={setAddrFullName}
+                          placeholder="Nguyễn Văn A"
+                          size="md"
+                        />
+                        <Selector
+                          label="Giới tính"
+                          value={addrGender || null}
+                          onChange={(val) => setAddrGender((val || '') as any)}
+                          options={[
+                            { value: '', label: 'Chọn giới tính' },
+                            { value: 'MALE', label: 'Nam' },
+                            { value: 'FEMALE', label: 'Nữ' },
+                            { value: 'OTHER', label: 'Khác' },
+                          ]}
+                          placeholder="Chọn giới tính"
+                          size="md"
+                        />
+                        <TextInput
+                          label="Số điện thoại"
+                          value={addrPhoneNumber}
+                          onChange={setAddrPhoneNumber}
+                          placeholder="0912 345 678"
+                          size="md"
+                        />
                       </div>
-                      <div>
-                        <label className="block text-sm font-medium text-text-primary mb-2">Địa chỉ</label>
-                        <input type="text" value={addrStreet} onChange={e => setAddrStreet(e.target.value)} placeholder="Số nhà, tên đường" className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-                      </div>
+                      <TextInput
+                        label="Địa chỉ"
+                        value={addrStreet}
+                        onChange={setAddrStreet}
+                        placeholder="Số nhà, tên đường"
+                        size="md"
+                      />
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-text-primary mb-2">Tỉnh/Thành phố</label>
-                          <select
-                            value={addrProvince}
-                            onChange={e => { setAddrProvince(e.target.value); const found = provinces.find((p: any) => p.name === e.target.value); if (found) fetchDistricts(found.code); }}
-                            disabled={loadingProvinces}
-                            className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 appearance-none disabled:opacity-50"
-                          >
-                            <option value="">{loadingProvinces ? 'Đang tải...' : 'Chọn tỉnh/thành'}</option>
-                            {provinces.map((p: any) => (
-                              <option key={p.code} value={p.name}>{p.name}</option>
-                            ))}
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-text-primary mb-2">Quận/Huyện</label>
-                          <select value={addrDistrict} onChange={e => setAddrDistrict(e.target.value)} disabled={loadingDistricts || !addrProvince} className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 appearance-none disabled:opacity-50">
-                            <option value="">{loadingDistricts ? 'Đang tải...' : addrProvince ? 'Chọn quận/huyện' : 'Chọn tỉnh trước'}</option>
-                            {districts.map((d: any) => (
-                              <option key={d.code} value={d.name}>{d.name}</option>
-                            ))}
-                          </select>
-                        </div>
+                        <Selector
+                          label="Tỉnh/Thành phố"
+                          value={addrProvince}
+                          onChange={(val) => {
+                            setAddrProvince(val || '');
+                            const found = provinces.find((p: any) => p.name === val);
+                            if (found) fetchDistricts(found.code);
+                          }}
+                          options={provinces.map((p: any) => ({ value: p.name, label: p.name }))}
+                          placeholder="Chọn tỉnh/thành"
+                          isDisabled={loadingProvinces}
+                          isLoading={loadingProvinces}
+                          size="md"
+                        />
+                        <Selector
+                          label="Quận/Huyện"
+                          value={addrDistrict}
+                          onChange={(val) => setAddrDistrict(val || '')}
+                          options={districts.map((d: any) => ({ value: d.name, label: d.name }))}
+                          placeholder={addrProvince ? 'Chọn quận/huyện' : 'Chọn tỉnh trước'}
+                          isDisabled={loadingDistricts || !addrProvince}
+                          isLoading={loadingDistricts}
+                          size="md"
+                        />
                       </div>
                       <div className="flex gap-3 pt-2">
-                        <button onClick={handleSaveAddress} disabled={addrSubmitting} className="flex items-center gap-2 px-5 py-2.5 bg-primary text-rich-black rounded-lg text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-50">
-                          <Check size={16} /> {addrSubmitting ? 'Đang lưu...' : 'Lưu'}
-                        </button>
-                        <button onClick={() => { setIsEditingAddress(false); setAddrError(''); }} className="px-5 py-2.5 bg-surface border border-border text-text-secondary rounded-lg text-sm font-medium hover:bg-background transition-colors">Hủy</button>
+                        <Button
+                          label={addrSubmitting ? 'Đang lưu...' : 'Lưu'}
+                          variant="primary"
+                          isDisabled={addrSubmitting}
+                          isLoading={addrSubmitting}
+                          icon={<Check size={16} />}
+                          onClick={handleSaveAddress}
+                        />
+                        <Button
+                          label="Hủy"
+                          variant="secondary"
+                          onClick={() => { setIsEditingAddress(false); setAddrError(''); }}
+                        />
                       </div>
                     </div>
                   )}
@@ -573,12 +626,19 @@ export default function ProfilePage() {
                           })}
                         </div>
                         <div className="ml-auto">
-                          <select value={orderSort} onChange={e => setOrderSort(e.target.value as any)} className="px-3 py-1.5 bg-background border border-border rounded-lg text-xs font-medium text-text-primary focus:outline-none focus:border-primary">
-                            <option value="newest">Mới nhất</option>
-                            <option value="oldest">Cũ nhất</option>
-                            <option value="highest">Giá cao nhất</option>
-                            <option value="lowest">Giá thấp nhất</option>
-                          </select>
+                          <Selector
+                            label="Sắp xếp"
+                            isLabelHidden
+                            value={orderSort}
+                            onChange={(val) => setOrderSort(val || 'newest')}
+                            options={[
+                              { value: 'newest', label: 'Mới nhất' },
+                              { value: 'oldest', label: 'Cũ nhất' },
+                              { value: 'highest', label: 'Giá cao nhất' },
+                              { value: 'lowest', label: 'Giá thấp nhất' },
+                            ]}
+                            size="sm"
+                          />
                         </div>
                       </div>
                     )}
@@ -624,21 +684,38 @@ export default function ProfilePage() {
                   {passwordSuccess && <div className="p-3 rounded-lg bg-green-50 border border-green-200 text-green-600 text-sm">{passwordSuccess}</div>}
                   {passwordError && <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">{passwordError}</div>}
                   <div className="space-y-4 max-w-md">
-                    <div>
-                      <label className="block text-sm font-medium text-text-primary mb-2">Mật khẩu hiện tại</label>
-                      <input type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} placeholder="••••••••" className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-text-primary mb-2">Mật khẩu mới</label>
-                      <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Tối thiểu 6 ký tự" className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-text-primary mb-2">Xác nhận mật khẩu mới</label>
-                      <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Nhập lại mật khẩu mới" className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-                    </div>
-                    <button onClick={handleChangePassword} disabled={passwordSaving} className="flex items-center gap-2 px-5 py-2.5 bg-primary text-rich-black rounded-lg text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-50">
-                      <Key size={16} /> {passwordSaving ? 'Đang xử lý...' : 'Đổi mật khẩu'}
-                    </button>
+                    <TextInput
+                      label="Mật khẩu hiện tại"
+                      type="password"
+                      value={currentPassword}
+                      onChange={setCurrentPassword}
+                      placeholder="••••••••"
+                      size="md"
+                    />
+                    <TextInput
+                      label="Mật khẩu mới"
+                      type="password"
+                      value={newPassword}
+                      onChange={setNewPassword}
+                      placeholder="Tối thiểu 6 ký tự"
+                      size="md"
+                    />
+                    <TextInput
+                      label="Xác nhận mật khẩu mới"
+                      type="password"
+                      value={confirmPassword}
+                      onChange={setConfirmPassword}
+                      placeholder="Nhập lại mật khẩu mới"
+                      size="md"
+                    />
+                    <Button
+                      label={passwordSaving ? 'Đang xử lý...' : 'Đổi mật khẩu'}
+                      variant="primary"
+                      isDisabled={passwordSaving}
+                      isLoading={passwordSaving}
+                      icon={<Key size={16} />}
+                      onClick={handleChangePassword}
+                    />
                   </div>
                 </div>
               )}
