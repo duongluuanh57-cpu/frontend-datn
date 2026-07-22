@@ -67,11 +67,11 @@ export interface GraphQLBrand {
 }
 
 export interface HomepageData {
-  sale: GraphQLProduct[];
-  new: GraphQLProduct[];
-  hot: GraphQLProduct[];
-  limited: GraphQLProduct[];
-  standard: GraphQLProduct[];
+  sale?: GraphQLProduct[];
+  new?: GraphQLProduct[];
+  hot?: GraphQLProduct[];
+  limited?: GraphQLProduct[];
+  standard?: GraphQLProduct[];
   brands: GraphQLBrand[];
 }
 
@@ -191,7 +191,7 @@ const PRODUCT_DETAIL_QUERY = `#graphql
       longevity sillage durability scentTrail
       style suitableFor occasion season time
     }
-    trendingProducts(limit: 8) {
+    trendingProducts(limit: 10) {
       _id name brand price originalPrice image tag discount reviewsCount soldCount quantityInStock
     }
   }

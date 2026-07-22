@@ -87,6 +87,11 @@ playwright.config.ts
 
 # AI coding cache
 .codegraph/
+.agents/
+skills-lock.json
+
+# Design documents (not needed for deploy)
+ERD.drawio
 
 # Default Next.js placeholder SVGs
 public/file.svg

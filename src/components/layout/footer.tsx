@@ -2,8 +2,26 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Camera, Globe, Send, Mail } from 'lucide-react';
+import { useProductsFilterStore } from '@/store/useProductsFilterStore';
 import './footer.css';
+
+const handleAboutClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+  e.preventDefault();
+  const targetId = 'about';
+  
+  // If already on home page, just scroll
+  if (window.location.pathname === '/') {
+    const el = document.getElementById(targetId);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  } else {
+    // Navigate to home page with hash
+    window.location.href = '/#about';
+  }
+};
 
 const SOCIAL_ICONS: Record<string, React.ReactNode> = {
   instagram: <Camera size={18} />,
@@ -12,6 +30,8 @@ const SOCIAL_ICONS: Record<string, React.ReactNode> = {
 };
 
 export function Footer() {
+  const router = useRouter();
+  const setFilterAndGo = useProductsFilterStore((s) => s.setFilterAndGo);
   const currentYear = new Date().getFullYear();
 
   const brand = {
@@ -24,11 +44,10 @@ export function Footer() {
       id: 'col-0',
       title: 'Khám Phá',
       links: [
-        { label: 'Bộ Sưu Tập', href: '/shop' },
-        { label: 'Sản Phẩm Mới', href: '/new-arrivals' },
-        { label: 'Câu Chuyện Thương Hiệu', href: '/about' },
-        { label: 'Liên Hệ', href: '/contact' },
-        { label: 'Cửa Hàng', href: '/stores' },
+        { label: 'Bộ Sưu Tập', href: '/products' },
+        { label: 'Sản Phẩm Mới', href: 'products', tag: 'new' as const },
+        { label: 'Sản Phẩm Bán Chạy', href: 'products', tag: 'hot' as const },
+        { label: 'Sản Phẩm Giới Hạn', href: 'products', tag: 'limited' as const },
       ],
     },
     {
@@ -36,8 +55,7 @@ export function Footer() {
       title: 'Về chúng tôi',
       links: [
         { label: 'Giới thiệu', href: '/about' },
-        { label: 'Câu chuyện thương hiệu', href: '/about#story' },
-        { label: 'Tuyển dụng', href: '/careers' },
+        { label: 'Câu chuyện thương hiệu', href: '/#about' },
         { label: 'Liên hệ', href: '/contact' },
       ],
     },
@@ -88,9 +106,20 @@ export function Footer() {
           <div key={col.id} className="footer-col footer-links">
             <h4>{col.title}</h4>
             <ul>
-              {col.links.map((link, i) => (
-                <li key={i}>
-                  <Link href={link.href}>{link.label}</Link>
+              {col.links.map((link: any, i: number) => (
+              <li key={i}>
+                  {link.href === '/#about' ? (
+                    <a href="/#about" onClick={handleAboutClick}>{link.label}</a>
+                  ) : link.tag ? (
+                    <button
+                      onClick={() => router.push(setFilterAndGo({ pendingTag: link.tag }))}
+                      className="text-inherit hover:text-inherit"
+                    >
+                      {link.label}
+                    </button>
+                  ) : (
+                    <Link href={link.href}>{link.label}</Link>
+                  )}
                 </li>
               ))}
             </ul>

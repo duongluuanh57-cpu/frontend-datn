@@ -2,10 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+
+
 @layer base {
   :root {
     --color-background: #FFFFFF;
-    --color-surface: #F5F5F5;
     --color-foreground: #1A1A1A;
     --color-primary: #C9A96E;
     --color-primary-dark: #B8944F;
@@ -14,14 +15,26 @@
     --color-text-primary: #1A1A1A;
     --color-text-secondary: #666666;
     --color-text-muted: #999999;
+    --color-on-primary: #FFFFFF;
+    --color-icon: #E8E8E8;
   }
 
-  * {
-    border-color: var(--color-border);
+
+  /* Fix double border on astryxdesign TextInput */
+  [data-stylix-props*="text-input"] {
+    border-color: inherit;
+  }
+  [data-stylix-props*="text-input"] input {
+    border: none !important;
+    outline: none !important;
+  }
+  [data-stylix-props*="text-input"] > div {
+    border: none !important;
   }
 
   html {
     overflow-x: hidden;
+    min-height: 100%;
   }
 
   body {
@@ -31,6 +44,9 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
+    overflow-y: auto;
+    min-height: 100vh;
+    height: auto;
   }
 
   /* Scrollbar styling */
@@ -53,26 +69,26 @@
 @layer components {
   /* Buttons */
   .btn-primary {
-    @apply inline-flex items-center justify-center px-6 py-3 bg-primary text-rich-black text-sm font-semibold rounded-lg hover:bg-primary-dark transition-all duration-300 active:scale-[0.98] cursor-pointer;
+    @apply inline-flex items-center justify-center px-6 py-3 bg-primary text-on-primary text-sm font-semibold rounded-lg hover:bg-primary-dark focus:ring-4 focus:ring-primary-light transition-all duration-300 active:scale-[0.98] cursor-pointer;
   }
 
   .btn-ghost {
-    @apply inline-flex items-center justify-center px-5 py-2.5 border border-border text-text-secondary text-sm font-medium rounded-lg hover:border-primary hover:text-primary transition-all duration-300 active:scale-[0.98] cursor-pointer;
+    @apply inline-flex items-center justify-center px-5 py-2.5 border border-border text-text-secondary text-sm font-medium rounded-lg hover:border-primary hover:text-primary focus:ring-4 focus:ring-primary-light transition-all duration-300 active:scale-[0.98] cursor-pointer;
   }
 
   /* Inputs */
   .input-field {
-    @apply w-full py-2.5 pl-4 pr-4 bg-surface border border-border rounded-lg text-sm text-text-primary placeholder-text-muted outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors duration-300;
+    @apply w-full py-2.5 pl-4 pr-4 bg-background border border-border rounded-lg text-sm text-text-primary placeholder-text-muted outline-none focus:border-primary-dark focus:ring-1 focus:ring-primary-dark transition-colors duration-300;
   }
 
   /* Card base */
   .card {
-    @apply bg-surface rounded-lg p-4 border border-border;
+    @apply bg-background rounded-lg p-4 border border-border;
   }
 
   /* Eyebrow label — taste-skill: max 1 per 3 sections */
   .eyebrow {
-    @apply inline-block font-mono font-medium text-[10px] uppercase tracking-[0.18em] text-primary/80 mb-3;
+    @apply inline-block font-sans font-medium text-[10px] uppercase tracking-[0.18em] text-primary/80 mb-3;
   }
 
   /* Section containers */
@@ -231,8 +247,8 @@ input[type="range"]::-moz-range-track { height: 8px; border-radius: 4px; backgro
 @keyframes badge-pop { 0% { transform: scale(1); } 50% { transform: scale(1.35); } 100% { transform: scale(1); } }
 .animate-badge-pop { animation: badge-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
 
-/* Custom checkbox — matches design system */
-.checkbox-primary {
+  /* Custom checkbox — matches design system */
+  .checkbox-primary {
   appearance: none;
   -webkit-appearance: none;
   width: 16px;

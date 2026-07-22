@@ -1,55 +1,20 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Button } from '@astryxdesign/core/Button';
+import { formatNumber, parsePrice, getPriceSuggestions } from '@/lib/priceFilterUtils';
 
 interface PriceFilterDropdownProps {
   priceMin: number | undefined;
   priceMax: number | undefined;
   onApply: (min: number, max: number) => void;
   onClear: () => void;
-}
-
-function formatPrice(value: number): string {
-  return value.toLocaleString('vi-VN');
-}
-
-function parsePrice(value: string): number {
-  const cleaned = value.replace(/\./g, '').replace(/,/g, '');
-  const parsed = parseInt(cleaned, 10);
-  return isNaN(parsed) ? 0 : Math.max(0, parsed);
-}
-
-function getPriceSuggestions(value: number): string[] {
-  if (value === 0) return [];
-  const suggestions: string[] = [];
-  const maxPrice = 5000000;
-  if (value < 1000) {
-    const s1 = value * 100000;
-    const s2 = value * 1000000;
-    if (s1 <= maxPrice) suggestions.push(formatPrice(s1));
-    if (s2 <= maxPrice) suggestions.push(formatPrice(s2));
-  } else if (value < 10000) {
-    const s1 = value * 100;
-    const s2 = value * 1000;
-    if (s1 <= maxPrice) suggestions.push(formatPrice(s1));
-    if (s2 <= maxPrice) suggestions.push(formatPrice(s2));
-  } else if (value < 100000) {
-    const s1 = value * 10;
-    const s2 = value * 100;
-    if (s1 <= maxPrice) suggestions.push(formatPrice(s1));
-    if (s2 <= maxPrice) suggestions.push(formatPrice(s2));
-  } else if (value < 1000000) {
-    const s1 = value * 10;
-    if (s1 <= maxPrice) suggestions.push(formatPrice(s1));
-  }
-  return suggestions.slice(0, 3);
+  isOpen?: boolean;
+  onToggle?: () => void;
 }
 
 export function PriceFilterDropdown({
-  priceMin, priceMax, onApply, onClear,
+  priceMin, priceMax, onApply, onClear, isOpen, onToggle,
 }: PriceFilterDropdownProps) {
-  const [open, setOpen] = useState(false);
   const initialMin = priceMin ?? 0;
   const initialMax = priceMax ?? 5000000;
 
@@ -96,31 +61,30 @@ export function PriceFilterDropdown({
 
   const handleApply = () => {
     onApply(tempMin, tempMax);
-    setOpen(false);
+    onToggle?.();
   };
 
   const handleClear = () => {
     setTempMin(0);
     setTempMax(5000000);
     onClear();
-    setOpen(false);
+    onToggle?.();
   };
 
   const hasActive = priceMin !== undefined || priceMax !== undefined;
 
   return (
     <div className="relative">
-      <button onClick={() => setOpen(!open)}
+      <button onClick={onToggle}
         className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border transition-colors cursor-pointer ${
-          hasActive ? 'bg-primary/10 border-primary text-primary' : 'bg-surface border-border text-text-primary hover:border-primary'
+          hasActive ? 'bg-primary/10 border-primary text-primary' : 'bg-background border-border text-text-primary hover:border-primary'
         }`}>
         <span>{hasActive ? 'Đã lọc giá' : 'Giá'}</span>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-text-muted"><path d="m6 9 6 6 6-6"/></svg>
       </button>
-      {open && (
+      {isOpen && (
         <>
-          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute top-full left-0 mt-2 w-80 bg-surface border border-border rounded-xl shadow-xl z-20 p-5">
+          <div className="absolute top-full left-0 mt-2 w-80 bg-background border border-border rounded-xl shadow-xl z-50 p-5">
             <div className="mb-4">
               <div className="relative h-2 bg-text-muted/10 rounded-full">
                 <div
@@ -168,20 +132,20 @@ export function PriceFilterDropdown({
                 <label className="block text-xs font-medium text-text-secondary mb-1.5">Tối thiểu</label>
                 <input
                   type="text"
-                  value={formatPrice(tempMin)}
+                  value={formatNumber(tempMin)}
                   onChange={handleMinInputChange}
                   className="w-full px-3 py-2 text-sm bg-background border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="0đ"
+                  placeholder="0d"
                 />
               </div>
               <div>
                 <label className="block text-xs font-medium text-text-secondary mb-1.5">Tối đa</label>
                 <input
                   type="text"
-                  value={formatPrice(tempMax)}
+                  value={formatNumber(tempMax)}
                   onChange={handleMaxInputChange}
                   className="w-full px-3 py-2 text-sm bg-background border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="5.000.000đ"
+                  placeholder="5.000.000d"
                 />
               </div>
             </div>
@@ -196,7 +160,7 @@ export function PriceFilterDropdown({
                       onClick={() => handleSuggestionClick(parsePrice(suggestion))}
                       className="px-2.5 py-1 bg-white border border-primary text-primary text-xs rounded-full hover:bg-primary hover:text-white transition-colors cursor-pointer"
                     >
-                      {suggestion}đ
+                      {suggestion}d
                     </button>
                   ))}
                 </div>
@@ -204,8 +168,12 @@ export function PriceFilterDropdown({
             )}
 
             <div className="flex gap-2">
-              <Button label="Xóa" variant="secondary" size="sm" onClick={handleClear} />
-              <Button label="Áp dụng" variant="primary" size="sm" onClick={handleApply} />
+              <button onClick={handleClear} className="flex-1 px-4 py-2 text-sm font-medium text-text-secondary bg-foreground/5 border border-border rounded-lg hover:bg-foreground/10 transition-colors cursor-pointer">
+                Xóa
+              </button>
+              <button onClick={handleApply} className="flex-1 px-4 py-2 text-sm font-medium text-on-primary bg-primary rounded-lg hover:bg-primary-dark transition-colors cursor-pointer">
+                Áp dụng
+              </button>
             </div>
           </div>
         </>

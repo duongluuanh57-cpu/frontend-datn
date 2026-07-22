@@ -2,7 +2,7 @@
 
 export function AboutUs() {
   return (
-    <section className="py-12 md:py-16 bg-surface border-y border-border">
+    <section id="about" className="py-12 md:py-16 bg-background">
       <div className="max-w-7xl mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
           {/* Hình bên trái */}
@@ -12,9 +12,9 @@ export function AboutUs() {
               alt="Về L'essence"
               className="w-full h-[300px] md:h-[400px] object-cover rounded-xl"
             />
-            <div className="absolute -bottom-4 -right-4 bg-primary text-white p-4 rounded-lg shadow-lg hidden md:block">
-              <p className="text-2xl font-bold">5+</p>
-              <p className="text-xs font-medium">Năm kinh nghiệm</p>
+            <div className="absolute -bottom-4 -right-4 bg-primary p-4 rounded-lg shadow-lg hidden md:block">
+              <p className="text-2xl font-bold text-on-primary">5+</p>
+              <p className="text-xs font-medium text-on-primary">Năm kinh nghiệm</p>
             </div>
           </div>
 

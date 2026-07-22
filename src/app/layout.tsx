@@ -1,4 +1,3 @@
-import '@astryxdesign/core/astryx.css';
 import './globals.css';
 import type { Metadata } from 'next';
 import Script from 'next/script';
@@ -10,7 +9,7 @@ import { Suspense } from 'react';
 import { TokenHandler } from '@/components/shared/token-handler';
 import { TrackVisit } from '@/components/shared/track-visit';
 import { ScrollToTop } from '@/components/shared/ScrollToTop';
-import AstryxProvider from '@/providers/AstryxProvider';
+import { PagePadding } from '@/components/shared/page-padding';
 
 
 const inter = Inter({
@@ -40,12 +39,12 @@ export default function RootLayout({
   const isProduction = process.env.NODE_ENV === 'production';
 
   return (
-    <html lang="vi" suppressHydrationWarning data-scroll-behavior="smooth" className="h-full">
+    <html lang="vi" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://pub-51942afe81314369ba1985f0493bce19.r2.dev" />
         <link rel="dns-prefetch" href="https://pub-51942afe81314369ba1985f0493bce19.r2.dev" />
       </head>
-<body className={`${inter.variable} ${jetbrainsMono.variable} font-sans h-screen flex flex-col`}>
+<body className={`${inter.variable} ${jetbrainsMono.variable} font-sans min-h-screen flex flex-col`}>
         {isProduction && (
           <Script id="fb-pixel" strategy="afterInteractive">
             {`
@@ -64,18 +63,16 @@ export default function RootLayout({
         )}
 
         <QueryProvider>
-          <AstryxProvider>
-            <ScrollToTop />
-            <Suspense fallback={null}>
-              <TokenHandler />
-            </Suspense>
-            <TrackVisit />
-            <Navbar />
-            <Toaster position="top-center" richColors />
-            <div className="flex-1 pt-16 md:pt-20 min-h-0">
-              {children}
-            </div>
-          </AstryxProvider>
+          <ScrollToTop />
+          <Suspense fallback={null}>
+            <TokenHandler />
+          </Suspense>
+          <TrackVisit />
+          <Navbar />
+          <Toaster position="top-center" richColors />
+          <div className="flex-1 min-h-0">
+            <PagePadding>{children}</PagePadding>
+          </div>
         </QueryProvider>
       </body>
     </html>

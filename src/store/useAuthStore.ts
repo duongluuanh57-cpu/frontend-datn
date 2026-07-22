@@ -13,6 +13,7 @@ interface User {
   fullName?: string;
   phoneNumber?: string;
   gender?: 'MALE' | 'FEMALE' | 'OTHER' | '';
+  dateOfBirth?: string;
   address?: string;
   province?: string;
   district?: string;

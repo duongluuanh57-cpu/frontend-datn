@@ -1,22 +1,29 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: ["./src/**/*.{js,ts,jsx,tsx,mdx}"],
+  content: [
+    "./src/**/*.{js,ts,jsx,tsx,mdx}",
+  ],
   theme: {
     extend: {
       colors: {
         background: "#FFFFFF",
-        surface: "#F5F5F5",
         foreground: "#1A1A1A",
         primary: "#C9A96E",
         "primary-dark": "#B8944F",
         "primary-light": "#D4BC82",
+        "on-primary": "#FFFFFF",
         gold: "#C9A96E",
         "rich-black": "#0A0A0A",
         border: "#E8E8E8",
+        "border-subtle": "rgba(232, 232, 232, 0.5)",
         "text-primary": "#1A1A1A",
         "text-secondary": "#666666",
         "text-muted": "#999999",
         price: "#C9A96E",
+        icon: "#E8E8E8",
+        success: "#10B981",
+        "success-light": "#D1FAE5",
+        "star-empty": "rgba(201, 169, 110, 0.2)",
       },
       fontFamily: {
         sans: ["var(--font-inter)", "Inter", "ui-sans-serif", "system-ui", "sans-serif"],
@@ -95,5 +102,5 @@ module.exports = {
       },
     },
   },
-  plugins: [],
+  plugins: [require("tailwindcss-animate")],
 };

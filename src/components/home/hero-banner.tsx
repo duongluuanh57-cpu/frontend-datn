@@ -90,7 +90,7 @@ export function HeroBanner() {
         <div className="absolute inset-0 z-[1]" />
 
         {/* Dark overlay — gradient để text dễ đọc */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent z-[2]" />
+        <div className="absolute inset-0 bg-gradient-to-r from-foreground/60 via-foreground/30 to-transparent z-[2]" />
 
         {/* Split Screen: Left = Text, Right = Video */}
         <div className="relative z-[3] min-h-[100dvh] flex items-center">
@@ -104,20 +104,20 @@ export function HeroBanner() {
                 transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                 className="max-w-xl"
               >
-                <span className="eyebrow inline-block !text-white/80 !text-[10px]">
+                <span className="eyebrow inline-block !text-on-primary/80 !text-xs">
                   {slide.badge}
                 </span>
-                <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white leading-tight mb-4 tracking-tighter whitespace-pre-line">
+                <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold text-on-primary leading-tight mb-4 tracking-tighter whitespace-pre-line">
                   {slide.title}
                 </h2>
-                <p className="text-base md:text-lg text-white/70 mb-8 max-w-md leading-relaxed">
+                <p className="text-base md:text-lg text-on-primary/70 mb-8 max-w-md leading-relaxed">
                   {slide.desc}
                 </p>
                 <div className="flex gap-3">
-                  <button className="px-7 py-3.5 bg-primary hover:bg-primary-dark text-rich-black text-sm font-semibold rounded-lg transition-all duration-300 hover:translate-y-[-1px] cursor-pointer shadow-lg shadow-primary/20">
+                  <button className="px-7 py-3.5 bg-primary-dark hover:bg-primary text-on-primary text-sm font-semibold rounded-lg transition-all duration-300 hover:translate-y-[-1px] cursor-pointer shadow-lg shadow-primary/20">
                     {slide.cta}
                   </button>
-                  <button className="btn-ghost !text-white/80 !border-white/20 hover:!border-white/50 hover:!text-white">
+                  <button className="btn-ghost !text-on-primary/80 !border-on-primary/20 hover:!border-on-primary/50 hover:!text-on-primary">
                     Xem thêm
                   </button>
                 </div>
@@ -131,16 +131,16 @@ export function HeroBanner() {
 
         {/* Dots navigation */}
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex gap-2">
-          {SLIDES.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrent(i)}
-              className={`h-1.5 rounded-full transition-all duration-500 cursor-pointer ${
-                i === current ? 'bg-primary w-8' : 'bg-white/30 hover:bg-white/50 w-3'
-              }`}
-              aria-label={`Slide ${i + 1}`}
-            />
-          ))}
+              {SLIDES.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrent(i)}
+                  className={`h-1.5 rounded-full transition-all duration-500 cursor-pointer ${
+                    i === current ? 'bg-primary-dark w-8' : 'bg-on-primary/30 w-3'
+                  }`}
+                  aria-label={`Slide ${i + 1}`}
+                />
+              ))}
         </div>
       </div>
     </section>

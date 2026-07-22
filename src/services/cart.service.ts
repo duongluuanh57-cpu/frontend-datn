@@ -20,6 +20,18 @@ export interface CartItem {
   availableVariants?: VariantInfo[];
 }
 
+export interface VoucherInfo {
+  code: string;
+  type: 'percentage' | 'fixed';
+  value: number;
+  maxDiscount: number | null;
+  minOrderAmount: number;
+  minTier: string | null;
+  discountAmount: number;
+  endDate: string;
+  remaining?: number;
+}
+
 export interface CartResponse {
   success: boolean;
   message?: string;
@@ -28,7 +40,15 @@ export interface CartResponse {
     items: CartItem[];
     totalAmount: number;
     totalItems: number;
+    voucherCode?: string;
+    voucherDiscount?: number;
   };
+}
+
+export interface VouchersResponse {
+  success: boolean;
+  message?: string;
+  data?: VoucherInfo[];
 }
 
 export async function getCart(token: string): Promise<CartResponse> {
@@ -138,6 +158,46 @@ export async function clearCart(token: string): Promise<CartResponse> {
   return res.json();
 }
 
+export async function getAvailableVouchers(token: string): Promise<VouchersResponse> {
+  const res = await fetch(`${API_BASE}/api/cart/vouchers`, {
+    method: 'GET',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.message || 'Không thể lấy danh sách voucher');
+  }
+  return res.json();
+}
+
+export async function applyVoucher(token: string, code: string): Promise<CartResponse> {
+  const res = await fetch(`${API_BASE}/api/cart/apply-voucher`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ code }),
+  });
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.message || 'Không thể áp dụng mã giảm giá');
+  }
+  return res.json();
+}
+
+export async function removeVoucher(token: string): Promise<CartResponse> {
+  const res = await fetch(`${API_BASE}/api/cart/remove-voucher`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.message || 'Không thể hủy mã giảm giá');
+  }
+  return res.json();
+}
+
 export async function checkout(
   token: string,
   orderData: {
@@ -146,6 +206,7 @@ export async function checkout(
     customerPhone?: string;
     customerAddress?: string;
     paymentMethod?: 'cod' | 'bank_transfer' | 'credit_card' | 'momo' | 'zalopay' | 'vnpay';
+    shippingMethod?: 'standard' | 'express';
   }
 ): Promise<CartResponse> {
   const res = await fetch(`${API_BASE}/api/cart/checkout`, {

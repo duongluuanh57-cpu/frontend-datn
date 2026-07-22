@@ -1,11 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { MapPin, Phone, User, Mail, CreditCard, Truck, Shield, ArrowLeft, CheckCircle, Building2, Loader2 } from 'lucide-react';
-import { TextInput } from '@astryxdesign/core/TextInput';
-import { Selector } from '@astryxdesign/core/Selector';
-import { Button } from '@astryxdesign/core/Button';
-import { TextArea } from '@astryxdesign/core/TextArea';
+import { MapPin, Phone, User, Mail, CreditCard, Truck, Shield, ArrowLeft, CheckCircle, Building2, Loader2, ChevronDown, X, Percent, Banknote, Receipt, ShoppingBag, Package, Clock, Info, Home, Zap, Tag, Ticket } from 'lucide-react';
 import Link from 'next/link';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useCartStore } from '@/store/useCartStore';
@@ -15,7 +11,15 @@ import { getCart, checkout } from '@/services/cart.service';
 import { CartItem } from '@/services/cart.service';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
+import { formatPrice } from '@/lib/formatPrice';
+import { AddressCard } from '@/components/profile/address-card';
+import { AddressEditForm } from '@/components/profile/address-edit-form';
+import { VoucherCard } from '@/components/profile/voucher-card';
+import { PriceSummary } from '@/components/shared/PriceSummary';
+import { VoucherSelector } from '@/components/shared/VoucherSelector';
+import { useProfileAddresses } from '@/hooks/profile/useProfileAddresses';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
@@ -30,6 +34,7 @@ export default function CheckoutPage() {
   const accessToken = useAuthStore((state) => state.accessToken);
   const user = useAuthStore((state) => state.user);
   const setCartCount = useCartStore((state) => state.setCartCount);
+  const queryClient = useQueryClient();
   const router = useRouter();
 
   const [formData, setFormData] = useState({
@@ -43,6 +48,7 @@ export default function CheckoutPage() {
     note: '',
     paymentMethod: 'cod',
   });
+  const [shippingMethod, setShippingMethod] = useState<'standard' | 'express'>('standard');
   const [isEditingInfo, setIsEditingInfo] = useState(false);
   const [voucherInput, setVoucherInput] = useState('');
   const [voucherMsg, setVoucherMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -50,6 +56,26 @@ export default function CheckoutPage() {
   const [vouchers, setVouchers] = useState<any[]>([]);
   const [showVoucherPopup, setShowVoucherPopup] = useState(false);
   const [fetchingVouchers, setFetchingVouchers] = useState(false);
+  const [selectedVoucherCode, setSelectedVoucherCode] = useState<string | null>(null);
+  const [showAddressPopup, setShowAddressPopup] = useState(false);
+  const [editingCheckoutAddr, setEditingCheckoutAddr] = useState<any>(null);
+  const [checkoutAddrForm, setCheckoutAddrForm] = useState({
+    editingAddressId: null as string | null,
+    addrType: 'home' as 'home' | 'office',
+    addrFullName: '',
+    addrPhoneNumber: '',
+    addrStreet: '',
+    addrProvince: '',
+    addrDistrict: '',
+    addrWard: '',
+    addrLat: 10.8231,
+    addrLng: 106.6297,
+    addrSubmitting: false,
+    addressStep: 'province' as AddressStep,
+    selectedProvinceCode: null as number | null,
+    selectedDistrictCode: null as number | null,
+  });
+  const [checkoutAddrError, setCheckoutAddrError] = useState<string | null>(null);
 
   // Province/District/Ward state
   const [provinces, setProvinces] = useState<Array<{ name: string; code: number }>>([]);
@@ -176,7 +202,9 @@ export default function CheckoutPage() {
 
         const addrs = addrResult.data?.data || [];
         setAddresses(addrs);
-        const methods = pmResult.data || [];
+        const methods = (pmResult.data || []).filter(
+          (m: any) => m.code === 'cod' || m.code === 'vnpay'
+        );
         setPaymentMethods(methods);
         if (methods.length > 0 && !formData.paymentMethod) {
           setFormData(prev => ({ ...prev, paymentMethod: methods[0].code }));
@@ -299,6 +327,7 @@ export default function CheckoutPage() {
               ? `${formData.address}, ${formData.district}, ${formData.city} - Ghi chú: ${formData.note}`
               : `${formData.address}, ${formData.district}, ${formData.city}`,
             note: formData.note,
+            shippingMethod: shippingMethod,
           }),
         });
         const json = await res.json();
@@ -318,10 +347,12 @@ export default function CheckoutPage() {
             ? `${formData.address}, ${formData.district}, ${formData.city} - Ghi chú: ${formData.note}`
             : `${formData.address}, ${formData.district}, ${formData.city}`,
           paymentMethod: formData.paymentMethod as any,
+          shippingMethod: shippingMethod,
         });
         if (result.success) {
           setOrderSuccess(true);
           setCartCount(0);
+          queryClient.invalidateQueries({ queryKey: ['cart'] });
           setTimeout(() => {
             router.push('/');
           }, 3000);
@@ -337,11 +368,9 @@ export default function CheckoutPage() {
     }
   };
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
-  };
-
-  const shippingFee = cart && cart.totalAmount >= 500000 ? 0 : 30000;
+  const shippingFee = shippingMethod === 'express'
+    ? Math.round(cart ? cart.totalAmount * 0.5 : 0)
+    : (cart && cart.totalAmount >= 500000 ? 0 : 30000);
   const voucherDiscount = cart?.voucherDiscount || 0;
   const finalTotal = cart ? cart.totalAmount + shippingFee - voucherDiscount : 0;
 
@@ -365,14 +394,16 @@ export default function CheckoutPage() {
   };
 
   const handleApplyVoucher = async (code?: string) => {
-    if (!accessToken || !voucherInput.trim()) return;
+    if (!accessToken) return;
+    const finalCode = (code || voucherInput || '').trim();
+    if (!finalCode) return;
     setApplyingVoucher(true);
     setVoucherMsg(null);
     try {
       const res = await fetch(`${API_BASE}/api/cart/apply-voucher`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
-        body: JSON.stringify({ code: (code || voucherInput).trim() }),
+        body: JSON.stringify({ code: finalCode }),
       });
       const json = await res.json();
       if (json.success && json.data) {
@@ -409,83 +440,64 @@ export default function CheckoutPage() {
     }
   };
 
-  if (loading) {
+  // ===== Flowbite-inspired Input component =====
+  function FormInput({ label, required, icon: Icon, ...props }: {
+    label: string; required?: boolean; icon?: React.ElementType;
+  } & React.InputHTMLAttributes<HTMLInputElement>) {
     return (
-      <div className="min-h-screen bg-background animate-pulse">
-        <div className="flex-shrink-0 border-b border-border bg-surface">
-          <div className="max-w-7xl mx-auto px-4 lg:px-6 py-4 lg:py-5">
-            <div className="h-3 bg-text-muted/10 rounded w-32 mb-3" />
-            <div className="flex items-start gap-3">
-              <div className="w-1 h-7 bg-primary/20 rounded-full flex-shrink-0 mt-1" />
-              <div className="space-y-2">
-                <div className="h-8 w-48 bg-text-muted/10 rounded" />
-                <div className="h-4 w-64 bg-text-muted/10 rounded" />
-              </div>
+      <div>
+        <label className="block text-sm font-medium text-text-secondary mb-1.5">
+          {label} {required && <span className="text-red-500">*</span>}
+        </label>
+        <div className="relative">
+          {Icon && (
+            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+              <Icon className="w-4 h-4 text-text-muted" />
             </div>
-          </div>
+          )}
+          <input
+            {...props}
+            className={`w-full border border-border bg-white text-text-primary text-sm rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors ${
+              Icon ? 'pl-10 pr-3.5 py-2.5' : 'px-3.5 py-2.5'
+            } disabled:bg-gray-50 disabled:text-text-muted`}
+          />
         </div>
-        <div className="max-w-7xl mx-auto w-full flex px-4 lg:px-6">
-          <div className="flex-1 py-5 lg:py-6 pr-4 lg:pr-6">
-            <div className="max-w-3xl space-y-5">
-              <div className="bg-surface rounded-xl p-5 lg:p-6 shadow-sm ring-1 ring-black/5">
-                <div className="h-5 w-40 bg-text-muted/10 rounded mb-4" />
-                <div className="h-10 bg-text-muted/10 rounded-xl" />
-              </div>
-              <div className="bg-surface rounded-xl p-5 lg:p-6 shadow-sm ring-1 ring-black/5 space-y-4">
-                <div className="h-5 w-44 bg-text-muted/10 rounded" />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="h-[52px] bg-text-muted/10 rounded-xl" />
-                  <div className="h-[52px] bg-text-muted/10 rounded-xl" />
-                </div>
-                <div className="h-[52px] bg-text-muted/10 rounded-xl" />
-                <div className="h-[52px] bg-text-muted/10 rounded-xl" />
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="h-[52px] bg-text-muted/10 rounded-xl" />
-                  <div className="h-[52px] bg-text-muted/10 rounded-xl" />
-                  <div className="h-[52px] bg-text-muted/10 rounded-xl" />
-                </div>
-              </div>
-              <div className="bg-surface rounded-xl p-5 lg:p-6 shadow-sm ring-1 ring-black/5 space-y-3">
-                <div className="h-5 w-48 bg-text-muted/10 rounded" />
-                <div className="h-16 bg-text-muted/10 rounded-xl" />
-                <div className="h-16 bg-text-muted/10 rounded-xl" />
-              </div>
+      </div>
+    );
+  }
+
+  function FormSelect({ label, required, icon: Icon, children, ...props }: {
+    label: string; required?: boolean; icon?: React.ElementType; children: React.ReactNode;
+  } & React.SelectHTMLAttributes<HTMLSelectElement>) {
+    return (
+      <div>
+        <label className="block text-sm font-medium text-text-secondary mb-1.5">
+          {label} {required && <span className="text-red-500">*</span>}
+        </label>
+        <div className="relative">
+          {Icon && (
+            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+              <Icon className="w-4 h-4 text-text-muted" />
             </div>
-          </div>
-          <div className="w-[360px] lg:w-[400px] flex-shrink-0 border-l border-border bg-surface p-5 lg:p-6">
-            <div className="h-5 w-40 bg-text-muted/10 rounded mb-5" />
-            <div className="h-10 bg-text-muted/10 rounded-xl mb-4" />
-            <div className="space-y-3">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="flex gap-3">
-                  <div className="w-14 h-14 bg-text-muted/10 rounded-xl flex-shrink-0" />
-                  <div className="flex-1 space-y-2">
-                    <div className="h-4 w-3/4 bg-text-muted/10 rounded" />
-                    <div className="h-3 w-12 bg-text-muted/10 rounded" />
-                    <div className="h-4 w-20 bg-text-muted/10 rounded" />
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="border-t border-border pt-4 mt-4 space-y-3">
-              <div className="flex justify-between">
-                <div className="h-4 w-16 bg-text-muted/10 rounded" />
-                <div className="h-4 w-20 bg-text-muted/10 rounded" />
-              </div>
-              <div className="flex justify-between">
-                <div className="h-4 w-24 bg-text-muted/10 rounded" />
-                <div className="h-4 w-16 bg-text-muted/10 rounded" />
-              </div>
-              <div className="border-t border-border pt-3 flex justify-between">
-                <div className="h-5 w-20 bg-text-muted/10 rounded" />
-                <div className="h-7 w-28 bg-text-muted/10 rounded" />
-              </div>
-              <div className="h-12 bg-text-muted/10 rounded-xl mt-3" />
-            </div>
+          )}
+          <select
+            {...props}
+            className={`w-full border border-border bg-white text-text-primary text-sm rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors appearance-none ${
+              Icon ? 'pl-10 pr-8 py-2.5' : 'px-3.5 pr-8 py-2.5'
+            } disabled:bg-gray-50 disabled:text-text-muted`}
+          >
+            {children}
+          </select>
+          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+            <ChevronDown className="w-4 h-4 text-text-muted" />
           </div>
         </div>
       </div>
     );
+  }
+
+  if (loading) {
+    return <SkeletonLoader />;
   }
 
   if (!accessToken) {
@@ -506,6 +518,7 @@ export default function CheckoutPage() {
     return (
       <div className="min-h-[100dvh] bg-background flex items-center justify-center">
         <div className="text-center">
+          <ShoppingBag className="w-16 h-16 text-text-muted mx-auto mb-4" />
           <h3 className="text-lg font-medium text-text-primary mb-2">Giỏ hàng trống</h3>
           <p className="text-text-secondary mb-6">Hãy thêm sản phẩm vào giỏ hàng trước khi thanh toán</p>
           <Link href="/" className="btn-primary">
@@ -519,454 +532,430 @@ export default function CheckoutPage() {
   if (orderSuccess) {
     return (
       <div className="min-h-[100dvh] bg-background flex items-center justify-center">
-        <div className="text-center">
-          <CheckCircle className="w-20 h-20 text-green-500 mx-auto mb-4" />
+        <div className="text-center max-w-sm mx-auto">
+          <div className="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-5">
+            <CheckCircle className="w-10 h-10 text-green-500" />
+          </div>
           <h2 className="text-2xl font-bold text-text-primary mb-2">Đặt hàng thành công!</h2>
-          <p className="text-text-secondary mb-4">Cảm ơn bạn đã mua hàng. Chúng tôi sẽ liên hệ với bạn sớm nhất.</p>
-          <p className="text-sm text-text-muted">Đang chuyển về trang chủ...</p>
+          <p className="text-text-secondary mb-1">Cảm ơn bạn đã mua hàng.</p>
+          <p className="text-sm text-text-muted">Chúng tôi sẽ liên hệ với bạn sớm nhất.</p>
+          <p className="text-xs text-text-muted mt-4 flex items-center justify-center gap-1.5">
+            <Clock className="w-3.5 h-3.5" />
+            Đang chuyển về trang chủ...
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-      <div className="h-screen flex flex-col bg-background -mt-16 md:-mt-20 overflow-hidden">
-      {/* HEADER — premium checkout header */}
-      <div className="flex-shrink-0 border-b border-border bg-surface">
-        <div className="max-w-7xl mx-auto px-4 lg:px-6">
-          <div className="py-4 lg:py-5">
+    <div className="min-h-screen bg-[#F9FAFB] -mt-16 md:-mt-20">
+      {/* HEADER */}
+      <div className="bg-white border-b border-border">
+        <div className="max-w-7xl mx-auto px-4 lg:px-6 py-4 lg:py-5">
             <Link
-              href="/"
-              className="inline-flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.15em] text-text-muted hover:text-primary transition-colors group mb-2"
+              href="/cart"
+              className="inline-flex items-center gap-1.5 text-xs font-medium tracking-wide text-text-muted hover:text-primary transition-colors group mb-2"
             >
-              <ArrowLeft size={12} className="transition-transform group-hover:-translate-x-1" />
-              Quay lại cửa hàng
+              <ArrowLeft size={14} className="transition-transform group-hover:-translate-x-1" />
+              Quay lại giỏ hàng
             </Link>
-            <div className="flex items-start gap-3">
-              <div className="w-1 h-7 bg-primary rounded-full flex-shrink-0 mt-1" />
-              <div>
-                <h1 className="text-2xl lg:text-3xl font-bold text-text-primary tracking-tight leading-tight">
-                  Thanh toán
-                </h1>
-                <p className="text-sm text-text-secondary mt-1">Kiểm tra thông tin và hoàn tất đơn hàng của bạn</p>
-              </div>
+          <div className="flex items-start gap-3">
+            <div className="w-1 h-7 bg-primary rounded-full flex-shrink-0 mt-0.5" />
+            <div>
+              <h1 className="text-2xl lg:text-3xl font-bold text-text-primary tracking-tight leading-tight">
+                Thanh toán
+              </h1>
+              <p className="text-sm text-text-secondary mt-0.5">Kiểm tra thông tin và hoàn tất đơn hàng</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* BODY – split panel */}
-      <form onSubmit={handleSubmit} className="flex-1 flex min-h-0">
-        <div className="max-w-7xl mx-auto w-full flex px-4 lg:px-6">
-          {/* LEFT COLUMN – scrollable */}
-          <div className="flex-1 overflow-y-auto py-5 lg:py-6 pr-4 lg:pr-6">
-            <div className="max-w-3xl space-y-5">
+      {/* BODY */}
+      <form onSubmit={handleSubmit}>
+        <div className="max-w-7xl mx-auto px-4 lg:px-6 py-6 lg:py-8">
+          <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
 
-            {/* ---- Address Selector ---- */}
-            {addresses.length > 0 && (
-              <section className="bg-surface rounded-xl p-5 lg:p-6 shadow-sm ring-1 ring-black/5">
-                <h2 className="text-sm lg:text-base font-semibold text-text-primary mb-4 flex items-center gap-2.5">
-                  <span className="w-1 h-4 bg-primary rounded-full" />
-                  Chọn địa chỉ giao hàng
-                </h2>
-                <Selector
-                  label="Chọn địa chỉ giao hàng"
-                  isLabelHidden
-                  value={selectedAddressId}
-                  onChange={(val) => val && handleAddressSelect(val)}
-                  options={[
-                    {
-                      value: 'default',
-                      label: addresses.find((a: any) => a.isDefault)
-                        ? `Mặc định: ${addresses.find((a: any) => a.isDefault).fullName} - ${addresses.find((a: any) => a.isDefault).address}`
-                        : 'Sử dụng thông tin tài khoản'
-                    },
-                    ...addresses.filter((a: any) => !a.isDefault).map((addr: any) => ({
-                      value: addr._id,
-                      label: `${addr.label}: ${addr.fullName} - ${addr.address}, ${addr.district && `${addr.district}, `}${addr.province}`
-                    }))
-                  ]}
-                  placeholder="Chọn địa chỉ"
-                  size="md"
-                />
-              </section>
-            )}
+            {/* ===== LEFT COLUMN ===== */}
+            <div className="flex-1 space-y-6 min-w-0">
 
-            {/* ---- Shipping Information ---- */}
-            <section className="bg-surface rounded-xl p-5 lg:p-6 shadow-sm ring-1 ring-black/5">
-              <h2 className="text-sm lg:text-base font-semibold text-text-primary mb-4 flex items-center gap-2.5">
-                <span className="w-1 h-4 bg-primary rounded-full" />
-                Thông tin giao hàng
-              </h2>
+              {/* Address Selector */}
+              {addresses.length > 0 && (
+                <section className="bg-white rounded-xl border border-border shadow-sm p-5 lg:p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-sm lg:text-base font-semibold text-text-primary flex items-center gap-2">
+                      <MapPin className="w-4 h-4 text-primary" />
+                      Địa chỉ nhận hàng
+                    </h2>
+                    <button
+                      type="button"
+                      onClick={() => setShowAddressPopup(true)}
+                      className="text-xs font-semibold text-primary hover:text-primary-dark transition-colors cursor-pointer"
+                    >
+                      Thay đổi
+                    </button>
+                  </div>
 
-              {isProfileComplete && selectedAddressId === 'default' ? (
-                <div className="space-y-3">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div className="flex items-start gap-3.5 p-4 rounded-xl bg-background/60 ring-1 ring-black/5">
-                      <User className="text-text-muted mt-0.5 flex-shrink-0" size={16} />
-                      <div>
-                        <p className="text-[10px] text-text-muted uppercase tracking-widest mb-0.5">Họ và tên</p>
-                        <p className="text-sm font-medium text-text-primary">{formData.fullName}</p>
+                  {/* Selected address display */}
+                  {(() => {
+                    const selectedAddr = selectedAddressId === 'default'
+                      ? addresses.find((a: any) => a.isDefault)
+                      : addresses.find((a: any) => a._id === selectedAddressId);
+                    if (!selectedAddr) return null;
+                    const isDefault = !!selectedAddr.isDefault;
+                    return (
+                      <div className="bg-foreground/5 rounded-xl p-4">
+                        <p className="text-sm font-semibold text-text-primary flex items-center gap-2 flex-wrap">
+                          <span>{selectedAddr.fullName} · {selectedAddr.phoneNumber}</span>
+                          {isDefault && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-semibold rounded-full whitespace-nowrap">
+                              <Home size={10} /> Mặc định
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-sm text-text-muted mt-1">
+                          {selectedAddr.address}
+                          {selectedAddr.ward ? `, ${selectedAddr.ward}` : ''}
+                          {selectedAddr.district ? `, ${selectedAddr.district}` : ''}
+                          {selectedAddr.province ? `, ${selectedAddr.province}` : ''}
+                        </p>
                       </div>
-                    </div>
-                    <div className="flex items-start gap-3.5 p-4 rounded-xl bg-background/60 ring-1 ring-black/5">
-                      <Phone className="text-text-muted mt-0.5 flex-shrink-0" size={16} />
-                      <div>
-                        <p className="text-[10px] text-text-muted uppercase tracking-widest mb-0.5">Số điện thoại</p>
-                        <p className="text-sm font-medium text-text-primary">{formData.phone}</p>
+                    );
+                  })()}
+
+                  {/* Note */}
+                  <div className="mt-4">
+                    <label className="block text-xs font-medium text-text-secondary mb-1.5">Ghi chú</label>
+                    <textarea
+                      value={formData.note}
+                      onChange={(e) => setFormData(prev => ({ ...prev, note: e.target.value }))}
+                      rows={2}
+                      placeholder="Ghi chú về đơn hàng, ví dụ: giao hàng vào giờ hành chính"
+                      className="w-full border border-border bg-white text-text-primary text-sm rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors px-3.5 py-2.5 resize-none"
+                    />
+                  </div>
+
+                  {/* Address picker popup */}
+                  {showAddressPopup && (
+                    <>
+                      <div className="fixed inset-0 bg-black/40 z-50" onClick={() => setShowAddressPopup(false)} />
+                      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <div className="bg-white rounded-xl shadow-elevated w-full max-w-lg max-h-[80vh] flex flex-col">
+                          <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+                            <h3 className="text-base font-semibold text-text-primary">Chọn địa chỉ nhận hàng</h3>
+                            <button type="button" onClick={() => setShowAddressPopup(false)} className="text-text-muted hover:text-text-primary transition-colors cursor-pointer">
+                              <X size={18} />
+                            </button>
+                          </div>
+                          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+                            {addresses.map((addr: any) => (
+                              <div
+                                key={addr._id}
+                                className={`relative rounded-xl border-2 transition-all ${
+                                  selectedAddressId === addr._id
+                                    ? 'border-primary bg-primary/[0.04]'
+                                    : 'border-border'
+                                }`}
+                              >
+                                <label className="block cursor-pointer p-4">
+                                  <input
+                                    type="radio"
+                                    name="checkout-address"
+                                    checked={selectedAddressId === addr._id}
+                                    onChange={() => {
+                                      handleAddressSelect(addr._id);
+                                      setShowAddressPopup(false);
+                                    }}
+                                    className="sr-only"
+                                  />
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span className="text-sm font-semibold text-text-primary">{addr.fullName}</span>
+                                    <span className="text-xs text-text-muted">· {addr.phoneNumber}</span>
+                                    {addr.isDefault && (
+                                      <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-semibold rounded-full">Mặc định</span>
+                                    )}
+                                  </div>
+                                  <p className="text-xs text-text-muted">
+                                    {addr.address}
+                                    {addr.ward ? `, ${addr.ward}` : ''}
+                                    {addr.district ? `, ${addr.district}` : ''}
+                                    {addr.province ? `, ${addr.province}` : ''}
+                                  </p>
+                                </label>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setEditingCheckoutAddr(addr);
+                                    setCheckoutAddrForm({
+                                      editingAddressId: addr._id,
+                                      addrType: addr.addressType === 'office' ? 'office' : 'home',
+                                      addrFullName: addr.fullName || '',
+                                      addrPhoneNumber: addr.phoneNumber || '',
+                                      addrStreet: addr.address || '',
+                                      addrProvince: addr.province || '',
+                                      addrDistrict: addr.district || '',
+                                      addrWard: addr.ward || '',
+                                      addrLat: addr.latitude || 10.8231,
+                                      addrLng: addr.longitude || 106.6297,
+                                      addrSubmitting: false,
+                                      addressStep: 'done' as AddressStep,
+                                      selectedProvinceCode: null,
+                                      selectedDistrictCode: null,
+                                    });
+                                  }}
+                                  className="absolute top-3 right-3 p-1.5 text-text-muted hover:text-text-primary transition-colors cursor-pointer"
+                                >
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="flex-shrink-0 flex justify-end px-5 py-4 border-t border-border">
+                            <button
+                              type="button"
+                              onClick={() => setShowAddressPopup(false)}
+                              className="px-4 py-2 text-sm font-semibold text-on-primary bg-primary rounded-lg hover:bg-primary-dark transition-colors cursor-pointer"
+                            >
+                              Xác nhận
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3.5 p-4 rounded-xl bg-background/60 ring-1 ring-black/5">
-                    <Mail className="text-text-muted mt-0.5 flex-shrink-0" size={16} />
-                    <div>
-                      <p className="text-[10px] text-text-muted uppercase tracking-widest mb-0.5">Email</p>
-                      <p className="text-sm font-medium text-text-primary">{formData.email}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3.5 p-4 rounded-xl bg-background/60 ring-1 ring-black/5">
-                    <MapPin className="text-text-muted mt-0.5 flex-shrink-0" size={16} />
-                    <div>
-                       <p className="text-[10px] text-text-muted uppercase tracking-widest mb-0.5">Địa chỉ</p>
-                      <p className="text-sm font-medium text-text-primary">
-                        {formData.address && `${formData.address}, `}
-                        {formData.district && `${formData.district}, `}
-                        {formData.city}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <TextInput
-                      label="Họ và tên"
-                      isRequired
-                      value={formData.fullName}
-                      onChange={(val) => setFormData(prev => ({ ...prev, fullName: val }))}
-                      placeholder="Nguyễn Văn A"
-                      startIcon={<User size={16} />}
-                      size="md"
-                    />
-                    <TextInput
-                      label="Số điện thoại"
-                      isRequired
-                      value={formData.phone}
-                      onChange={(val) => setFormData(prev => ({ ...prev, phone: val }))}
-                      placeholder="0912345678"
-                      startIcon={<Phone size={16} />}
-                      size="md"
-                    />
-                  </div>
-                  <TextInput
-                    label="Email"
-                    value={formData.email}
-                    onChange={(val) => setFormData(prev => ({ ...prev, email: val }))}
-                    placeholder="email@example.com"
-                    startIcon={<Mail size={16} />}
-                    size="md"
-                  />
-                  <TextInput
-                    label="Địa chỉ"
-                    isRequired
-                    value={formData.address}
-                    onChange={(val) => setFormData(prev => ({ ...prev, address: val }))}
-                    placeholder="123 Đường ABC"
-                    size="md"
-                  />
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <Selector
-                      label="Tỉnh/Thành phố"
-                      isRequired
-                      value={formData.city}
-                      onChange={(val) => handleProvinceChange(val || '')}
-                      options={provinces.map((p) => ({ value: p.name, label: p.name }))}
-                      placeholder="Chọn tỉnh/thành"
-                      isDisabled={loadingProvinces}
-                      isLoading={loadingProvinces}
-                      size="md"
-                    />
-                    <Selector
-                      label="Quận/Huyện"
-                      isRequired
-                      value={formData.district}
-                      onChange={(val) => handleDistrictChange(val || '')}
-                      options={districts.map((d) => ({ value: d.name, label: d.name }))}
-                      placeholder={formData.city ? 'Chọn quận/huyện' : 'Chọn tỉnh trước'}
-                      isDisabled={loadingDistricts || !formData.city}
-                      isLoading={loadingDistricts}
-                      size="md"
-                    />
-                    <Selector
-                      label="Phường/Xã"
-                      isRequired
-                      value={formData.ward}
-                      onChange={(val) => setFormData(prev => ({ ...prev, ward: val || '' }))}
-                      options={wards.map((w) => ({ value: w.name, label: w.name }))}
-                      placeholder={formData.district ? 'Chọn phường/xã' : 'Chọn quận trước'}
-                      isDisabled={loadingWards || !formData.district}
-                      isLoading={loadingWards}
-                      size="md"
-                    />
-                  </div>
-                </div>
+                    </>
+                  )}
+                </section>
               )}
 
-              <div className="mt-4">
-                <TextArea
-                  label="Ghi chú"
-                  isLabelHidden
-                  value={formData.note}
-                  onChange={(val) => setFormData(prev => ({ ...prev, note: val }))}
-                  rows={3}
-                  placeholder="Ghi chú về đơn hàng, ví dụ: giao hàng vào giờ hành chính"
-                />
-              </div>
-            </section>
+              {/* Shipping Method */}
+              <section className="bg-white rounded-xl border border-border shadow-sm p-5 lg:p-6">
+                <h2 className="text-sm lg:text-base font-semibold text-text-primary mb-4 flex items-center gap-2">
+                  <Truck className="w-4 h-4 text-primary" />
+                  Phương thức vận chuyển
+                </h2>
+                <div className="space-y-3">
+                  <label
+                    className={`relative flex items-center gap-4 p-4 border-2 rounded-xl cursor-pointer transition-all ${
+                      shippingMethod === 'standard'
+                        ? 'border-primary bg-primary/[0.04] shadow-[0_0_0_1px_rgba(201,169,110,0.15)]'
+                        : 'border-border hover:border-primary/30 bg-white'
+                    }`}
+                  >
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                      shippingMethod === 'standard' ? 'border-primary' : 'border-gray-300'
+                    }`}>
+                      {shippingMethod === 'standard' && (
+                        <div className="w-2.5 h-2.5 rounded-full bg-primary" />
+                      )}
+                    </div>
+                    <div className="flex-shrink-0">
+                      <div className="w-11 h-11 flex items-center justify-center rounded-lg bg-blue-50 border border-blue-200">
+                        <Truck className="w-5 h-5 text-blue-600" />
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={`font-semibold text-sm ${shippingMethod === 'standard' ? 'text-primary' : 'text-text-primary'}`}>
+                        Giao hàng thường
+                      </p>
+                      <p className="text-xs text-text-muted mt-0.5">
+                        {cart && cart.totalAmount >= 500000 ? 'Miễn phí' : `${formatPrice(30000)}`}
+                        {cart && cart.totalAmount < 500000 && ` · Miễn phí cho đơn từ ${formatPrice(500000)}`}
+                      </p>
+                    </div>
+                    <input
+                      type="radio"
+                      name="shippingMethod"
+                      value="standard"
+                      checked={shippingMethod === 'standard'}
+                      onChange={() => setShippingMethod('standard')}
+                      className="sr-only"
+                    />
+                  </label>
 
-            {/* ---- Payment Method ---- */}
-            <section className="bg-surface rounded-xl p-5 lg:p-6 shadow-sm ring-1 ring-black/5">
-              <h2 className="text-sm lg:text-base font-semibold text-text-primary mb-4 flex items-center gap-2.5">
-                <span className="w-1 h-4 bg-primary rounded-full" />
-                Phương thức thanh toán
-              </h2>
+                  <label
+                    className={`relative flex items-center gap-4 p-4 border-2 rounded-xl cursor-pointer transition-all ${
+                      shippingMethod === 'express'
+                        ? 'border-primary bg-primary/[0.04] shadow-[0_0_0_1px_rgba(201,169,110,0.15)]'
+                        : 'border-border hover:border-primary/30 bg-white'
+                    }`}
+                  >
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                      shippingMethod === 'express' ? 'border-primary' : 'border-gray-300'
+                    }`}>
+                      {shippingMethod === 'express' && (
+                        <div className="w-2.5 h-2.5 rounded-full bg-primary" />
+                      )}
+                    </div>
+                    <div className="flex-shrink-0">
+                      <div className="w-11 h-11 flex items-center justify-center rounded-lg bg-orange-50 border border-orange-200">
+                        <Zap className="w-5 h-5 text-orange-600" />
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={`font-semibold text-sm ${shippingMethod === 'express' ? 'text-primary' : 'text-text-primary'}`}>
+                        Giao hàng Hỏa tốc
+                      </p>
+                      <p className="text-xs text-text-muted mt-0.5">
+                        Phí 50% tổng giá trị đơn hàng · {cart ? formatPrice(Math.round(cart.totalAmount * 0.5)) : '0đ'}
+                      </p>
+                    </div>
+                    <input
+                      type="radio"
+                      name="shippingMethod"
+                      value="express"
+                      checked={shippingMethod === 'express'}
+                      onChange={() => setShippingMethod('express')}
+                      className="sr-only"
+                    />
+                  </label>
+                </div>
+              </section>
 
-              <div className="space-y-3">
-                {paymentMethods.length > 0 ? (
-                  paymentMethods.map((method: any) => {
-                    const isSelected = formData.paymentMethod === method.code;
-
-                    const getMethodIcon = (code: string, icon: string) => {
-                      switch (code) {
-                        case 'cod':
-                          return (
-                            <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-amber-50 ring-1 ring-amber-200/40">
-                              <Truck className="w-5 h-5 text-amber-600" />
-                            </div>
-                          );
-                        case 'bank_transfer':
-                          return (
-                            <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-blue-50 ring-1 ring-blue-200/40">
-                              <Building2 className="w-5 h-5 text-blue-600" />
-                            </div>
-                          );
-                        default:
-                          if (icon) {
-                            return (
-                              <img src={icon} alt={method.name} className="w-10 h-10 object-contain" />
-                            );
-                          }
-                          return (
-                            <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 ring-1 ring-gray-200/40">
-                              <CreditCard className="w-5 h-5 text-gray-500" />
-                            </div>
-                          );
-                      }
-                    };
-
-                    const getMethodDescription = (code: string) => {
-                      switch (code) {
-                        case 'cod':
-                          return 'Chỉ thanh toán khi bạn nhận được hàng';
-                        case 'bank_transfer':
-                          return 'Chuyển khoản qua tài khoản ngân hàng';
-                        default:
-                          return '';
-                      }
-                    };
-
-                    return (
+              {/* Payment Method */}
+              <section className="bg-white rounded-xl border border-border shadow-sm p-5 lg:p-6">
+                <h2 className="text-sm lg:text-base font-semibold text-text-primary mb-4 flex items-center gap-2">
+                  <CreditCard className="w-4 h-4 text-primary" />
+                  Phương thức thanh toán
+                </h2>
+                {paymentMethods.length === 0 ? (
+                  <div className="space-y-3">
+                    <label className="relative flex items-center gap-4 p-4 border-2 rounded-xl border-primary bg-primary/[0.04] shadow-[0_0_0_1px_rgba(201,169,110,0.15)] cursor-pointer">
+                      <div className="w-5 h-5 rounded-full border-2 border-primary flex items-center justify-center flex-shrink-0">
+                        <div className="w-2.5 h-2.5 rounded-full bg-primary" />
+                      </div>
+                      <div className="flex-shrink-0">
+                        <div className="w-11 h-11 flex items-center justify-center rounded-lg bg-green-50 border border-green-200">
+                          <Banknote className="w-5 h-5 text-green-600" />
+                        </div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm text-primary">
+                          Thanh toán khi nhận hàng (COD)
+                        </p>
+                        <p className="text-xs text-text-muted mt-0.5">
+                          Thanh toán bằng tiền mặt khi nhận hàng
+                        </p>
+                      </div>
+                    </label>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {paymentMethods.map((method: any) => (
                       <label
-                        key={method._id}
-                        className={`relative flex items-center gap-4 p-4 border-2 rounded-xl cursor-pointer transition-all duration-200 active:scale-[0.99] ${
-                          isSelected
-                            ? 'border-primary bg-primary/5 shadow-[0_0_0_1px_rgba(var(--primary-rgb),0.15)]'
-                            : 'border-border hover:border-primary/40 bg-surface'
+                        key={method.code}
+                        className={`relative flex items-center gap-4 p-4 border-2 rounded-xl cursor-pointer transition-all ${
+                          formData.paymentMethod === method.code
+                            ? 'border-primary bg-primary/[0.04] shadow-[0_0_0_1px_rgba(201,169,110,0.15)]'
+                            : 'border-border hover:border-primary/30 bg-white'
                         }`}
                       >
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
-                          isSelected ? 'border-primary' : 'border-gray-300'
+                          formData.paymentMethod === method.code ? 'border-primary' : 'border-gray-300'
                         }`}>
-                          {isSelected && (
-                            <div className="w-2.5 h-2.5 rounded-full bg-primary scale-in" />
+                          {formData.paymentMethod === method.code && (
+                            <div className="w-2.5 h-2.5 rounded-full bg-primary" />
                           )}
                         </div>
-
                         <div className="flex-shrink-0">
-                          {getMethodIcon(method.code, method.icon)}
+                          <div className="w-11 h-11 flex items-center justify-center rounded-lg bg-green-50 border border-green-200">
+                            {method.code === 'vnpay' ? (
+                              <Building2 className="w-5 h-5 text-blue-600" />
+                            ) : (
+                              <Banknote className="w-5 h-5 text-green-600" />
+                            )}
+                          </div>
                         </div>
-
                         <div className="flex-1 min-w-0">
-                          <p className={`font-semibold text-sm ${isSelected ? 'text-primary' : 'text-text-primary'}`}>
+                          <p className={`font-semibold text-sm ${formData.paymentMethod === method.code ? 'text-primary' : 'text-text-primary'}`}>
                             {method.name}
                           </p>
-                          {getMethodDescription(method.code) && (
-                            <p className="text-xs text-text-muted/80 mt-0.5 leading-relaxed">
-                              {getMethodDescription(method.code)}
-                            </p>
-                          )}
+                          <p className="text-xs text-text-muted mt-0.5">
+                            {method.code === 'vnpay'
+                              ? 'Thanh toán qua cổng VNPAY'
+                              : method.code === 'cod'
+                                ? 'Thanh toán bằng tiền mặt khi nhận hàng'
+                                : ''}
+                          </p>
                         </div>
-
                         <input
                           type="radio"
                           name="paymentMethod"
                           value={method.code}
-                          checked={isSelected}
-                          onChange={handleInputChange}
+                          checked={formData.paymentMethod === method.code}
+                          onChange={() => setFormData(prev => ({ ...prev, paymentMethod: method.code }))}
                           className="sr-only"
                         />
                       </label>
-                    );
-                  })
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-8 text-text-muted">
-                    <CreditCard className="w-8 h-8 mb-2 opacity-30" />
-                    <p className="text-sm">Đang tải phương thức thanh toán...</p>
-                  </div>
-                )}
-              </div>
-            </section>
-
-            </div>
-          </div>
-
-          {/* RIGHT COLUMN – fixed summary panel */}
-          <div className="w-[360px] lg:w-[400px] flex-shrink-0 border-l border-border bg-surface">
-            <div className="p-5 lg:p-6 h-full flex flex-col">
-              <h3 className="text-sm lg:text-base font-semibold text-text-primary mb-5 flex items-center gap-2.5 flex-shrink-0">
-                <span className="w-1 h-4 bg-primary rounded-full" />
-                Tóm tắt đơn hàng
-              </h3>
-
-              {/* Voucher */}
-              <div className="space-y-2 relative flex-shrink-0">
-                {showVoucherPopup && vouchers.length > 0 && (
-                  <div className="border border-border rounded-xl bg-white shadow-xl max-h-40 overflow-y-auto absolute bottom-full left-0 right-0 mb-2 z-10">
-                    <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-surface/80 sticky top-0">
-                      <span className="text-[11px] font-medium text-text-secondary uppercase tracking-wider">Mã giảm giá có sẵn</span>
-                    </div>
-                    {vouchers.map((v: any) => (
-                      <button
-                        key={v._id}
-                        onClick={() => { setVoucherInput(v.code); setShowVoucherPopup(false); handleApplyVoucher(v.code); }}
-                        className="w-full text-left px-3 py-2.5 hover:bg-primary/5 transition-colors border-b border-border last:border-0"
-                      >
-                        <span className="text-sm font-semibold text-text-primary">{v.code}</span>
-                        <span className="text-xs text-text-muted ml-2">
-                          {v.type === 'percentage' ? `Giảm ${v.value}%` : `Giảm ${v.value.toLocaleString('vi-VN')}đ`}
-                          {v.minOrderAmount > 0 && ` (Đơn từ ${v.minOrderAmount.toLocaleString('vi-VN')}đ)`}
-                        </span>
-                      </button>
                     ))}
                   </div>
                 )}
-                {!cart.voucherCode ? (
-                  <div className="flex gap-2">
-                    <TextInput
-                      label="Mã giảm giá"
-                      isLabelHidden
-                      value={voucherInput}
-                      onChange={(val) => setVoucherInput(val.toUpperCase())}
-                      placeholder="Nhập mã giảm giá"
-                      onFocus={() => fetchVouchers()}
-                      onBlur={() => setTimeout(() => setShowVoucherPopup(false), 200)}
-                      onEnter={() => handleApplyVoucher()}
-                      size="md"
-                    />
-                    <Button
-                      label="Áp dụng"
-                      variant="primary"
-                      isDisabled={applyingVoucher || !voucherInput.trim()}
-                      isLoading={applyingVoucher}
-                      onClick={() => handleApplyVoucher()}
-                    />
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-3 py-2.5">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-green-500" />
-                      <span className="text-sm font-semibold text-green-700">{cart.voucherCode}</span>
-                      <span className="text-xs text-green-600 font-medium">
-                        -{formatPrice(voucherDiscount || 0)}
-                      </span>
-                    </div>
-                    <Button
-                      label="Hủy"
-                      variant="ghost"
-                      onClick={handleRemoveVoucher}
-                      size="sm"
-                    />
-                  </div>
-                )}
-                {voucherMsg && (
-                  <p className={`text-xs mt-1 ${voucherMsg.type === 'success' ? 'text-green-600' : 'text-red-500'}`}>
-                    {voucherMsg.text}
-                  </p>
-                )}
-              </div>
+              </section>
 
-              {/* Cart Items */}
-              <div className="flex-1 overflow-y-auto mt-4 space-y-3 pr-1 -mr-1 min-h-0">
-                {cart.items.map((item) => (
-                  <div key={item.productId} className="flex gap-3">
-                    <div className="w-14 h-14 bg-background rounded-xl overflow-hidden flex-shrink-0 ring-1 ring-black/10">
-                      {item.image ? (
-                        <img src={resolveImageUrl(item.image)} alt={item.name} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <div className="w-5 h-5 bg-text-muted/20 rounded" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-text-primary line-clamp-1 leading-snug">{item.name}</p>
-                      <p className="text-xs text-text-muted/70 mt-0.5">SL: {item.quantity}</p>
-                      <p className="text-sm font-semibold text-primary mt-1">{formatPrice(item.price * item.quantity)}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+            </div>
 
-              {/* Price Summary */}
-              <div className="flex-shrink-0 border-t border-border pt-4 mt-4 space-y-2.5">
-                <div className="flex justify-between text-sm">
-                  <span className="text-text-secondary">Tạm tính</span>
-                  <span className="font-medium text-text-primary">{formatPrice(cart.totalAmount)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-text-secondary">Phí vận chuyển</span>
-                  <span className={`font-medium ${shippingFee === 0 ? 'text-green-600' : 'text-text-primary'}`}>
-                    {shippingFee === 0 ? 'Miễn phí' : formatPrice(shippingFee)}
-                  </span>
-                </div>
-                {shippingFee > 0 && (
-                  <p className="text-[11px] text-text-muted/70">
-                    Miễn phí vận chuyển cho đơn từ {formatPrice(500000)}
-                  </p>
-                )}
-                {voucherDiscount > 0 && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-text-secondary">Giảm giá</span>
-                    <span className="font-medium text-green-600">-{formatPrice(voucherDiscount)}</span>
-                  </div>
-                )}
-                <div className="border-t border-border pt-3 mt-3">
-                  <div className="flex justify-between items-baseline">
-                    <span className="font-semibold text-text-primary">Tổng cộng</span>
-                    <span className="text-xl lg:text-2xl font-bold text-primary">{formatPrice(Math.max(0, finalTotal))}</span>
-                  </div>
-                </div>
+            {/* ===== RIGHT COLUMN — Order Summary ===== */}
+            <div className="w-full lg:w-[400px] flex-shrink-0">
+              <div className="bg-white rounded-xl border border-border shadow-sm p-5 lg:p-6 sticky top-24 space-y-5">
 
-                <Button
-                  type="submit"
-                  variant="primary"
-                  isDisabled={submitting}
-                  isLoading={submitting}
-                  label={submitting ? 'Đang xử lý...' : 'Đặt hàng'}
-                  className="w-full mt-3"
+                <h3 className="text-sm lg:text-base font-semibold text-text-primary flex items-center gap-2">
+                  <Receipt className="w-4 h-4 text-primary" />
+                  Tóm tắt đơn hàng
+                </h3>
+
+                <VoucherSelector
+                  accessToken={accessToken!}
+                  voucherCode={cart.voucherCode}
+                  onApply={async (code) => {
+                    setVoucherInput(code);
+                    await handleApplyVoucher(code);
+                  }}
+                  onRemove={handleRemoveVoucher}
                 />
 
-                <div className="flex items-center justify-center gap-2 text-xs text-text-muted/60 pt-1">
+                {/* Cart Items */}
+                <div className="space-y-3 max-h-[320px] overflow-y-auto pr-1 -mr-1">
+                  {cart.items.map((item) => (
+                    <div key={item.productId} className="flex gap-3">
+                      <div className="w-14 h-14 bg-[#F9FAFB] rounded-lg overflow-hidden flex-shrink-0 border border-border">
+                        {item.image ? (
+                          <img src={resolveImageUrl(item.image)} alt={item.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Package className="w-5 h-5 text-text-muted/30" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-text-primary line-clamp-1 leading-snug">{item.name}</p>
+                        <p className="text-xs text-text-muted mt-0.5">SL: {item.quantity}</p>
+                        <p className="text-sm font-semibold text-primary mt-1">{formatPrice(item.price * item.quantity)}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <PriceSummary
+                  totalAmount={cart.totalAmount}
+                  shippingFee={shippingFee}
+                  showFreeShippingHint={shippingFee > 0 && shippingMethod === 'standard'}
+                  voucherDiscount={voucherDiscount}
+                  finalTotal={finalTotal}
+                />
+
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="w-full py-3 px-4 text-sm font-bold text-on-primary bg-primary rounded-lg hover:bg-primary-dark focus:ring-4 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
+                >
+                  {submitting ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Đang xử lý...
+                    </span>
+                  ) : 'Đặt hàng'}
+                </button>
+
+                <div className="flex items-center justify-center gap-2 text-xs text-text-muted pt-1">
                   <Shield className="w-3.5 h-3.5" />
                   <span>Thông tin của bạn được bảo mật</span>
                 </div>
@@ -975,6 +964,247 @@ export default function CheckoutPage() {
           </div>
         </div>
       </form>
+
+      {/* Voucher selection modal — outside form */}
+      {showVoucherPopup && (
+        <div className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center" style={{ margin: 0 }} onClick={() => setShowVoucherPopup(false)}>
+          <div className="bg-white rounded-xl shadow-elevated w-full max-w-md max-h-[80vh] flex flex-col mx-4" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+                <h3 className="text-base font-semibold text-text-primary">Chọn mã giảm giá</h3>
+                <button type="button" onClick={() => setShowVoucherPopup(false)} className="text-text-muted hover:text-text-primary transition-colors cursor-pointer">
+                  <X size={18} />
+                </button>
+              </div>
+              {fetchingVouchers ? (
+                <div className="flex-1 flex items-center justify-center py-12">
+                  <Loader2 className="w-6 h-6 animate-spin text-text-muted" />
+                </div>
+              ) : vouchers.length === 0 ? (
+                <div className="flex-1 flex flex-col items-center justify-center py-12 px-5">
+                  <Ticket className="w-12 h-12 text-text-muted mb-3" />
+                  <p className="text-sm text-text-secondary">Không có voucher nào khả dụng.</p>
+                </div>
+              ) : (
+                <div className="flex-1 overflow-y-auto px-5 pb-4">
+                  <div className="space-y-4 pt-4">
+                    {vouchers.filter((v: any) => !v.minTier).length > 0 && (
+                      <div>
+                        <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">Voucher L'essence</p>
+                        <div className="space-y-2">
+                          {vouchers.filter((v: any) => !v.minTier).map((v: any) => (
+                            <label key={v.code} className="block cursor-pointer">
+                              <input
+                                type="radio"
+                                name="checkout-voucher"
+                                checked={selectedVoucherCode === v.code}
+                                onChange={() => {
+                                  setSelectedVoucherCode(v.code);
+                                  setVoucherInput(v.code);
+                                  setShowVoucherPopup(false);
+                                  handleApplyVoucher(v.code);
+                                }}
+                                className="sr-only"
+                              />
+                              <VoucherCard voucher={v} selected={selectedVoucherCode === v.code} />
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {vouchers.filter((v: any) => !!v.minTier).length > 0 && (
+                      <div>
+                        <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">Voucher VIP</p>
+                        <div className="space-y-2">
+                          {vouchers.filter((v: any) => !!v.minTier).map((v: any) => (
+                            <label key={v.code} className="block cursor-pointer">
+                              <input
+                                type="radio"
+                                name="checkout-voucher"
+                                checked={selectedVoucherCode === v.code}
+                                onChange={() => {
+                                  setSelectedVoucherCode(v.code);
+                                  setVoucherInput(v.code);
+                                  setShowVoucherPopup(false);
+                                  handleApplyVoucher(v.code);
+                                }}
+                                className="sr-only"
+                              />
+                              <VoucherCard voucher={v} selected={selectedVoucherCode === v.code} />
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+              <div className="flex-shrink-0 flex justify-end px-5 py-4 border-t border-border">
+                <button
+                  type="button"
+                  onClick={() => setShowVoucherPopup(false)}
+                  className="px-4 py-2 text-sm font-semibold text-on-primary bg-primary rounded-lg hover:bg-primary-dark transition-colors cursor-pointer"
+                >
+                  Đóng
+                </button>
+              </div>
+            </div>
+          </div>
+      )}
+
+      {/* Address edit form in checkout */}
+      <AddressEditForm
+        isOpen={!!editingCheckoutAddr}
+        onClose={() => { setEditingCheckoutAddr(null); setCheckoutAddrError(null); }}
+        editingAddressId={checkoutAddrForm.editingAddressId}
+        addrType={checkoutAddrForm.addrType}
+        setAddrType={(v) => setCheckoutAddrForm(prev => ({ ...prev, addrType: v }))}
+        addrFullName={checkoutAddrForm.addrFullName}
+        setAddrFullName={(v) => setCheckoutAddrForm(prev => ({ ...prev, addrFullName: v }))}
+        addrPhoneNumber={checkoutAddrForm.addrPhoneNumber}
+        setAddrPhoneNumber={(v) => setCheckoutAddrForm(prev => ({ ...prev, addrPhoneNumber: v }))}
+        addrStreet={checkoutAddrForm.addrStreet}
+        setAddrStreet={(v) => setCheckoutAddrForm(prev => ({ ...prev, addrStreet: v }))}
+        addrProvince={checkoutAddrForm.addrProvince}
+        setAddrProvince={(v) => setCheckoutAddrForm(prev => ({ ...prev, addrProvince: v }))}
+        addrDistrict={checkoutAddrForm.addrDistrict}
+        setAddrDistrict={(v) => setCheckoutAddrForm(prev => ({ ...prev, addrDistrict: v }))}
+        addrWard={checkoutAddrForm.addrWard}
+        setAddrWard={(v) => setCheckoutAddrForm(prev => ({ ...prev, addrWard: v }))}
+        addrLat={checkoutAddrForm.addrLat}
+        addrLng={checkoutAddrForm.addrLng}
+        setAddrLat={(v) => setCheckoutAddrForm(prev => ({ ...prev, addrLat: v }))}
+        setAddrLng={(v) => setCheckoutAddrForm(prev => ({ ...prev, addrLng: v }))}
+        addrSubmitting={checkoutAddrForm.addrSubmitting}
+        setAddrError={setCheckoutAddrError}
+        provinces={provinces}
+        districts={districts}
+        wards={wards}
+        setWards={setWards}
+        loadingProvinces={loadingProvinces}
+        loadingDistricts={loadingDistricts}
+        loadingWards={loadingWards}
+        addressStep={checkoutAddrForm.addressStep}
+        selectedProvinceCode={checkoutAddrForm.selectedProvinceCode}
+        selectedDistrictCode={checkoutAddrForm.selectedDistrictCode}
+        handleSelectProvince={(name, code) => {
+          setCheckoutAddrForm(prev => ({ ...prev, addrProvince: name, selectedProvinceCode: code, addrDistrict: '', addrWard: '', addressStep: 'ward' as AddressStep }));
+          fetchDistricts(code);
+        }}
+        handleSelectWard={(name, code) => {
+          setCheckoutAddrForm(prev => ({ ...prev, addrWard: name, selectedDistrictCode: code, addrDistrict: '', addressStep: 'district' as AddressStep }));
+          fetchWards(code);
+        }}
+        handleSelectDistrict={(name) => {
+          setCheckoutAddrForm(prev => ({ ...prev, addrDistrict: name, addressStep: 'done' as AddressStep }));
+        }}
+        resetLocationFlow={() => {
+          setCheckoutAddrForm(prev => ({ ...prev, addressStep: 'province' as AddressStep, selectedProvinceCode: null, selectedDistrictCode: null, addrProvince: '', addrDistrict: '', addrWard: '' }));
+        }}
+        handleSaveAddress={async () => {
+          setCheckoutAddrForm(prev => ({ ...prev, addrSubmitting: true }));
+          try {
+            const payload = {
+              addressType: checkoutAddrForm.addrType,
+              fullName: checkoutAddrForm.addrFullName,
+              phoneNumber: checkoutAddrForm.addrPhoneNumber,
+              address: checkoutAddrForm.addrStreet,
+              province: checkoutAddrForm.addrProvince,
+              district: checkoutAddrForm.addrDistrict,
+              ward: checkoutAddrForm.addrWard,
+              latitude: checkoutAddrForm.addrLat,
+              longitude: checkoutAddrForm.addrLng,
+            };
+            await api.patch(`/user-addresses/${checkoutAddrForm.editingAddressId}`, payload);
+            // Refresh addresses
+            const addrResult = await api.get('/user-addresses').catch(() => ({ data: { success: false, data: [] } }));
+            const addrs = addrResult.data?.data || [];
+            setAddresses(addrs);
+            setEditingCheckoutAddr(null);
+            setCheckoutAddrError(null);
+            toast.success('Cập nhật địa chỉ thành công');
+          } catch (err: any) {
+            toast.error(err.response?.data?.message || err.message || 'Lỗi khi lưu địa chỉ');
+          } finally {
+            setCheckoutAddrForm(prev => ({ ...prev, addrSubmitting: false }));
+          }
+        }}
+        fetchDistricts={fetchDistricts}
+      />
+
+    </div>
+  );
+}
+
+/* ===== Skeleton Loader ===== */
+function SkeletonLoader() {
+  const shimmer = 'bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 bg-[length:200%_100%] animate-shimmer rounded';
+  return (
+    <div className="min-h-screen bg-[#F9FAFB]">
+      <div className="bg-white border-b border-border">
+        <div className="max-w-7xl mx-auto px-4 lg:px-6 py-4 lg:py-5">
+          <div className={`${shimmer} h-3 w-28 mb-3`} />
+          <div className="flex items-start gap-3">
+            <div className={`${shimmer} w-1 h-7 flex-shrink-0 mt-0.5`} />
+            <div className="space-y-2">
+              <div className={`${shimmer} h-7 w-40`} />
+              <div className={`${shimmer} h-4 w-60`} />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="max-w-7xl mx-auto px-4 lg:px-6 py-6 lg:py-8">
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+          <div className="flex-1 space-y-6">
+            <div className="bg-white rounded-xl border border-border p-5 lg:p-6 space-y-4">
+              <div className={`${shimmer} h-4 w-40`} />
+              <div className={`${shimmer} h-10 w-full`} />
+            </div>
+            <div className="bg-white rounded-xl border border-border p-5 lg:p-6 space-y-5">
+              <div className={`${shimmer} h-4 w-44`} />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className={`${shimmer} h-10 w-full`} />
+                <div className={`${shimmer} h-10 w-full`} />
+              </div>
+              <div className={`${shimmer} h-10 w-full`} />
+              <div className={`${shimmer} h-10 w-full`} />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className={`${shimmer} h-10 w-full`} />
+                <div className={`${shimmer} h-10 w-full`} />
+                <div className={`${shimmer} h-10 w-full`} />
+              </div>
+            </div>
+            <div className="bg-white rounded-xl border border-border p-5 lg:p-6 space-y-3">
+              <div className={`${shimmer} h-4 w-48`} />
+              <div className={`${shimmer} h-16 w-full`} />
+              <div className={`${shimmer} h-16 w-full`} />
+            </div>
+          </div>
+          <div className="w-full lg:w-[400px]">
+            <div className="bg-white rounded-xl border border-border p-5 lg:p-6 space-y-5">
+              <div className={`${shimmer} h-4 w-40`} />
+              <div className={`${shimmer} h-10 w-full`} />
+              <div className="space-y-3">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="flex gap-3">
+                    <div className={`${shimmer} w-14 h-14 flex-shrink-0`} />
+                    <div className="flex-1 space-y-2">
+                      <div className={`${shimmer} h-4 w-3/4`} />
+                      <div className={`${shimmer} h-3 w-12`} />
+                      <div className={`${shimmer} h-4 w-20`} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="space-y-3 border-t border-border pt-4">
+                <div className="flex justify-between"><div className={`${shimmer} h-4 w-16`} /><div className={`${shimmer} h-4 w-20`} /></div>
+                <div className="flex justify-between"><div className={`${shimmer} h-4 w-24`} /><div className={`${shimmer} h-4 w-16`} /></div>
+                <div className="border-t border-border pt-3 flex justify-between"><div className={`${shimmer} h-5 w-20`} /><div className={`${shimmer} h-7 w-28`} /></div>
+                <div className={`${shimmer} h-12 w-full`} />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

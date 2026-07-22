@@ -2,26 +2,36 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import api from '@/lib/api';
+import { toast } from 'sonner';
+
+export type AddressStep = 'province' | 'ward' | 'district' | 'done';
 
 export function useProfileAddresses() {
   const [addresses, setAddresses] = useState<any[]>([]);
   const [loadingAddresses, setLoadingAddresses] = useState(false);
   const [isEditingAddress, setIsEditingAddress] = useState(false);
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
-  const [addrLabel, setAddrLabel] = useState('');
+  const [addrType, setAddrType] = useState<'home' | 'office'>('home');
   const [addrFullName, setAddrFullName] = useState('');
-  const [addrGender, setAddrGender] = useState<'MALE' | 'FEMALE' | 'OTHER' | ''>('');
   const [addrPhoneNumber, setAddrPhoneNumber] = useState('');
   const [addrStreet, setAddrStreet] = useState('');
   const [addrProvince, setAddrProvince] = useState('');
   const [addrDistrict, setAddrDistrict] = useState('');
+  const [addrWard, setAddrWard] = useState('');
+  const [addrLat, setAddrLat] = useState(10.8231);
+  const [addrLng, setAddrLng] = useState(106.6297);
   const [addrSubmitting, setAddrSubmitting] = useState(false);
   const [addrError, setAddrError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [provinces, setProvinces] = useState<Array<{ name: string; code: number }>>([]);
   const [districts, setDistricts] = useState<Array<{ name: string; code: number }>>([]);
+  const [wards, setWards] = useState<Array<{ name: string; code: number }>>([]);
   const [loadingProvinces, setLoadingProvinces] = useState(false);
   const [loadingDistricts, setLoadingDistricts] = useState(false);
+  const [loadingWards, setLoadingWards] = useState(false);
+  const [addressStep, setAddressStep] = useState<AddressStep>('province');
+  const [selectedProvinceCode, setSelectedProvinceCode] = useState<number | null>(null);
+  const [selectedDistrictCode, setSelectedDistrictCode] = useState<number | null>(null);
 
   const fetchProvinces = useCallback(() => {
     setLoadingProvinces(true);
@@ -51,6 +61,20 @@ export function useProfileAddresses() {
       });
   }, []);
 
+  const fetchWards = useCallback((districtCode: number) => {
+    setLoadingWards(true);
+    fetch(`https://provinces.open-api.vn/api/d/${districtCode}?depth=2`)
+      .then((res) => res.json())
+      .then((data) => {
+        setWards(data.wards || []);
+        setLoadingWards(false);
+      })
+      .catch((err) => {
+        console.error('Failed to fetch wards:', err);
+        setLoadingWards(false);
+      });
+  }, []);
+
   const fetchAddresses = useCallback(async () => {
     setLoadingAddresses(true);
     try {
@@ -70,33 +94,77 @@ export function useProfileAddresses() {
     }
   }, [provinces.length, fetchProvinces]);
 
-  const openNewAddressForm = useCallback(() => {
-    setEditingAddressId(null);
-    setAddrLabel('Địa chỉ của tôi');
-    setAddrFullName('');
-    setAddrGender('');
-    setAddrPhoneNumber('');
-    setAddrStreet('');
+  const handleSelectProvince = useCallback((name: string, code: number) => {
+    setAddrProvince(name);
+    setSelectedProvinceCode(code);
+    setAddrDistrict('');
+    setAddrWard('');
+    setDistricts([]);
+    setWards([]);
+    setAddressStep('ward');
+    fetchDistricts(code);
+  }, [fetchDistricts]);
+
+  // Step "Phường/Xã" thực chất chọn Quận/Huyện từ API, nhưng UI hiển thị là Phường/Xã
+  const handleSelectWard = useCallback((name: string, code: number) => {
+    setAddrWard(name);
+    setSelectedDistrictCode(code);
+    setAddrDistrict('');
+    setWards([]);
+    setAddressStep('district');
+    fetchWards(code);
+  }, [fetchWards]);
+
+  // Step "Quận/Huyện" thực chất chọn Phường/Xã từ API, nhưng UI hiển thị là Quận/Huyện
+  const handleSelectDistrict = useCallback((name: string) => {
+    setAddrDistrict(name);
+    setAddressStep('done');
+  }, []);
+
+  const resetLocationFlow = useCallback(() => {
+    setAddressStep('province');
+    setSelectedProvinceCode(null);
+    setSelectedDistrictCode(null);
     setAddrProvince('');
     setAddrDistrict('');
+    setAddrWard('');
+    setDistricts([]);
+    setWards([]);
+  }, []);
+
+  const openNewAddressForm = useCallback(() => {
+    setEditingAddressId(null);
+    setAddrType('home');
+    setAddrFullName('');
+    setAddrPhoneNumber('');
+    setAddrStreet('');
+    resetLocationFlow();
+    setAddrLat(10.8231);
+    setAddrLng(106.6297);
     setAddrError(null);
     setIsEditingAddress(true);
-  }, []);
+  }, [resetLocationFlow]);
 
   const openEditAddressForm = useCallback((addr: any) => {
     setEditingAddressId(addr._id);
-    setAddrLabel(addr.label || '');
+    setAddrType(addr.addressType === 'office' ? 'office' : 'home');
     setAddrFullName(addr.fullName || '');
-    setAddrGender(addr.gender || '');
     setAddrPhoneNumber(addr.phoneNumber || '');
     setAddrStreet(addr.address || '');
     setAddrProvince(addr.province || '');
     setAddrDistrict(addr.district || '');
+    setAddrWard(addr.ward || '');
+    setAddrLat(addr.latitude || 10.8231);
+    setAddrLng(addr.longitude || 106.6297);
     setAddrError(null);
+    setAddressStep('done');
     setIsEditingAddress(true);
     if (addr.province && provinces.length > 0) {
       const found = provinces.find((p) => p.name === addr.province);
-      if (found) fetchDistricts(found.code);
+      if (found) {
+        setSelectedProvinceCode(found.code);
+        fetchDistricts(found.code);
+      }
     }
   }, [provinces, fetchDistricts]);
 
@@ -105,13 +173,15 @@ export function useProfileAddresses() {
     setAddrError(null);
     try {
       const payload = {
-        label: addrLabel,
+        addressType: addrType,
         fullName: addrFullName,
-        gender: addrGender,
         phoneNumber: addrPhoneNumber,
         address: addrStreet,
         province: addrProvince,
         district: addrDistrict,
+        ward: addrWard,
+        latitude: addrLat,
+        longitude: addrLng,
       };
       if (editingAddressId) {
         await api.patch(`/user-addresses/${editingAddressId}`, payload);
@@ -120,8 +190,9 @@ export function useProfileAddresses() {
       }
       await fetchAddresses();
       setIsEditingAddress(false);
+      toast.success(editingAddressId ? 'Cập nhật địa chỉ thành công' : 'Thêm địa chỉ thành công');
     } catch (err: any) {
-      setAddrError(err.response?.data?.message || err.message || 'Lỗi khi lưu địa chỉ');
+      toast.error(err.response?.data?.message || err.message || 'Lỗi khi lưu địa chỉ');
     } finally {
       setAddrSubmitting(false);
     }
@@ -133,13 +204,14 @@ export function useProfileAddresses() {
     try {
       const res = await api.delete(`/user-addresses/${id}`);
       if (res.data && !res.data.success) {
-        setDeleteError(res.data.message || 'Không thể xóa địa chỉ');
+        toast.error(res.data.message || 'Không thể xóa địa chỉ');
         return;
       }
       await fetchAddresses();
+      toast.success('Xóa địa chỉ thành công');
     } catch (err: any) {
       const msg = err.response?.data?.message || err.message || 'Lỗi khi xóa địa chỉ';
-      setDeleteError(msg);
+      toast.error(msg);
       console.error('Failed to delete address:', err);
     }
   };
@@ -148,8 +220,9 @@ export function useProfileAddresses() {
     try {
       await api.patch(`/user-addresses/${id}/set-default`);
       await fetchAddresses();
+      toast.success('Đặt địa chỉ mặc định thành công');
     } catch (err: any) {
-      console.error('Failed to set default:', err);
+      toast.error(err.response?.data?.message || err.message || 'Lỗi khi đặt mặc định');
     }
   };
 
@@ -158,18 +231,29 @@ export function useProfileAddresses() {
     loadingAddresses,
     isEditingAddress, setIsEditingAddress,
     editingAddressId,
-    addrLabel, setAddrLabel,
+    addrType, setAddrType,
     addrFullName, setAddrFullName,
-    addrGender, setAddrGender,
     addrPhoneNumber, setAddrPhoneNumber,
     addrStreet, setAddrStreet,
     addrProvince, setAddrProvince,
     addrDistrict, setAddrDistrict,
+    addrWard, setAddrWard,
+    addrLat, setAddrLat,
+    addrLng, setAddrLng,
     addrSubmitting, addrError, setAddrError, deleteError, setDeleteError,
     provinces, setProvinces,
     districts, setDistricts,
+    wards, setWards,
+    setDistricts,
     loadingProvinces, setLoadingProvinces,
     loadingDistricts, setLoadingDistricts,
+    loadingWards, setLoadingWards,
+    addressStep, setAddressStep,
+    selectedProvinceCode, selectedDistrictCode,
+    handleSelectProvince,
+    handleSelectWard,
+    handleSelectDistrict,
+    resetLocationFlow,
     fetchAddresses,
     fetchProvinces,
     openNewAddressForm,

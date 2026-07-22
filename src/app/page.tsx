@@ -40,7 +40,7 @@ export default async function HomePage() {
           emptyMessage="Hiện tại chưa có chương trình Flash Sale nào"
           layout="marquee"
           maxProducts={8}
-          enablePriceFilter={sale.length > 0}
+          enablePriceFilter={Array.isArray(sale) && sale.length > 0}
 
         />
       </SectionReveal>
@@ -55,7 +55,6 @@ export default async function HomePage() {
           layout="horizontal"
           showNavigation={true}
           enablePriceFilter={true}
-
         />
       </SectionReveal>
 

@@ -1,31 +1,40 @@
 'use client';
 
+import { useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Heart, User, Users, ArrowRight } from 'lucide-react';
-import Link from 'next/link';
+import { useProductsFilterStore } from '@/store/useProductsFilterStore';
 
 const USPS = [
   {
     icon: Heart,
     title: 'NƯỚC HOA NỮ',
     desc: 'Hương thơm quyến rũ, mềm mại và sang trọng phong cách dành cho nữ.',
-    href: '/products?category=Nữ'
+    category: 'Nữ' as const,
   },
   {
     icon: User,
     title: 'NƯỚC HOA NAM',
     desc: 'Tầng hương ấm áp, cay nồng và gỗ trầm, tạo nên phong thái lịch lãm.',
-    href: '/products?category=Nam'
+    category: 'Nam' as const,
   },
   {
     icon: Users,
     title: 'UNISEX',
     desc: 'Pha trộn cân bằng cho cả nam và nữ với cảm hứng tự do và nghệ thuật.',
-    href: '/products?category=Unisex'
+    category: 'Unisex' as const,
   }
 ];
 
 export function BrandUsp() {
+  const router = useRouter();
+  const setFilterAndGo = useProductsFilterStore((s) => s.setFilterAndGo);
+
+  const handleCategoryClick = useCallback((category: string) => {
+    router.push(setFilterAndGo({ pendingCategory: category }));
+  }, [router, setFilterAndGo]);
+
   const currentUsps = USPS;
 
   return (
@@ -59,13 +68,13 @@ export function BrandUsp() {
                   {usp.desc}
                 </p>
 
-                <Link
-                  href={usp.href}
-                  className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-primary/30 text-[10px] font-bold uppercase tracking-wider text-primary hover:bg-primary hover:text-white transition-all duration-300 group/btn"
+                <button
+                  onClick={() => handleCategoryClick(usp.category)}
+                  className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-primary/30 text-xs font-bold uppercase tracking-wider text-primary hover:bg-primary hover:text-on-primary transition-all duration-300 cursor-pointer group/btn"
                 >
                   Khám phá ngay
                   <ArrowRight size={12} className="transition-transform duration-300 group-hover/btn:translate-x-0.5" />
-                </Link>
+                </button>
               </motion.div>
             );
           })}

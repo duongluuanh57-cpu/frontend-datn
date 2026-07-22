@@ -2,8 +2,11 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
+import { useCartStore } from '@/store/useCartStore';
 import { getActiveOriginSync } from '@/lib/backendDiscovery';
 import { CheckCircle, XCircle, Loader2, ArrowLeft, CreditCard } from 'lucide-react';
+import { formatPrice } from '@/lib/formatPrice';
 import Link from 'next/link';
 
 type PaymentStatus = 'loading' | 'success' | 'failed' | 'pending';
@@ -11,6 +14,8 @@ type PaymentStatus = 'loading' | 'success' | 'failed' | 'pending';
 export default function PaymentReturnPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const setCartCount = useCartStore((state) => state.setCartCount);
   const [status, setStatus] = useState<PaymentStatus>('loading');
   const [message, setMessage] = useState('');
   const [orderId, setOrderId] = useState<string | null>(null);
@@ -73,6 +78,8 @@ export default function PaymentReturnPage() {
                 setOrderId(pollJson.data.orderId);
                 setAmount(pollJson.data.amount || 0);
                 setTransactionNo(pollJson.data.transactionNo || txnRef);
+                queryClient.invalidateQueries({ queryKey: ['cart'] });
+                setCartCount(0);
               }
             } catch {
               // ignore poll errors
@@ -84,6 +91,8 @@ export default function PaymentReturnPage() {
           setOrderId(json.data?.orderId);
           setAmount(json.data?.amount || 0);
           setTransactionNo(json.data?.transactionNo || txnRef);
+          queryClient.invalidateQueries({ queryKey: ['cart'] });
+          setCartCount(0);
         }
       } else {
         setStatus('failed');
@@ -99,10 +108,6 @@ export default function PaymentReturnPage() {
   useEffect(() => {
     verifyPayment();
   }, [verifyPayment]);
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
-  };
 
   return (
     <div className="min-h-[100dvh] bg-background flex items-center justify-center px-4 -mt-16 md:-mt-20">

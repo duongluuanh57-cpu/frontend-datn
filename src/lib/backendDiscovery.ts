@@ -3,7 +3,7 @@ const DEV_PORT = '4000';
 const BACKENDS = [RENDER_URL];
 
 function getLocalUrl(): string {
-  const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+  const hostname = typeof window !== 'undefined' ? (window.location.hostname || 'localhost') : 'localhost';
   return `http://${hostname}:${DEV_PORT}`;
 }
 

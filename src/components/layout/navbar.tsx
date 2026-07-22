@@ -1,22 +1,29 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { Search, Heart, ShoppingCart, Menu, User } from 'lucide-react';
+import { Search, Heart, ShoppingCart, Menu, User, LogOut } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { useProductsFilterStore } from '@/store/useProductsFilterStore';
+import { getProductSlug } from '@/lib/utils';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useFavoriteStore } from '@/store/useFavoriteStore';
-import { useSearchSuggestions, ProductSuggestion } from '@/hooks/useSearchSuggestions';
-import { getFavoriteIds } from '@/services/favorite.service';
+import { useCartStore } from '@/store/useCartStore';
 import { useCart } from '@/hooks/useCart';
+import { useSearchSuggestions, ProductSuggestion, BrandSuggestion } from '@/hooks/useSearchSuggestions';
+import { getFavoriteIds } from '@/services/favorite.service';
 import { CartSidebar } from '@/components/shared/cart-sidebar';
+import { MiniProductCard } from '@/components/shared/MiniProductCard';
 import { getOriginRedirectUrl, resolveImageUrl } from '@/lib/api';
-import { Badge } from '@astryxdesign/core/Badge';
-import { IconButton } from '@astryxdesign/core/IconButton';
-import { TextInput } from '@astryxdesign/core/TextInput';
 
 export function Navbar() {
   const pathname = usePathname();
+  return <NavbarInner pathname={pathname} />;
+}
+
+function NavbarInner({ pathname }: { pathname: string }) {
+  const router = useRouter();
+  const setFilterAndGo = useProductsFilterStore((s) => s.setFilterAndGo);
   const { user, isAuthenticated, accessToken } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [cartSidebarOpen, setCartSidebarOpen] = useState(false);
@@ -28,9 +35,20 @@ export function Navbar() {
   }, []);
   const favoriteCount = useFavoriteStore((state) => state.favoriteCount);
   const setFavoriteCount = useFavoriteStore((state) => state.setFavoriteCount);
-  const { totalItems: cartCount } = useCart();
+  const { totalItems } = useCart();
+  const setCartCount = useCartStore((state) => state.setCartCount);
+  const cartCount = useCartStore((state) => state.cartCount);
+
+  // Sync initial cart count từ API vào Zustand store
+  useEffect(() => {
+    if (totalItems !== undefined) {
+      setCartCount(totalItems);
+    }
+  }, [totalItems, setCartCount]);
+
   const {
     suggestions,
+    brandResults,
     isLoading,
     isOpen,
     query,
@@ -70,12 +88,13 @@ export function Navbar() {
 
   const handleProductClick = useCallback((product: ProductSuggestion) => {
     close();
-    window.location.href = `/product/${product._id}`;
-  }, [close]);
+    router.push(`/product/${getProductSlug(product.name, product._id)}`);
+  }, [close, router]);
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
-  };
+  const handleBrandClick = useCallback((brand: BrandSuggestion) => {
+    close();
+    router.push(setFilterAndGo({ pendingBrand: brand.name }));
+  }, [close, router, setFilterAndGo]);
 
   // Ẩn navbar trên trang checkout — phải ĐẶT SAU TẤT CẢ hooks
   if (pathname === '/checkout') {
@@ -85,87 +104,140 @@ export function Navbar() {
   return (
     <>
       {/* Main Header */}
-      <header className="bg-surface/90 backdrop-blur-md fixed top-0 left-0 right-0 z-50 border-b border-border">
+      <header className="bg-white fixed top-0 left-0 right-0 z-50 font-sans">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between h-16 md:h-20 gap-4">
             
-            {/* Logo */}
-            <Link href="/" className="flex items-center gap-2 flex-shrink-0 cursor-pointer">
-              <img src="/logo.png" alt="L'essence" className="w-8 h-8 object-contain" />
-              <span className="font-bold text-xl text-text-primary">L'essence</span>
-            </Link>
+            {/* Logo & Cart — fixed width, không co giãn */}
+            <div className="flex items-center gap-2 flex-shrink-0 w-auto md:w-[240px] lg:w-[280px] overflow-hidden">
+              <Link href="/" className="flex items-center gap-2 flex-shrink-0 cursor-pointer">
+                <img src="/logo.png" alt="L'essence" className="w-8 h-8 object-contain" />
+                <span className="font-bold text-xl text-text-primary">L'essence</span>
+              </Link>
+              {(pathname === '/cart' || pathname === '/favorites' || pathname === '/profile' || pathname === '/products' || pathname.startsWith('/product/')) && (
+                <>
+                  <span className="text-text-muted mx-1">|</span>
+                  <span className="flex items-center gap-1.5 text-text-secondary text-sm font-medium truncate">
+                    {pathname === '/cart' ? (
+                      <>
+                        <ShoppingCart className="w-5 h-5 text-text-secondary" />
+                        Giỏ hàng
+                        {cartCount > 0 && (
+                          <span className="bg-primary text-on-primary text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                            {cartCount > 99 ? '99+' : cartCount}
+                          </span>
+                        )}
+                      </>
+                    ) : pathname === '/favorites' ? (
+                      <>
+                        <Heart className="w-5 h-5 text-text-secondary" />
+                        Yêu thích
+                        {favoriteCount > 0 && (
+                          <span className="bg-primary text-on-primary text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                            {favoriteCount > 99 ? '99+' : favoriteCount}
+                          </span>
+                        )}
+                      </>
+                    ) : pathname === '/products' ? (
+                      <>
+                        Sản phẩm
+                      </>
+                    ) : pathname.startsWith('/product/') ? (
+                      <>
+                        Chi tiết sản phẩm
+                      </>
+                    ) : (
+                      <>
+                        <User className="w-5 h-5 text-text-secondary" />
+                        Tài khoản
+                      </>
+                    )}
+                  </span>
+                </>
+              )}
+            </div>
             
             {/* Search Bar with Suggestions */}
-            <div className="flex-1 max-w-2xl hidden md:block" ref={containerRef}>
+            <div className="flex-1 min-w-[300px] max-w-2xl hidden md:block" ref={containerRef}>
               <div className="relative">
-                <TextInput
-                  label="Tìm kiếm"
-                  isLabelHidden
+                <input
+                  type="text"
                   value={query}
-                  onChange={setQuery}
+                  onChange={(e) => setQuery(e.target.value)}
                   onFocus={open}
-                  onEnter={() => {}}
                   placeholder="Tìm nước hoa, thương hiệu..."
-                  startIcon={<Search size={16} />}
-                  size="md"
+                  className="input-field pl-10 bg-white border-border hover:border-primary focus:border-primary focus:ring-2 focus:ring-primary/20"
                 />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" />
 
                 {/* Suggestions Dropdown */}
                 {isOpen && (
-                  <div className="absolute top-full left-0 right-0 mt-2 bg-surface border border-border rounded-lg shadow-xl max-h-80 overflow-y-auto z-50">
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-xl max-h-80 overflow-y-auto z-50">
                     {isLoading ? (
                       <div className="p-4 text-center text-text-secondary text-sm">
                         Đang tìm kiếm...
                       </div>
-                    ) : suggestions.length > 0 ? (
-                      <div className="p-2">
-                        {suggestions.map((product) => (
-                          <button
-                            key={product._id}
-                            onClick={() => handleProductClick(product)}
-                            className="w-full flex items-center gap-3 p-2 hover:bg-primary/10 rounded-md transition-colors cursor-pointer text-left"
-                          >
-                            {product.image ? (
-                              <div className="relative flex-shrink-0">
-                                <img
-                                  src={resolveImageUrl(product.image)}
-                                  alt={product.name}
-                                  className="w-10 h-10 rounded-md object-cover"
+                    ) : (
+                      <>
+                        {/* Brand Suggestions */}
+                        {brandResults.length > 0 && (
+                          <div className="p-2 border-b border-border">
+                            <div className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-2 px-2">Thương hiệu</div>
+                            {brandResults.map((brand) => (
+                              <button
+                                key={brand._id}
+                                onClick={() => handleBrandClick(brand)}
+                                className="w-full flex items-center gap-3 p-2 rounded-md transition-colors cursor-pointer border border-transparent hover:border-primary-dark hover:bg-surface/50 text-left"
+                              >
+                                <div className="w-10 h-10 rounded-md border border-border overflow-hidden flex-shrink-0 bg-white flex items-center justify-center">
+                                  {brand.logo ? (
+                                    <img src={resolveImageUrl(brand.logo)} alt={brand.name} className="w-full h-full object-contain" />
+                                  ) : (
+                                    <span className="text-xs font-bold text-text-muted">{brand.name.charAt(0)}</span>
+                                  )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-sm font-semibold text-text-primary truncate">{brand.name}</div>
+                                </div>
+                                <span className="text-xs text-primary font-medium whitespace-nowrap">Vào xem thương hiệu →</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Product Suggestions */}
+                        {suggestions.length > 0 ? (
+                          <div className="p-2">
+                            {suggestions.map((product) => (
+                              <button
+                                key={product._id}
+                                onClick={() => handleProductClick(product)}
+                                className="w-full text-left rounded-md transition-colors cursor-pointer border border-transparent hover:border-primary-dark hover:bg-surface/50 p-2"
+                              >
+                                <MiniProductCard
+                                  item={{
+                                    productId: product._id,
+                                    name: product.name,
+                                    image: product.image,
+                                    brand: product.brand,
+                                    price: product.discount && product.discount > 0 ? product.price : product.originalPrice || product.price,
+                                    discount: product.discount,
+                                    variantSize: '50ml',
+                                  }}
+                                  variant="cart"
+                                  hideRemoveButton
+                                  compact
                                 />
-                                {product.discount && product.discount > 0 ? (
-                                  <span className="absolute -top-1 -left-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-sm leading-none shadow-sm">
-                                    -{product.discount}%
-                                  </span>
-                                ) : null}
-                              </div>
-                            ) : (
-                              <div className="w-10 h-10 rounded-md bg-surface border border-border flex items-center justify-center flex-shrink-0">
-                                <span className="text-xs text-text-muted">IMG</span>
-                              </div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-text-primary truncate">{product.name}</p>
-                              <p className="text-xs text-text-secondary">{product.brand}</p>
-                            </div>
-                            <span className="flex-shrink-0 text-right">
-                              {product.discount && product.discount > 0 && product.originalPrice && product.originalPrice > product.price ? (
-                                <>
-                                  <span className="text-xs text-text-muted line-through mr-1">{formatPrice(product.originalPrice)}</span>
-                                  <br />
-                                  <span className="text-sm font-semibold text-primary">{formatPrice(product.price)}</span>
-                                </>
-                              ) : (
-                                <span className="text-sm font-semibold text-primary">{formatPrice(product.price)}</span>
-                              )}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                    ) : query.trim().length > 0 ? (
-                      <div className="p-4 text-center text-text-secondary text-sm">
-                        Không tìm thấy sản phẩm nào
-                      </div>
-                    ) : null}
+                              </button>
+                            ))}
+                          </div>
+                        ) : brandResults.length === 0 && query.trim().length > 0 ? (
+                          <div className="p-4 text-center text-text-secondary text-sm">
+                            Không tìm thấy sản phẩm nào
+                          </div>
+                        ) : null}
+                      </>
+                    )}
                   </div>
                 )}
               </div>
@@ -174,57 +246,82 @@ export function Navbar() {
             {/* Actions */}
             <div className="flex items-center gap-1 md:gap-2">
               <div className="relative">
-                <IconButton
-                  label="Yêu thích"
-                  icon={<Heart className={`w-6 h-6 text-text-secondary transition-all duration-300 ${favoriteCount > 0 ? 'scale-110' : ''}`} />}
-                  variant="ghost"
+                <button
+                  aria-label="Yêu thích"
                   onClick={handleFavoritesOpen}
-                />
+                  className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-foreground/5 transition-colors cursor-pointer"
+                >
+                  <Heart className={`w-6 h-6 text-text-muted hover:text-primary-dark transition-all duration-300 ${favoriteCount > 0 ? 'scale-110' : ''}`} />
+                </button>
                 {favoriteCount > 0 && (
-                  <Badge
-                    label={favoriteCount > 99 ? '99+' : favoriteCount}
-                    variant="info"
-                    className="absolute -top-1 -right-1 z-10"
-                  />
+                  <span
+                    className="absolute -top-1 -right-1 z-10 bg-primary-light text-on-primary text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center"
+                    style={{ backgroundColor: '#B8944F', color: '#FFFFFF' }}
+                  >
+                    {favoriteCount > 99 ? '99+' : favoriteCount}
+                  </span>
                 )}
               </div>
               <div className="relative">
-                <IconButton
-                  label="Giỏ hàng"
-                  icon={<ShoppingCart className="w-6 h-6 text-text-secondary" />}
-                  variant="ghost"
+                <button
+                  aria-label="Giỏ hàng"
                   onClick={handleCartOpen}
-                />
+                  className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-foreground/5 transition-colors cursor-pointer"
+                >
+                  <ShoppingCart className="w-6 h-6 text-text-muted hover:text-primary-dark" />
+                </button>
                 {cartCount > 0 && (
-                  <Badge
-                    label={cartCount > 99 ? '99+' : cartCount}
-                    variant="info"
-                    className="absolute -top-1 -right-1 z-10"
-                  />
+                  <span
+                    className="absolute -top-1 -right-1 z-10 bg-primary-light text-on-primary text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center"
+                    style={{ backgroundColor: '#B8944F', color: '#FFFFFF' }}
+                  >
+                    {cartCount > 99 ? '99+' : cartCount}
+                  </span>
                 )}
               </div>
               {isAuthenticated ? (
-                <IconButton
-                  label="Tài khoản"
-                  icon={<User className="w-6 h-6 text-text-secondary" />}
-                  variant="ghost"
-                  href="/profile"
-                />
+                <div className="relative group">
+                  <Link
+                    href="/profile?tab=orders"
+                    aria-label="Tài khoản"
+                    className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-foreground/5 transition-colors"
+                  >
+                    <User className="w-6 h-6 text-text-muted hover:text-primary-dark" />
+                  </Link>
+                  {/* Dropdown on hover — centered */}
+                  <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-48 bg-white rounded-xl border border-border shadow-elevated opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                    <Link
+                      href="/profile?tab=info"
+                      className="flex items-center gap-3 px-4 py-3 text-sm text-text-primary hover:bg-foreground/5 rounded-t-xl transition-colors"
+                    >
+                      <User size={16} />
+                      Tài khoản
+                    </Link>
+                    <button
+                      onClick={() => useAuthStore.getState().logout()}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-red-50/50 rounded-b-xl transition-colors cursor-pointer"
+                    >
+                      <LogOut size={16} />
+                      Đăng xuất
+                    </button>
+                  </div>
+                </div>
               ) : (
-                <IconButton
-                  label="Đăng nhập"
-                  icon={<User className="w-6 h-6 text-text-secondary" />}
-                  variant="ghost"
+                <a
                   href={loginUrl}
-                />
+                  aria-label="Đăng nhập"
+                  className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-foreground/5 transition-colors"
+                >
+                  <User className="w-6 h-6 text-text-muted" />
+                </a>
               )}
-              <IconButton
-                label="Menu"
-                icon={<Menu className="w-5 h-5 text-text-secondary" />}
-                variant="ghost"
-                className="md:hidden"
+              <button
+                aria-label="Menu"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              />
+                className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-foreground/5 transition-colors md:hidden cursor-pointer"
+              >
+                <Menu className="w-5 h-5 text-text-muted hover:text-primary-dark" />
+              </button>
             </div>
           </div>
         </div>
@@ -232,19 +329,18 @@ export function Navbar() {
 
       {/* Mobile Menu Dropdown */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-surface border-b border-border">
+        <div className="md:hidden bg-white">
           <div className="max-w-7xl mx-auto px-4 py-4 space-y-3">
             {/* Mobile Search */}
             <div className="relative">
-              <TextInput
-                label="Tìm kiếm"
-                isLabelHidden
+              <input
+                type="text"
                 value={query}
-                onChange={setQuery}
+                onChange={(e) => setQuery(e.target.value)}
                 placeholder="Tìm nước hoa, thương hiệu..."
-                startIcon={<Search size={16} />}
-                size="sm"
+                className="input-field pl-10"
               />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" />
             </div>
             <button
               onClick={() => {

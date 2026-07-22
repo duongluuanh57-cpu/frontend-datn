@@ -15,8 +15,15 @@ export interface ProductSuggestion {
   image: string;
 }
 
+export interface BrandSuggestion {
+  _id: string;
+  name: string;
+  logo: string;
+}
+
 export interface UseSearchSuggestionsReturn {
   suggestions: ProductSuggestion[];
+  brandResults: BrandSuggestion[];
   isLoading: boolean;
   isOpen: boolean;
   query: string;
@@ -64,28 +71,14 @@ export function useSearchSuggestions(): UseSearchSuggestionsReturn {
     }
   }, [brandNames]);
 
-  // Detect if query matches a brand
-  const detectBrand = useCallback((q: string): string | null => {
-    if (!q || !brands.length) return null;
-    const lowerQ = q.toLowerCase().trim();
-    const matched = brands.find(b => b.toLowerCase() === lowerQ);
-    return matched || null;
-  }, [brands]);
-
   // Fetch suggestions based on query (vẫn dùng REST vì cần auth + params động)
   const { data: searchData, isLoading: isLoadingSearch } = useQuery({
     queryKey: ['searchSuggestions', query],
     queryFn: async () => {
       const trimmed = query.trim();
       if (!trimmed) return null;
-      const matchedBrand = detectBrand(trimmed);
-      if (matchedBrand) {
-        const { data } = await api.get('/products', { params: { brand: matchedBrand, limit: 8 } });
-        return data;
-      } else {
-        const { data } = await api.get('/products/suggest', { params: { q: trimmed, limit: 8 } });
-        return data;
-      }
+      const { data } = await api.get('/products/suggest', { params: { q: trimmed, limit: 8 } });
+      return data;
     },
     enabled: isOpen && query.trim().length > 0,
     staleTime: 30 * 1000,
@@ -94,7 +87,7 @@ export function useSearchSuggestions(): UseSearchSuggestionsReturn {
   const searchList = extractArray(searchData);
 
   const suggestions: ProductSuggestion[] = query.trim().length > 0
-    ? searchList.map((p: any) => ({
+    ? (Array.isArray(searchData) ? searchData : (searchData?.data?.products || searchData?.products || [])).map((p: any) => ({
         _id: p._id || p.id,
         name: p.name,
         brand: p.brand || (p.brandId?.name) || '',
@@ -112,6 +105,14 @@ export function useSearchSuggestions(): UseSearchSuggestionsReturn {
         discount: p.discount ? Number(p.discount) : 0,
         image: p.image || p.images?.[0] || '',
       }));
+
+  const brandResults: BrandSuggestion[] = query.trim().length > 0
+    ? (searchData?.data?.brands || searchData?.brands || []).map((b: any) => ({
+        _id: b._id,
+        name: b.name,
+        logo: b.logo || '',
+      }))
+    : [];
 
   const isLoading = query.trim().length > 0 ? isLoadingSearch : isLoadingNavbar;
 
@@ -138,6 +139,7 @@ export function useSearchSuggestions(): UseSearchSuggestionsReturn {
 
   return {
     suggestions,
+    brandResults,
     isLoading,
     isOpen,
     query,

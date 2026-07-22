@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { formatNumber, parsePrice, getPriceSuggestions } from '@/lib/priceFilterUtils';
 
 interface PriceFilterPopupProps {
   isOpen: boolean;
@@ -9,6 +10,7 @@ interface PriceFilterPopupProps {
   onClear: () => void;
   initialMin?: number;
   initialMax?: number;
+  popupId?: string;
 }
 
 export function PriceFilterPopup({
@@ -18,6 +20,7 @@ export function PriceFilterPopup({
   onClear,
   initialMin = 0,
   initialMax = 5000000,
+  popupId,
 }: PriceFilterPopupProps) {
   const [minPrice, setMinPrice] = useState(initialMin);
   const [maxPrice, setMaxPrice] = useState(initialMax);
@@ -35,44 +38,32 @@ export function PriceFilterPopup({
     }
   }, [isOpen, initialMin, initialMax]);
 
-  const formatPrice = (value: number): string => {
-    return value.toLocaleString('vi-VN');
-  };
+  // Click outside to close (không reset filter)
+  useEffect(() => {
+    if (!isOpen) return;
 
-  const parsePrice = (value: string): number => {
-    const cleaned = value.replace(/\./g, '').replace(/,/g, '');
-    const parsed = parseInt(cleaned, 10);
-    return isNaN(parsed) ? 0 : Math.max(0, parsed);
-  };
+    const handleClickOutside = (event: MouseEvent) => {
+      if (popupRef.current && !popupRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
 
-  const getPriceSuggestions = (value: number): string[] => {
-    if (value === 0) return [];
-    
-    const suggestions: string[] = [];
-    const maxPrice = 5000000;
-    
-    if (value < 1000) {
-      const s1 = value * 100000;
-      const s2 = value * 1000000;
-      if (s1 <= maxPrice) suggestions.push(formatPrice(s1));
-      if (s2 <= maxPrice) suggestions.push(formatPrice(s2));
-    } else if (value < 10000) {
-      const s1 = value * 100;
-      const s2 = value * 1000;
-      if (s1 <= maxPrice) suggestions.push(formatPrice(s1));
-      if (s2 <= maxPrice) suggestions.push(formatPrice(s2));
-    } else if (value < 100000) {
-      const s1 = value * 10;
-      const s2 = value * 100;
-      if (s1 <= maxPrice) suggestions.push(formatPrice(s1));
-      if (s2 <= maxPrice) suggestions.push(formatPrice(s2));
-    } else if (value < 1000000) {
-      const s1 = value * 10;
-      if (s1 <= maxPrice) suggestions.push(formatPrice(s1));
-    }
-    
-    return suggestions.slice(0, 3);
-  };
+    // Đóng popup khác khi mở popup này
+    const handlePopupOpen = (event: Event) => {
+      const customEvent = event as CustomEvent<{ id: string }>;
+      if (customEvent.detail?.id && customEvent.detail.id !== popupId) {
+        onClose();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('price-filter-opened', handlePopupOpen);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('price-filter-opened', handlePopupOpen);
+    };
+  }, [isOpen, onClose, popupId]);
 
   const handleMinInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -115,6 +106,13 @@ export function PriceFilterPopup({
     onClose();
   };
 
+  // Thông báo cho các popup khác biết mình đang mở
+  useEffect(() => {
+    if (isOpen && popupId) {
+      window.dispatchEvent(new CustomEvent('price-filter-opened', { detail: { id: popupId } }));
+    }
+  }, [isOpen, popupId]);
+
   const handleClear = () => {
     setTempMin(0);
     setTempMax(5000000);
@@ -129,6 +127,7 @@ export function PriceFilterPopup({
   return (
     <div
       ref={popupRef}
+      onMouseDown={(e) => e.stopPropagation()}
       className="absolute top-full right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-200 p-5 w-80 z-50"
     >
       <div className="mb-4">
@@ -185,7 +184,7 @@ export function PriceFilterPopup({
           </label>
           <input
             type="text"
-            value={formatPrice(tempMin)}
+            value={formatNumber(tempMin)}
             onChange={handleMinInputChange}
             className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
             placeholder="0đ"
@@ -197,7 +196,7 @@ export function PriceFilterPopup({
           </label>
           <input
             type="text"
-            value={formatPrice(tempMax)}
+            value={formatNumber(tempMax)}
             onChange={handleMaxInputChange}
             className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
             placeholder="5.000.000đ"

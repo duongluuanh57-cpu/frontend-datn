@@ -13,6 +13,7 @@ import { CartItem } from '@/services/cart.service';
 import { getFavorites, removeFromFavorites, invalidateFavoriteIdsCache } from '@/services/favorite.service';
 import { toast } from 'sonner';
 import { MiniProductCard } from './MiniProductCard';
+import { formatPrice } from '@/lib/formatPrice';
 
 interface CartSidebarProps {
   isOpen: boolean;
@@ -29,7 +30,7 @@ export function CartSidebar({ isOpen, onClose, initialTab = 'cart' }: CartSideba
   const [favorites, setFavorites] = useState<any[]>([]);
   const [favoritesLoading, setFavoritesLoading] = useState(false);
   const accessToken = useAuthStore((state) => state.accessToken);
-  const cartCount = useCartStore((state) => state.totalItems);
+  const cartCount = useCartStore((state) => state.cartCount);
   const favoriteCount = useFavoriteStore((state) => state.favoriteCount);
   const setCartCount = useCartStore((state) => state.setCartCount);
   const setFavoriteCount = useFavoriteStore((state) => state.setFavoriteCount);
@@ -40,17 +41,11 @@ export function CartSidebar({ isOpen, onClose, initialTab = 'cart' }: CartSideba
     if (isOpen) {
       setActiveTab(initialTab);
       document.body.style.overflow = 'hidden';
-      document.documentElement.style.overflow = 'hidden';
-      document.documentElement.style.overscrollBehavior = 'none';
     } else {
       document.body.style.overflow = '';
-      document.documentElement.style.overflow = '';
-      document.documentElement.style.overscrollBehavior = '';
     }
     return () => {
       document.body.style.overflow = '';
-      document.documentElement.style.overflow = '';
-      document.documentElement.style.overscrollBehavior = '';
     };
   }, [isOpen]);
 
@@ -124,10 +119,6 @@ export function CartSidebar({ isOpen, onClose, initialTab = 'cart' }: CartSideba
     }
   };
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
-  };
-
   const cartItems = cart?.items?.slice(0, MAX_PREVIEW) || [];
   const hasMoreCartItems = (cart?.items?.length || 0) > MAX_PREVIEW;
 
@@ -140,7 +131,7 @@ export function CartSidebar({ isOpen, onClose, initialTab = 'cart' }: CartSideba
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
-            className="fixed inset-0 bg-black/50 z-[100] cart-overlay"
+            className="fixed inset-0 bg-black/50 z-[10000] cart-overlay"
             onClick={onClose}
             onWheel={onClose}
           />
@@ -149,82 +140,81 @@ export function CartSidebar({ isOpen, onClose, initialTab = 'cart' }: CartSideba
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 250 }}
-            className="fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl z-[102]"
+            className="fixed right-0 top-0 h-full w-full max-w-md bg-background shadow-2xl z-[10001]"
           >
             <div className="flex flex-col h-full">
-              {/* Header */}
-              <div className="flex items-center justify-between p-4 border-b border-border">
-                <h2 className="text-lg font-bold text-text-primary">Giỏ hàng & Yêu thích</h2>
-                <button onClick={onClose} className="p-2 hover:bg-surface rounded-lg transition-colors" aria-label="Đóng">
-                  <X className="w-5 h-5 text-text-secondary" />
-                </button>
-              </div>
-
-              {/* Tabs */}
-              <div className="flex border-b border-border">
-                <button
-                  onClick={() => setActiveTab('cart')}
-                  className={`flex-1 py-3 text-sm font-semibold transition-colors relative ${
-                    activeTab === 'cart' ? 'text-primary' : 'text-text-muted hover:text-text-primary'
-                  }`}
-                >
-                  Giỏ hàng
-                  {cartCount > 0 && (
-                    <span className="ml-1.5 text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">{cartCount}</span>
-                  )}
-                  {activeTab === 'cart' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />}
-                </button>
-                <button
-                  onClick={() => setActiveTab('favorites')}
-                  className={`flex-1 py-3 text-sm font-semibold transition-colors relative ${
-                    activeTab === 'favorites' ? 'text-primary' : 'text-text-muted hover:text-text-primary'
-                  }`}
-                >
-                  Yêu thích
-                  {favoriteCount > 0 && (
-                    <span className="ml-1.5 text-xs bg-red-100 text-red-500 px-1.5 py-0.5 rounded-full">{favoriteCount}</span>
-                  )}
-                  {activeTab === 'favorites' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />}
-                </button>
+              {/* Top bar — full height = navbar height, border at bottom aligns with navbar bottom edge */}
+              <div className="flex-shrink-0 h-16 md:h-20 flex flex-col border-b border-border">
+                <div className="flex-1" />
+                <div className="flex items-stretch px-4 h-10 md:h-12">
+                  <button
+                    onClick={() => setActiveTab('cart')}
+                    className={`flex-1 flex items-center justify-center gap-1.5 text-sm md:text-base font-semibold border-b-2 transition-colors ${
+                      activeTab === 'cart' ? 'text-primary border-primary' : 'text-text-muted hover:text-text-primary border-transparent hover:border-text-muted/30'
+                    }`}
+                  >
+                    Giỏ hàng
+                    {cartCount > 0 && (
+                      <span className="text-[11px] md:text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">{cartCount}</span>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('favorites')}
+                    className={`flex-1 flex items-center justify-center gap-1.5 text-sm md:text-base font-semibold border-b-2 transition-colors ${
+                      activeTab === 'favorites' ? 'text-primary border-primary' : 'text-text-muted hover:text-text-primary border-transparent hover:border-text-muted/30'
+                    }`}
+                  >
+                    Yêu thích
+                    {favoriteCount > 0 && (
+                      <span className="text-[11px] md:text-xs bg-red-100 text-red-500 px-1.5 py-0.5 rounded-full">{favoriteCount}</span>
+                    )}
+                  </button>
+                </div>
               </div>
 
               {/* Content */}
-              <div className="flex-1 overflow-y-auto p-4">
+              <div className="flex-1 overflow-y-auto p-4 snap-y snap-mandatory scroll-smooth" style={{ overscrollBehavior: 'contain' }}>
                 {activeTab === 'cart' ? (
                   <>
                     {loading ? (
                       <div className="space-y-4">
                         {[...Array(3)].map((_, i) => (
-                          <div key={i} className="bg-surface rounded-lg p-3 flex gap-3 animate-pulse">
-                            <div className="w-16 h-16 bg-surface/80 rounded-md flex-shrink-0" />
+                          <div key={i} className="bg-foreground/5 rounded-lg p-3 flex gap-3 animate-pulse">
+                            <div className="w-16 h-16 bg-foreground/5 rounded-md flex-shrink-0" />
                             <div className="flex-1 space-y-2">
-                              <div className="h-4 w-3/4 bg-surface/80 rounded" />
-                              <div className="h-3 w-1/2 bg-surface/80 rounded" />
+                              <div className="h-4 w-3/4 bg-foreground/5 rounded" />
+                              <div className="h-3 w-1/2 bg-foreground/5 rounded" />
                             </div>
                           </div>
                         ))}
                       </div>
                     ) : !cart || cart.items.length === 0 ? (
                       <div className="flex flex-col items-center justify-center h-full text-center">
-                        <ShoppingBag className="w-16 h-16 text-text-muted mb-4" />
-                        <h3 className="text-lg font-medium text-text-primary mb-2">Giỏ hàng trống</h3>
-                        <p className="text-text-secondary mb-6">Hãy thêm sản phẩm vào giỏ hàng của bạn</p>
+                        <ShoppingBag className="w-20 h-20 text-text-muted mb-4" />
+                        <h3 className="text-xl font-bold text-text-primary mb-2">Giỏ hàng trống</h3>
+                        <p className="text-sm text-text-secondary mb-6">Hãy thêm sản phẩm vào giỏ hàng của bạn</p>
                         <button onClick={onClose} className="btn-primary">Tiếp tục mua sắm</button>
                       </div>
                     ) : (
-                      <div className="space-y-4">
+                      <div className="flex flex-col">
                         {cartItems.map((item) => (
-                          <MiniProductCard
-                            key={item.productId + '-' + (item.variantSize || '50ml')}
-                            item={item}
-                            variant="cart"
-                            onRemove={handleRemove}
-                          />
+                          <div key={item.productId + '-' + (item.variantSize || '50ml')} className="snap-start shrink-0">
+                            <MiniProductCard
+                              item={item}
+                              variant="cart"
+                              onRemove={handleRemove}
+                              compact={false}
+                            />
+                          </div>
                         ))}
                         {hasMoreCartItems && (
-                          <p className="text-xs text-text-muted text-center pt-1">
+                          <Link
+                            href="/cart"
+                            onClick={onClose}
+                            className="block text-xs text-primary font-medium text-center pt-1 hover:underline"
+                          >
                             + {cart.items.length - MAX_PREVIEW} sản phẩm khác
-                          </p>
+                          </Link>
                         )}
                       </div>
                     )}
@@ -237,36 +227,43 @@ export function CartSidebar({ isOpen, onClose, initialTab = 'cart' }: CartSideba
                       </div>
                     ) : favorites.length === 0 ? (
                       <div className="flex flex-col items-center justify-center h-full text-center">
-                        <Heart className="w-16 h-16 text-text-muted mb-4" />
-                        <h3 className="text-lg font-medium text-text-primary mb-2">Chưa có sản phẩm yêu thích</h3>
-                        <p className="text-text-secondary mb-6">Hãy thêm sản phẩm vào danh sách yêu thích của bạn</p>
+                        <Heart className="w-20 h-20 text-text-muted mb-4" />
+                        <h3 className="text-xl font-bold text-text-primary mb-2">Chưa có sản phẩm yêu thích</h3>
+                        <p className="text-sm text-text-secondary mb-6">Hãy thêm sản phẩm vào danh sách yêu thích của bạn</p>
                         <button onClick={onClose} className="btn-primary">Tiếp tục mua sắm</button>
                       </div>
                     ) : (
-                      <div className="space-y-4">
+                      <div className="flex flex-col">
                         {favorites.map((fav: any) => {
                           const product = fav.productId || fav;
                           const productId = product._id || fav._id;
                           return (
-                            <MiniProductCard
-                              key={fav._id}
-                              item={{
-                                productId,
-                                name: product.name || '',
-                                image: product.image || '',
-                                brand: product.brand || '',
-                                price: product.price || 0,
-                                discount: product.discount || 0,
-                              }}
-                              variant="favorite"
-                              onRemove={(id: string) => handleRemoveFavorite(id)}
-                            />
+                            <div key={fav._id} className="snap-start shrink-0">
+                              <MiniProductCard
+                                item={{
+                                  productId,
+                                  name: product.name || '',
+                                  image: product.image || '',
+                                  brand: product.brand || '',
+                                  price: product.price || 0,
+                                  discount: product.discount || 0,
+                                  variantSize: product.variantSize || '',
+                                }}
+                                variant="favorite"
+                                onRemove={(id: string) => handleRemoveFavorite(id)}
+                                compact={false}
+                              />
+                            </div>
                           );
                         })}
                         {favoriteCount > MAX_PREVIEW && (
-                          <p className="text-xs text-text-muted text-center pt-1">
+                          <Link
+                            href="/favorites"
+                            onClick={onClose}
+                            className="block text-xs text-primary font-medium text-center pt-1 hover:underline"
+                          >
                             + {favoriteCount - MAX_PREVIEW} sản phẩm yêu thích khác
-                          </p>
+                          </Link>
                         )}
                       </div>
                     )}
@@ -280,12 +277,12 @@ export function CartSidebar({ isOpen, onClose, initialTab = 'cart' }: CartSideba
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-text-secondary">{cart.totalItems} sản phẩm</span>
-                      <span className="font-semibold text-text-primary">Tạm tính: {formatPrice(cart.totalAmount)}</span>
+                      <span className="text-base font-bold text-text-primary">Tạm tính: {formatPrice(cart.totalAmount)}</span>
                     </div>
                     <Link
                       href="/cart"
                       onClick={onClose}
-                      className="flex items-center justify-center gap-2 w-full py-3 bg-primary hover:bg-primary-dark text-rich-black font-semibold rounded-lg transition-colors"
+                      className="flex items-center justify-center gap-2 w-full py-3 bg-primary hover:bg-primary-dark text-on-primary font-semibold rounded-lg transition-colors"
                     >
                       Xem giỏ hàng
                       <ArrowRight size={18} />
@@ -295,7 +292,7 @@ export function CartSidebar({ isOpen, onClose, initialTab = 'cart' }: CartSideba
                   <Link
                     href="/favorites"
                     onClick={onClose}
-                    className="flex items-center justify-center gap-2 w-full py-3 bg-primary hover:bg-primary-dark text-rich-black font-semibold rounded-lg transition-colors"
+                    className="flex items-center justify-center gap-2 w-full py-3 bg-primary hover:bg-primary-dark text-on-primary font-semibold rounded-lg transition-colors"
                   >
                     Xem tất cả yêu thích
                     <ExternalLink size={16} />

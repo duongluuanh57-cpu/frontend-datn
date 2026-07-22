@@ -15,3 +15,17 @@ export async function getMyOrders(token: string) {
   const json = await res.json();
   return json.data;
 }
+
+/**
+ * PATCH /api/orders/:id/cancel — Hủy đơn hàng (chỉ khi pending)
+ */
+export async function cancelOrder(token: string, orderId: string) {
+  const origin = getBackendOrigin();
+  const res = await fetch(`${origin.replace(/\/+$/, '')}/api/orders/${orderId}/cancel`, {
+    method: 'PATCH',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.message || 'Không thể hủy đơn hàng');
+  return json;
+}

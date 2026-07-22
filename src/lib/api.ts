@@ -1,4 +1,4 @@
-import { getActiveOrigin, getActiveApiUrl, getActiveOriginSync } from './backendDiscovery';
+import { getActiveOriginSync } from './backendDiscovery';
 
 /** Helper: get redirect URL for backend routes */
 export function getOriginRedirectUrl(path: string): string {
@@ -8,17 +8,13 @@ export function getOriginRedirectUrl(path: string): string {
 
 /** Lấy base URL từ cache (sync) — fallback về Render */
 export function getBackendOrigin(): string {
-  return getActiveOriginSync();
-}
-
-/** Lấy base URL động — ping song song, ưu tiên Render */
-export async function getBackendOriginAsync(): Promise<string> {
-  return getActiveOrigin();
-}
-
-/** Lấy API URL động (origin + /api) — async */
-export async function getApiBase(): Promise<string> {
-  return getActiveApiUrl();
+  const origin = getActiveOriginSync();
+  if (typeof window !== 'undefined' && !origin.startsWith('http://') && !origin.startsWith('https://')) {
+    const fallback = window.location.origin;
+    console.warn('[getBackendOrigin] Malformed origin:', origin, '→ falling back to', fallback);
+    return fallback;
+  }
+  return origin;
 }
 
 /**
@@ -216,77 +212,3 @@ export const api = {
 };
 
 export default api;
-
-// ──────────────────────────────────────────────
-// CÁC HÀM TIỆN ÍCH KHÁC (giữ nguyên)
-// ──────────────────────────────────────────────
-
-export type ImgBBUploadResponseData = {
-  url: string;
-  displayUrl: string;
-  thumbUrl?: string;
-  deleteUrl?: string;
-  originalBytes: number;
-  compressedBytes: number;
-};
-
-/** Multipart POST — Upload lên Cloudflare R2 qua backend. */
-export async function uploadImageToR2(
-  file: File,
-  options?: { maxWidth?: number; quality?: number; folder?: string }
-): Promise<ImgBBUploadResponseData> {
-  const base = (await getActiveApiUrl()).replace(/\/+$/, '');
-  const endpoint = `${base}/media/upload-r2`;
-
-  const form = new FormData();
-  form.append('image', file);
-  if (options?.maxWidth != null) form.append('maxWidth', String(options.maxWidth));
-  if (options?.quality != null) form.append('quality', String(options.quality));
-  if (options?.folder) form.append('folder', options.folder);
-
-  const headers = new Headers();
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-  if (token) headers.set('Authorization', `Bearer ${token}`);
-
-  const res = await fetch(endpoint, { method: 'POST', body: form, headers });
-  const json = (await res.json()) as {
-    success?: boolean;
-    message?: string;
-    data?: ImgBBUploadResponseData;
-  };
-
-  if (!res.ok || !json.success || !json.data) {
-    throw new Error(json.message || `Upload failed (${res.status})`);
-  }
-  return json.data;
-}
-
-/** @deprecated — use uploadImageToR2 instead */
-export const uploadImageToImgBB = uploadImageToR2;
-
-export interface BrandData {
-  _id: string;
-  name: string;
-  logo?: string;
-  description?: string;
-  origin?: string;
-  status: 'active' | 'inactive';
-  featured: boolean;
-}
-
-/**
- * Fetch all brands from the backend.
- * Public endpoint, returns list of brands.
- */
-export async function getBrands(): Promise<BrandData[]> {
-  try {
-    const res = await api.get('/brands');
-    if (res.data && (res.data as any).success) {
-      return (res.data as any).data;
-    }
-    return [];
-  } catch (error) {
-    console.error('Failed to fetch brands from database:', error);
-    return [];
-  }
-}

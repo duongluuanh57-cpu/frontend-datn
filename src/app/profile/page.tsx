@@ -1,32 +1,47 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useProfileAddresses } from '@/hooks/profile/useProfileAddresses';
-import { getMe, updateProfile, changePassword } from '@/services/user.service';
+import { getMe } from '@/services/user.service';
 import { getMyOrders } from '@/services/order.service';
-import { User, Mail, Shield, MapPin, ShoppingBag, Key, LogOut, Plus, Edit2, Trash2, Check, Crown, DollarSign, Phone, UserRound, Globe, Building2, LayoutDashboard, CalendarDays, AtSign, BadgeCheck } from 'lucide-react';
-import { TextInput } from '@astryxdesign/core/TextInput';
-import { Selector } from '@astryxdesign/core/Selector';
-import { Button } from '@astryxdesign/core/Button';
-import { getBackendOrigin, resolveImageUrl } from '@/lib/api';
-import Link from 'next/link';
+import { User, ShoppingBag, Crown, UserRound, LayoutDashboard, Search, Medal, Ticket } from 'lucide-react';
+import { toast } from 'sonner';
+import { getBackendOrigin } from '@/lib/api';
+import { OrderCard } from '@/components/profile/order-card';
+import { OrderDetail } from '@/components/profile/order-detail';
+import { ProfileInfo } from '@/components/profile/profile-info';
+import { AddressManager } from '@/components/profile/address-manager';
+import { PasswordManager } from '@/components/profile/password-manager';
+import { RankManager } from '@/components/profile/rank-card';
+import { VoucherManager } from '@/components/profile/voucher-manager';
 
 export default function ProfilePage() {
+  return (
+    <Suspense fallback={null}>
+      <ProfilePageInner />
+    </Suspense>
+  );
+}
+
+function ProfilePageInner() {
   const { user, logout, accessToken, updateUser } = useAuthStore();
-  const [activeTab, setActiveTab] = useState('info');
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const tabParam = searchParams.get('tab');
+  const orderParam = searchParams.get('order');
+  const [activeTab, setActiveTab] = useState(tabParam || 'orders');
   const {
     addresses,
     loadingAddresses,
     isEditingAddress,
     setIsEditingAddress,
     editingAddressId,
-    addrLabel,
-    setAddrLabel,
+    addrType,
+    setAddrType,
     addrFullName,
     setAddrFullName,
-    addrGender,
-    setAddrGender,
     addrPhoneNumber,
     setAddrPhoneNumber,
     addrStreet,
@@ -35,6 +50,12 @@ export default function ProfilePage() {
     setAddrProvince,
     addrDistrict,
     setAddrDistrict,
+    addrWard,
+    setAddrWard,
+    addrLat,
+    setAddrLat,
+    addrLng,
+    setAddrLng,
     addrSubmitting,
     addrError,
     setAddrError,
@@ -42,8 +63,18 @@ export default function ProfilePage() {
     setDeleteError,
     provinces,
     districts,
+    wards,
+    setWards,
     loadingProvinces,
     loadingDistricts,
+    loadingWards,
+    addressStep,
+    selectedProvinceCode,
+    selectedDistrictCode,
+    handleSelectProvince,
+    handleSelectWard,
+    handleSelectDistrict,
+    resetLocationFlow,
     fetchAddresses,
     openNewAddressForm,
     openEditAddressForm,
@@ -53,21 +84,6 @@ export default function ProfilePage() {
     fetchDistricts,
   } = useProfileAddresses();
 
-  const [isEditingInfo, setIsEditingInfo] = useState(false);
-  const [editFullName, setEditFullName] = useState(user?.fullName || '');
-  const [editPhone, setEditPhone] = useState(user?.phoneNumber || '');
-  const [editGender, setEditGender] = useState<'MALE' | 'FEMALE' | 'OTHER' | ''>(user?.gender || '');
-
-  const [infoSaving, setInfoSaving] = useState(false);
-  const [infoError, setInfoError] = useState('');
-  const [infoSuccess, setInfoSuccess] = useState('');
-
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [passwordSaving, setPasswordSaving] = useState(false);
-  const [passwordSuccess, setPasswordSuccess] = useState('');
-  const [passwordError, setPasswordError] = useState('');
 
   const [orders, setOrders] = useState<any[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
@@ -75,72 +91,33 @@ export default function ProfilePage() {
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [orderFilter, setOrderFilter] = useState('all');
   const [orderSort, setOrderSort] = useState('newest');
+  const [orderSearch, setOrderSearch] = useState('');
+  const [loadingProfile, setLoadingProfile] = useState(true);
+  const [showAccountMenu, setShowAccountMenu] = useState(activeTab === 'info' || activeTab === 'addresses' || activeTab === 'password');
 
-  const isOAuth = Boolean(user?.provider && user.provider !== 'local');
+  const isOAuth = Boolean(user?.oauthProvider);
 
-  const startEditInfo = () => {
-    setEditFullName(user?.fullName || '');
-    setEditPhone(user?.phoneNumber || '');
-    setEditGender(user?.gender || '');
+  const switchTab = useCallback((tab: string) => {
+    setActiveTab(tab);
+    setSelectedOrder(null);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('tab', tab);
+    params.delete('order');
+    router.replace(`/profile?${params.toString()}`, { scroll: false });
+  }, [searchParams, router]);
 
-    setIsEditingInfo(true);
-    setInfoError('');
-    setInfoSuccess('');
-  };
+  const selectOrder = useCallback((order: any) => {
+    setSelectedOrder(order);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('tab', 'orders');
+    if (order?._id) params.set('order', order._id);
+    router.replace(`/profile?${params.toString()}`, { scroll: false });
+  }, [searchParams, router]);
 
-  const saveInfo = async () => {
-    if (!accessToken) return;
-    setInfoSaving(true);
-    setInfoError('');
-    setInfoSuccess('');
-    try {
-      await updateProfile(accessToken, {
-        fullName: editFullName,
-        phoneNumber: editPhone,
-        gender: editGender as any,
-      });
-      updateUser({
-        fullName: editFullName,
-        phoneNumber: editPhone,
-        gender: editGender as any,
-      });
-      setInfoSuccess('Cập nhật thông tin thành công');
-      setIsEditingInfo(false);
-    } catch (err: any) {
-      setInfoError(err?.message || 'Không thể cập nhật thông tin');
-    } finally {
-      setInfoSaving(false);
-    }
-  };
-
-  const handleChangePassword = async () => {
-    if (!accessToken) return;
-    setPasswordError('');
-    setPasswordSuccess('');
-    if (newPassword.length < 6) {
-      setPasswordError('Mật khẩu mới phải có ít nhất 6 ký tự');
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setPasswordError('Mật khẩu xác nhận không khớp');
-      return;
-    }
-    setPasswordSaving(true);
-    try {
-      await changePassword(accessToken, currentPassword, newPassword);
-      setPasswordSuccess('Đổi mật khẩu thành công');
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
-    } catch (err: any) {
-      setPasswordError(err?.message || 'Không thể đổi mật khẩu');
-    } finally {
-      setPasswordSaving(false);
-    }
-  };
 
   useEffect(() => {
     if (accessToken) {
+      setLoadingProfile(true);
       getMe(accessToken)
         .then((userData) => {
           updateUser({
@@ -149,17 +126,25 @@ export default function ProfilePage() {
             fullName: userData.fullName || '',
             phoneNumber: userData.phoneNumber || '',
             status: userData.status || 'active',
+            oauthProvider: userData.oauthProvider || undefined,
           });
         })
-        .catch(() => {});
+        .catch(() => {
+          // Backend lỗi → giữ nguyên data cũ, vẫn cho xem profile
+        })
+        .finally(() => {
+          setLoadingProfile(false);
+        });
+    } else {
+      setLoadingProfile(false);
     }
   }, [accessToken, updateUser]);
 
   useEffect(() => {
-    if (activeTab === 'orders' && orders.length === 0) {
+    if (activeTab === 'orders' && orders.length === 0 && accessToken) {
       setLoadingOrders(true);
       setOrdersError('');
-      getMyOrders(accessToken!)
+      getMyOrders(accessToken)
         .then((data) => {
           setOrders(data);
           setLoadingOrders(false);
@@ -171,48 +156,28 @@ export default function ProfilePage() {
     }
   }, [activeTab, accessToken, orders.length]);
 
+  // Restore selected order from URL after orders load
+  useEffect(() => {
+    if (orderParam && orders.length > 0) {
+      const found = orders.find((o: any) => o._id === orderParam);
+      if (found) {
+        setSelectedOrder(found);
+      }
+    }
+  }, [orderParam]);
+
   useEffect(() => {
     if (activeTab === 'addresses' && addresses.length === 0 && accessToken) {
       fetchAddresses();
     }
   }, [activeTab, addresses.length, accessToken, fetchAddresses]);
 
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('vi-VN', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
-  };
-
-  const statusLabel: Record<string, string> = {
-    pending: 'Chờ xác nhận',
-    processing: 'Đang xử lý',
-    shipped: 'Đang giao',
-    delivered: 'Đã giao',
-    cancelled: 'Đã hủy',
-  };
-
-  const statusColor: Record<string, string> = {
-    pending: 'bg-amber-100 text-amber-700',
-    processing: 'bg-blue-100 text-blue-700',
-    shipped: 'bg-purple-100 text-purple-700',
-    delivered: 'bg-green-100 text-green-700',
-    cancelled: 'bg-red-100 text-red-700',
-  };
-
   if (!user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-text-primary mb-2">Vui lòng đăng nhập</h2>
-          <p className="text-text-secondary mb-4">Bạn cần đăng nhập để xem trang cá nhân</p>
+          <h2 className="text-2xl md:text-3xl font-bold text-text-primary mb-2">Vui lòng đăng nhập</h2>
+          <p className="text-sm text-text-secondary mb-4">Bạn cần đăng nhập để xem trang cá nhân</p>
           <a href={getBackendOrigin() + '/api/auth/login'} className="btn-primary inline-block">
             Đăng nhập
           </a>
@@ -221,12 +186,54 @@ export default function ProfilePage() {
     );
   }
 
+  // Skeleton loading khi đang fetch profile
+  if (loadingProfile) {
+    return (
+      <div className="h-[calc(100vh-80px)] bg-background max-w-7xl mx-auto px-4 overflow-hidden">
+        <div className="h-full flex flex-col bg-background overflow-hidden">
+          <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+            {/* Left Sidebar Skeleton */}
+            <div className="bg-foreground/5 border-b md:border-b-0 md:border-r border-border md:w-72 lg:w-80 flex-shrink-0 p-5 md:p-6 space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-full bg-text-muted/10 animate-pulse flex-shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-text-muted/10 rounded w-32 animate-pulse" />
+                  <div className="h-3 bg-text-muted/10 rounded w-40 animate-pulse" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="h-10 bg-text-muted/10 rounded-xl animate-pulse" />
+                ))}
+              </div>
+            </div>
+
+            {/* Right Content Skeleton */}
+            <div className="flex-1 min-h-0 overflow-y-auto">
+              <div className="px-4 py-6 md:py-8 space-y-6">
+                <div className="h-8 bg-text-muted/10 rounded w-48 animate-pulse" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="p-5 rounded-xl bg-foreground/5 border border-border space-y-3">
+                      <div className="h-3 bg-text-muted/10 rounded w-20 animate-pulse" />
+                      <div className="h-4 bg-text-muted/10 rounded w-40 animate-pulse" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="h-full bg-background max-w-7xl mx-auto px-4 py-4">
-      <div className="h-full flex flex-col border border-border rounded-2xl overflow-hidden">
+    <div className="h-[calc(100vh-80px)] bg-background max-w-7xl mx-auto px-4 overflow-hidden">
+      <div className="h-full flex flex-col overflow-hidden">
         <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
           {/* Left Sidebar */}
-          <div className="bg-surface border-b md:border-b-0 md:border-r border-border md:w-72 lg:w-80 flex-shrink-0 flex flex-col overflow-y-auto">
+          <div className="bg-foreground/5 border-b md:border-b-0 md:border-r border-border md:w-72 lg:w-80 flex-shrink-0 flex flex-col overflow-y-auto">
             <div className="p-5 md:p-6 space-y-4">
               <div className="flex items-center gap-4">
                 <div className="w-14 h-14 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 ring-2 ring-primary/30">
@@ -237,7 +244,7 @@ export default function ProfilePage() {
                   )}
                 </div>
                 <div className="min-w-0">
-                  <h3 className="font-semibold text-text-primary text-lg truncate">{user?.fullName || user?.username || 'Người dùng'}</h3>
+                  <h3 className="font-semibold text-text-primary text-base truncate">{user?.fullName || user?.username || 'Người dùng'}</h3>
                   <p className="text-xs text-text-muted truncate">{user?.email}</p>
                   {user?.role === 'ADMIN' && (
                     <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 bg-primary/10 text-primary text-xs font-semibold rounded-full">
@@ -247,7 +254,7 @@ export default function ProfilePage() {
                 </div>
               </div>
               {user?.role === 'ADMIN' && (
-                <a href={`${getBackendOrigin()}/api/auth/set-admin-session?token=${encodeURIComponent(accessToken || '')}`} target="_blank" rel="noopener noreferrer" className="w-full flex items-center gap-3 px-4 py-2.5 bg-primary text-rich-black rounded-xl text-sm font-semibold hover:bg-primary-dark transition-colors">
+                <a href={`${getBackendOrigin()}/api/auth/set-admin-session?token=${encodeURIComponent(accessToken || '')}`} target="_blank" rel="noopener noreferrer"               className="w-full flex items-center gap-3 px-4 py-2.5 bg-primary text-on-primary rounded-xl text-sm font-semibold hover:bg-primary-dark shadow-soft transition-colors">
                   <LayoutDashboard size={18} />
                   Trang quản trị
                 </a>
@@ -255,271 +262,191 @@ export default function ProfilePage() {
             </div>
 
             <nav className="flex-1 px-3 space-y-1 pb-6">
-              {[
-                { key: 'info', icon: User, label: 'Thông tin tài khoản' },
-                { key: 'orders', icon: ShoppingBag, label: 'Lịch sử đơn hàng' },
-                { key: 'addresses', icon: MapPin, label: 'Sổ địa chỉ' },
-                !isOAuth && { key: 'password', icon: Key, label: 'Đổi mật khẩu' },
-              ].filter(Boolean).map((tab: any) => (
+              {/* Tài khoản của tôi - click vào sẽ vào Hồ sơ */}
+              <button
+                onClick={() => { if (showAccountMenu) { setShowAccountMenu(false); } else { switchTab('info'); setShowAccountMenu(true); } }}
+                className={`w-full flex items-center justify-between gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-colors ${
+                  activeTab === 'info' || activeTab === 'addresses' || activeTab === 'password'
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-text-secondary hover:bg-foreground/5 hover:text-text-primary'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <User size={18} />
+                  Tài khoản của tôi
+                </div>
+                <svg
+                  className={`w-4 h-4 text-text-muted transition-transform duration-200 ${showAccountMenu ? 'rotate-180' : ''}`}
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </button>
+              <div
+                className={`ml-9 space-y-1 overflow-hidden transition-all duration-300 ease-in-out ${
+                  showAccountMenu ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'
+                }`}
+              >
                 <button
-                  key={tab.key}
-                  onClick={() => setActiveTab(tab.key)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 text-sm rounded-xl transition-colors ${
-                    activeTab === tab.key
+                  onClick={() => switchTab('info')}
+                  className={`w-full flex items-center gap-3 px-4 py-2 text-sm rounded-lg transition-colors ${
+                    activeTab === 'info'
                       ? 'bg-primary/10 text-primary font-semibold'
-                      : 'text-text-secondary hover:bg-surface hover:text-text-primary'
+                      : 'text-text-secondary hover:bg-foreground/5 hover:text-text-primary'
                   }`}
                 >
-                  <tab.icon size={18} />
-                  {tab.label}
+                  Hồ sơ
                 </button>
-              ))}
+                <button
+                  onClick={() => switchTab('addresses')}
+                  className={`w-full flex items-center gap-3 px-4 py-2 text-sm rounded-lg transition-colors ${
+                    activeTab === 'addresses'
+                      ? 'bg-primary/10 text-primary font-semibold'
+                      : 'text-text-secondary hover:bg-foreground/5 hover:text-text-primary'
+                  }`}
+                >
+                  Địa chỉ
+                </button>
+                  <button
+                    onClick={() => switchTab('password')}
+                    className={`w-full flex items-center gap-3 px-4 py-2 text-sm rounded-lg transition-colors ${
+                      activeTab === 'password'
+                        ? 'bg-primary/10 text-primary font-semibold'
+                        : 'text-text-secondary hover:bg-foreground/5 hover:text-text-primary'
+                    }`}
+                  >
+                    Đổi mật khẩu
+                  </button>
+              </div>
+
+              {/* Lịch sử đơn hàng - separate */}
+              <div className="pt-3">
+                <button
+                  onClick={() => { switchTab('orders'); setShowAccountMenu(false); }}
+                  className={`w-full flex items-center gap-3 px-4 py-3 text-sm rounded-xl transition-colors ${
+                    activeTab === 'orders'
+                      ? 'bg-primary/10 text-primary font-semibold'
+                      : 'text-text-secondary hover:bg-foreground/5 hover:text-text-primary'
+                  }`}
+                >
+                  <ShoppingBag size={18} />
+                  Lịch sử đơn hàng
+                </button>
+              </div>
+
+              {/* Voucher - separate */}
+              <div className="pt-3">
+                <button
+                  onClick={() => { switchTab('voucher'); setShowAccountMenu(false); }}
+                  className={`w-full flex items-center gap-3 px-4 py-3 text-sm rounded-xl transition-colors ${
+                    activeTab === 'voucher'
+                      ? 'bg-primary/10 text-primary font-semibold'
+                      : 'text-text-secondary hover:bg-foreground/5 hover:text-text-primary'
+                  }`}
+                >
+                  <Ticket size={18} />
+                  Voucher
+                </button>
+              </div>
+
+              {/* Thứ hạng - separate */}
+              <div className="pt-3">
+                <button
+                  onClick={() => { switchTab('rank'); setShowAccountMenu(false); }}
+                  className={`w-full flex items-center gap-3 px-4 py-3 text-sm rounded-xl transition-colors ${
+                    activeTab === 'rank'
+                      ? 'bg-primary/10 text-primary font-semibold'
+                      : 'text-text-secondary hover:bg-foreground/5 hover:text-text-primary'
+                  }`}
+                >
+                  <Medal size={18} />
+                  Thứ hạng
+                </button>
+              </div>
             </nav>
-            <button
-              onClick={logout}
-              className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-red-50 rounded-lg transition-colors mt-auto"
-            >
-              <LogOut size={18} />
-              Đăng xuất
-            </button>
           </div>
 
           {/* Right Content Area */}
-          <div className="flex-1 min-h-0 overflow-y-auto bg-background/30">
-            <div className="px-4 py-6 md:py-8">
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            <div className="px-4 py-6 md:py-8 h-full">
 
               {activeTab === 'info' && (
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-2xl font-semibold text-text-primary">Thông tin tài khoản</h2>
-                    {!isEditingInfo && (
-                      <Button
-                        label="Chỉnh sửa"
-                        variant="primary"
-                        icon={<Edit2 size={16} />}
-                        onClick={startEditInfo}
-                      />
-                    )}
-                  </div>
-
-                  {infoSuccess && <div className="p-3 rounded-lg bg-green-50 border border-green-200 text-green-600 text-sm">{infoSuccess}</div>}
-                  {infoError && <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">{infoError}</div>}
-
-                  {isEditingInfo ? (
-                    <div className="space-y-4 p-5 rounded-xl bg-surface border border-border">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <TextInput
-                          label="Họ và tên"
-                          value={editFullName}
-                          onChange={setEditFullName}
-                          placeholder="Nguyễn Văn A"
-                          size="md"
-                        />
-                        <TextInput
-                          label="Số điện thoại"
-                          value={editPhone}
-                          onChange={setEditPhone}
-                          placeholder="0912 345 678"
-                          size="md"
-                        />
-                        <Selector
-                          label="Giới tính"
-                          value={editGender || null}
-                          onChange={(val) => setEditGender((val || '') as any)}
-                          options={[
-                            { value: '', label: 'Chọn giới tính' },
-                            { value: 'MALE', label: 'Nam' },
-                            { value: 'FEMALE', label: 'Nữ' },
-                            { value: 'OTHER', label: 'Khác' },
-                          ]}
-                          placeholder="Chọn giới tính"
-                          size="md"
-                        />
-                      </div>
-                      <div className="flex gap-3 pt-2">
-                        <Button
-                          label={infoSaving ? 'Đang lưu...' : 'Lưu'}
-                          variant="primary"
-                          isDisabled={infoSaving}
-                          isLoading={infoSaving}
-                          icon={<Check size={16} />}
-                          onClick={saveInfo}
-                        />
-                        <Button
-                          label="Hủy"
-                          variant="secondary"
-                          onClick={() => { setIsEditingInfo(false); setInfoError(''); }}
-                        />
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <InfoRow icon={AtSign} label="Tên đăng nhập" value={user?.username || 'Chưa cập nhật'} />
-                      <InfoRow icon={User} label="Họ và tên" value={user?.fullName || 'Chưa cập nhật'} />
-                      <InfoRow icon={Phone} label="Số điện thoại" value={user?.phoneNumber || 'Chưa cập nhật'} />
-                      <InfoRow icon={Mail} label="Email" value={user?.email || 'Chưa cập nhật'} />
-                      <InfoRow icon={Globe} label="Giới tính" value={user?.gender === 'MALE' ? 'Nam' : user?.gender === 'FEMALE' ? 'Nữ' : user?.gender || 'Chưa cập nhật'} />
-                      <InfoRow icon={MapPin} label="Địa chỉ" value={user?.address ? `${user.address}, ${user.district || ''}, ${user.province || ''}` : 'Chưa cập nhật'} />
-                      <InfoRow icon={Shield} label="Vai trò" value={user?.role === 'ADMIN' ? 'Quản trị viên' : user?.role === 'SUBADMIN' ? 'Phó quản trị' : 'Khách hàng'} />
-                      <InfoRow icon={Crown} label="Hạng thành viên" value={user?.memberTier === 'KimCuong' ? 'Kim Cương' : user?.memberTier === 'Vang' ? 'Vàng' : user?.memberTier === 'Bac' ? 'Bạc' : 'Thành viên'} />
-                      <InfoRow icon={DollarSign} label="Tổng chi tiêu" value={user?.totalSpent != null ? formatPrice(user.totalSpent) : '0 ₫'} />
-                      <InfoRow icon={BadgeCheck} label="Trạng thái" value={user?.status === 'active' ? 'Hoạt động' : user?.status === 'inactive' ? 'Không hoạt động' : user?.status === 'suspended' ? 'Bị khóa' : 'Chưa xác định'} />
-                      <InfoRow icon={CalendarDays} label="Ngày tham gia" value={user?.createdAt ? formatDate(user.createdAt) : 'Chưa có dữ liệu'} />
-                      {user?.oauthProvider && (
-                        <InfoRow icon={Globe} label="Đăng nhập qua" value={user.oauthProvider === 'google' ? 'Google' : user.oauthProvider === 'github' ? 'GitHub' : user.oauthProvider} />
-                      )}
-                    </div>
-                  )}
-                </div>
+                <ProfileInfo ordersCount={orders.length} loadingOrders={loadingOrders} />
               )}
 
               {activeTab === 'addresses' && (
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-2xl font-semibold text-text-primary">Sổ địa chỉ</h2>
-                    <Button
-                      label="Thêm địa chỉ"
-                      variant="primary"
-                      icon={<Plus size={16} />}
-                      onClick={openNewAddressForm}
-                    />
-                  </div>
-
-                  {addrError && <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">{addrError}</div>}
-                  {deleteError && <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">{deleteError}</div>}
-
-                  {isEditingAddress && (
-                    <div className="space-y-4 p-5 rounded-xl bg-surface border border-border">
-                      <h3 className="font-semibold text-text-primary">{editingAddressId ? 'Chỉnh sửa địa chỉ' : 'Thêm địa chỉ mới'}</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <TextInput
-                          label="Nhãn"
-                          value={addrLabel}
-                          onChange={setAddrLabel}
-                          placeholder="Nhà riêng, Công ty..."
-                          size="md"
-                        />
-                        <TextInput
-                          label="Họ và tên"
-                          value={addrFullName}
-                          onChange={setAddrFullName}
-                          placeholder="Nguyễn Văn A"
-                          size="md"
-                        />
-                        <Selector
-                          label="Giới tính"
-                          value={addrGender || null}
-                          onChange={(val) => setAddrGender((val || '') as any)}
-                          options={[
-                            { value: '', label: 'Chọn giới tính' },
-                            { value: 'MALE', label: 'Nam' },
-                            { value: 'FEMALE', label: 'Nữ' },
-                            { value: 'OTHER', label: 'Khác' },
-                          ]}
-                          placeholder="Chọn giới tính"
-                          size="md"
-                        />
-                        <TextInput
-                          label="Số điện thoại"
-                          value={addrPhoneNumber}
-                          onChange={setAddrPhoneNumber}
-                          placeholder="0912 345 678"
-                          size="md"
-                        />
-                      </div>
-                      <TextInput
-                        label="Địa chỉ"
-                        value={addrStreet}
-                        onChange={setAddrStreet}
-                        placeholder="Số nhà, tên đường"
-                        size="md"
-                      />
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Selector
-                          label="Tỉnh/Thành phố"
-                          value={addrProvince}
-                          onChange={(val) => {
-                            setAddrProvince(val || '');
-                            const found = provinces.find((p: any) => p.name === val);
-                            if (found) fetchDistricts(found.code);
-                          }}
-                          options={provinces.map((p: any) => ({ value: p.name, label: p.name }))}
-                          placeholder="Chọn tỉnh/thành"
-                          isDisabled={loadingProvinces}
-                          isLoading={loadingProvinces}
-                          size="md"
-                        />
-                        <Selector
-                          label="Quận/Huyện"
-                          value={addrDistrict}
-                          onChange={(val) => setAddrDistrict(val || '')}
-                          options={districts.map((d: any) => ({ value: d.name, label: d.name }))}
-                          placeholder={addrProvince ? 'Chọn quận/huyện' : 'Chọn tỉnh trước'}
-                          isDisabled={loadingDistricts || !addrProvince}
-                          isLoading={loadingDistricts}
-                          size="md"
-                        />
-                      </div>
-                      <div className="flex gap-3 pt-2">
-                        <Button
-                          label={addrSubmitting ? 'Đang lưu...' : 'Lưu'}
-                          variant="primary"
-                          isDisabled={addrSubmitting}
-                          isLoading={addrSubmitting}
-                          icon={<Check size={16} />}
-                          onClick={handleSaveAddress}
-                        />
-                        <Button
-                          label="Hủy"
-                          variant="secondary"
-                          onClick={() => { setIsEditingAddress(false); setAddrError(''); }}
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="space-y-3">
-                    {addresses.map((addr: any) => (
-                      <div key={addr._id} className="p-5 rounded-xl bg-surface border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="font-semibold text-text-primary text-sm">{addr.label}</span>
-                            {addr.isDefault && (
-                              <span className="px-2 py-0.5 bg-primary/10 text-primary text-xs font-medium rounded-full">Mặc định</span>
-                            )}
-                          </div>
-                          <p className="text-sm text-text-secondary">{addr.fullName} · {addr.phoneNumber}</p>
-                          <p className="text-sm text-text-muted mt-1">{addr.address}, {addr.district}, {addr.province}</p>
-                        </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          {!addr.isDefault && (
-                            <button onClick={() => handleSetDefault(addr._id)} className="px-3 py-1.5 text-xs font-medium text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors">Đặt mặc định</button>
-                          )}
-                          <button onClick={() => openEditAddressForm(addr)} className="p-2 text-text-muted hover:text-text-primary transition-colors">
-                            <Edit2 size={16} />
-                          </button>
-                          <button onClick={() => handleDeleteAddress(addr._id)} className="p-2 text-text-muted hover:text-red-500 transition-colors">
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                <AddressManager
+                  addresses={addresses}
+                  loadingAddresses={loadingAddresses}
+                  isEditingAddress={isEditingAddress}
+                  setIsEditingAddress={setIsEditingAddress}
+                  editingAddressId={editingAddressId}
+                  addrType={addrType}
+                  setAddrType={setAddrType}
+                  addrFullName={addrFullName}
+                  setAddrFullName={setAddrFullName}
+                  addrPhoneNumber={addrPhoneNumber}
+                  setAddrPhoneNumber={setAddrPhoneNumber}
+                  addrStreet={addrStreet}
+                  setAddrStreet={setAddrStreet}
+                  addrProvince={addrProvince}
+                  setAddrProvince={setAddrProvince}
+                  addrDistrict={addrDistrict}
+                  setAddrDistrict={setAddrDistrict}
+                  addrWard={addrWard}
+                  setAddrWard={setAddrWard}
+                  addrLat={addrLat}
+                  addrLng={addrLng}
+                  setAddrLat={setAddrLat}
+                  setAddrLng={setAddrLng}
+                  addrSubmitting={addrSubmitting}
+                  setAddrError={setAddrError}
+                  provinces={provinces}
+                  districts={districts}
+                  wards={wards}
+                  setWards={setWards}
+                  loadingProvinces={loadingProvinces}
+                  loadingDistricts={loadingDistricts}
+                  loadingWards={loadingWards}
+                  addressStep={addressStep}
+                  selectedProvinceCode={selectedProvinceCode}
+                  selectedDistrictCode={selectedDistrictCode}
+                  handleSelectProvince={handleSelectProvince}
+                  handleSelectWard={handleSelectWard}
+                  handleSelectDistrict={handleSelectDistrict}
+                  resetLocationFlow={resetLocationFlow}
+                  openNewAddressForm={openNewAddressForm}
+                  openEditAddressForm={openEditAddressForm}
+                  handleSaveAddress={handleSaveAddress}
+                  handleDeleteAddress={handleDeleteAddress}
+                  handleSetDefault={handleSetDefault}
+                  fetchDistricts={fetchDistricts}
+                />
               )}
 
               {activeTab === 'orders' && (() => {
                 const filterTabs = [
                   { key: 'all', label: 'Tất cả' },
-                  { key: 'pending', label: 'Chờ xác nhận' },
-                  { key: 'processing', label: 'Đang xử lý' },
-                  { key: 'shipped', label: 'Đang giao' },
-                  { key: 'delivered', label: 'Đã giao' },
+                  { key: 'pending', label: 'Chờ thanh toán' },
+                  { key: 'processing', label: 'Vận chuyển' },
+                  { key: 'shipped', label: 'Chờ giao hàng' },
+                  { key: 'delivered', label: 'Hoàn thành' },
                   { key: 'cancelled', label: 'Đã hủy' },
                 ];
 
+                const q = orderSearch.toLowerCase().trim();
                 const filtered = orders
-                  .filter(o => orderFilter === 'all' || o.status === orderFilter)
+                  .filter(o => {
+                    let matchesFilter = orderFilter === 'all' || o.status === orderFilter;
+                    // Loại đơn đã gửi yêu cầu hủy khỏi tab "pending"
+                    if (orderFilter === 'pending' && o.cancelRequested) matchesFilter = false;
+                    return matchesFilter && (
+                      !q || o._id?.toLowerCase().includes(q) || o.items?.some((item: any) => item.name?.toLowerCase().includes(q))
+                    );
+                  })
                   .sort((a, b) => {
                     switch (orderSort) {
                       case 'oldest': return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
@@ -530,146 +457,75 @@ export default function ProfilePage() {
                   });
 
                 if (selectedOrder) {
-                  const order = selectedOrder;
                   return (
-                    <div className="space-y-6">
-                      <button onClick={() => setSelectedOrder(null)} className="flex items-center gap-2 text-sm text-primary hover:text-primary-dark font-medium">
-                        ← Quay lại danh sách
-                      </button>
-                      <div className="space-y-4">
-                        <div className="bg-surface rounded-xl p-5 border border-border">
-                          <div className="flex items-center justify-between mb-4">
-                            <div>
-                              <h3 className="font-semibold text-text-primary">Đơn hàng #{order._id?.slice(-8).toUpperCase()}</h3>
-                              <p className="text-xs text-text-muted mt-1">{formatDate(order.createdAt)}</p>
-                            </div>
-                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColor[order.status] || 'bg-gray-100'}`}>
-                              {statusLabel[order.status] || order.status}
-                            </span>
-                          </div>
-                          <div className="border-t border-border pt-4 space-y-2">
-                            <p className="text-sm"><span className="text-text-muted">Người nhận:</span> <span className="text-text-primary font-medium">{order.shippingAddress?.fullName || order.customerName}</span></p>
-                            <p className="text-sm"><span className="text-text-muted">Điện thoại:</span> <span className="text-text-primary font-medium">{order.shippingAddress?.phone || order.customerPhone}</span></p>
-                            <p className="text-sm"><span className="text-text-muted">Địa chỉ:</span> <span className="text-text-primary font-medium">{order.shippingAddress?.address || order.customerAddress}</span></p>
-                            {order.note && <p className="text-sm"><span className="text-text-muted">Ghi chú:</span> <span className="text-text-primary">{order.note}</span></p>}
-                          </div>
-                        </div>
-
-                        <div className="bg-surface rounded-xl border border-border overflow-hidden">
-                          <div className="px-5 py-4 border-b border-border">
-                            <h3 className="font-semibold text-text-primary text-sm">Sản phẩm ({order.items?.length || 0})</h3>
-                          </div>
-                          <div className="divide-y divide-border">
-                            {order.items?.map((item: any, idx: number) => (
-                              <div key={idx} className="flex items-center gap-4 px-5 py-4">
-                                <div className="w-16 h-16 rounded-lg bg-surface border border-border overflow-hidden flex-shrink-0">
-                                  {item.image ? <img src={resolveImageUrl(item.image)} alt={item.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-text-muted"><ShoppingBag size={18} /></div>}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <Link href={`/product/${item.productId}`} className="text-sm font-semibold text-text-primary hover:text-primary truncate block">{item.name}</Link>
-                                  {item.brand && <p className="text-xs text-text-muted mt-0.5">{item.brand}</p>}
-                                  <div className="flex items-center gap-3 mt-1.5">
-                                    <span className="text-xs text-text-muted">SL: {item.quantity}</span>
-                                    {item.variantSize && <span className="text-xs text-text-muted">{item.variantSize}</span>}
-                                  </div>
-                                </div>
-                                <p className="font-semibold text-text-primary text-sm">{formatPrice(item.price * (item.quantity || 1))}</p>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div className="bg-surface rounded-xl p-5 border border-border">
-                          <div className="space-y-2">
-                            <div className="flex justify-between text-sm">
-                              <span className="text-text-secondary">Tạm tính</span>
-                              <span className="font-medium text-text-primary">{formatPrice(order.totalAmount)}</span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                              <span className="text-text-secondary">Phí vận chuyển</span>
-                              <span className={`font-medium ${order.shippingFee === 0 ? 'text-green-600' : 'text-text-primary'}`}>
-                                {order.shippingFee === 0 ? 'Miễn phí' : formatPrice(order.shippingFee || 0)}
-                              </span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                              <span className="text-text-secondary">Phương thức</span>
-                              <span className="font-medium text-text-primary">{order.paymentMethod === 'cod' ? 'COD' : order.paymentMethod === 'bank_transfer' ? 'Chuyển khoản' : order.paymentMethod}</span>
-                            </div>
-                            <div className="border-t border-border pt-2 mt-2">
-                              <div className="flex justify-between items-baseline">
-                                <span className="font-semibold text-text-primary">Tổng cộng</span>
-                                <span className="text-xl font-bold text-primary">{formatPrice(order.finalAmount || order.totalAmount)}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                    <OrderDetail order={selectedOrder} onBack={() => { setSelectedOrder(null); const params = new URLSearchParams(searchParams.toString()); params.delete('order'); router.replace(`/profile?${params.toString()}`, { scroll: false }); }} />
                   );
                 }
 
                 return (
                   <div className="space-y-6">
-                    <h2 className="text-2xl font-semibold text-text-primary">Lịch sử đơn hàng</h2>
-                    {ordersError && <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">{ordersError}</div>}
-
-                    {!loadingOrders && orders.length > 0 && (
-                      <div className="flex flex-wrap items-center gap-2 md:gap-3">
-                        <div className="flex flex-wrap gap-1.5 bg-background rounded-lg p-1 border border-border">
-                          {filterTabs.map(tab => {
-                            const count = tab.key === 'all' ? orders.length : orders.filter(o => o.status === tab.key).length;
-                            return (
-                              <button key={tab.key} onClick={() => setOrderFilter(tab.key)} className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${orderFilter === tab.key ? 'bg-primary text-rich-black' : 'text-text-secondary hover:text-text-primary'}`}>
-                                {tab.label}<span className="ml-1 opacity-60">({count})</span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                        <div className="ml-auto">
-                          <Selector
-                            label="Sắp xếp"
-                            isLabelHidden
-                            value={orderSort}
-                            onChange={(val) => setOrderSort(val || 'newest')}
-                            options={[
-                              { value: 'newest', label: 'Mới nhất' },
-                              { value: 'oldest', label: 'Cũ nhất' },
-                              { value: 'highest', label: 'Giá cao nhất' },
-                              { value: 'lowest', label: 'Giá thấp nhất' },
-                            ]}
-                            size="sm"
-                          />
-                        </div>
+                    <h2 className="text-2xl md:text-3xl font-bold text-text-primary">Đơn hàng</h2>
+                    {loadingOrders && (
+                      <div className="space-y-3">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <div key={i} className="w-full rounded-xl bg-foreground/5 border border-border p-5 flex flex-wrap items-center justify-between gap-3">
+                            <div className="flex items-center gap-4 min-w-0">
+                              <div className="w-10 h-10 rounded-lg bg-text-muted/10 animate-pulse flex-shrink-0" />
+                              <div className="flex-1 space-y-2">
+                                <div className="h-4 bg-text-muted/10 rounded w-32 animate-pulse" />
+                                <div className="h-3 bg-text-muted/10 rounded w-48 animate-pulse" />
+                              </div>
+                            </div>
+                            <div className="h-4 bg-text-muted/10 rounded w-20 animate-pulse" />
+                          </div>
+                        ))}
                       </div>
                     )}
-
-                    {loadingOrders ? (
-                      <div className="text-center py-12 text-text-muted">Đang tải đơn hàng...</div>
-                    ) : orders.length === 0 ? (
-                      <div className="text-center py-12"><ShoppingBag className="mx-auto text-text-muted mb-3" size={48} /><p className="text-text-secondary text-sm">Chưa có đơn hàng nào.</p></div>
-                    ) : filtered.length === 0 ? (
-                      <div className="text-center py-12 text-text-muted">Không có đơn hàng nào ở trạng thái này.</div>
-                    ) : (
-                      <div className="space-y-3">
+                    {ordersError && (
+                      <div className="text-center py-12">
+                        <ShoppingBag className="mx-auto text-text-muted mb-3" size={48} />
+                        <p className="text-red-500 text-sm mb-3">{ordersError}</p>
+                        <button onClick={() => { if (!accessToken) return; setLoadingOrders(true); setOrdersError(''); getMyOrders(accessToken).then((data) => { setOrders(data); setLoadingOrders(false); }).catch((err) => { setOrdersError(err?.message || 'Không thể tải đơn hàng'); setLoadingOrders(false); }); }} className="btn-primary">Thử lại</button>
+                      </div>
+                    )}
+                    {!loadingOrders && !ordersError && orders.length === 0 && (
+                      <div className="text-center py-12">
+                        <ShoppingBag className="mx-auto text-text-muted mb-3" size={48} />
+                        <p className="text-text-secondary text-sm">Chưa có đơn hàng nào.</p>
+                      </div>
+                    )}
+                    {!loadingOrders && !ordersError && orders.length > 0 && (
+                      <>
+                        <div className="sticky top-0 z-10 bg-background py-3 -mx-4 px-4">
+                          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 bg-background rounded-lg p-1 border border-border w-full">
+                            {filterTabs.map(tab => {
+                              const count = tab.key === 'all' ? orders.length : orders.filter(o => {
+                                if (tab.key === 'pending') return o.status === 'pending' && !o.cancelRequested;
+                                return o.status === tab.key;
+                              }).length;
+                              return (
+                                <button key={tab.key} onClick={() => setOrderFilter(tab.key)} className={`px-2 py-2 rounded-md text-sm font-medium transition-all duration-300 text-center ${orderFilter === tab.key ? 'bg-primary text-on-primary shadow-soft' : 'text-text-secondary hover:text-text-primary hover:bg-foreground/5'}`}>
+                                  {tab.label}<span className="ml-1 opacity-60">({count})</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                        <div className="relative mb-4">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={16} />
+                          <input type="text" value={orderSearch} onChange={(e) => setOrderSearch(e.target.value)} placeholder="Tìm kiếm sản phẩm, mã đơn hàng..." className="w-full pl-9 pr-4 py-2.5 text-sm bg-background border border-border rounded-lg text-text-primary placeholder-text-muted outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors" />
+                        </div>
+                      </>
+                    )}
+                    {!loadingOrders && !ordersError && orders.length > 0 && filtered.length === 0 && (
+                      <div className="text-center py-12 text-text-muted">
+                        {orderSearch ? 'Không tìm thấy đơn hàng phù hợp.' : 'Không có đơn hàng nào ở trạng thái này.'}
+                      </div>
+                    )}
+                    {!loadingOrders && !ordersError && filtered.length > 0 && (
+                      <div key={orderFilter} className="space-y-3 animate-fade-up">
                         {filtered.map((order: any) => (
-                          <button key={order._id} onClick={() => setSelectedOrder(order)} className="w-full text-left rounded-xl bg-surface border border-border p-5 flex flex-wrap items-center justify-between gap-3 hover:bg-background/30 hover:border-primary/30 transition-all cursor-pointer">
-                            <div className="flex items-center gap-4 min-w-0">
-                              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                                <ShoppingBag size={18} className="text-primary" />
-                              </div>
-                              <div className="min-w-0">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <span className="font-semibold text-text-primary text-sm">#{order._id?.slice(-8).toUpperCase()}</span>
-                                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColor[order.status] || 'bg-gray-100'}`}>{statusLabel[order.status] || order.status}</span>
-                                </div>
-                                <p className="text-xs text-text-muted mt-0.5">{formatDate(order.createdAt)} · {order.items?.length || 0} sản phẩm</p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-3 flex-shrink-0">
-                              <p className="font-semibold text-text-primary text-sm">{formatPrice(order.totalAmount)}</p>
-                              <svg className="w-4 h-4 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                            </div>
-                          </button>
+                          <OrderCard key={order._id} order={order} onClick={() => selectOrder(order)} onOrderCancelled={() => { getMyOrders(accessToken).then((data) => { setOrders(data); }).catch(() => {}); }} />
                         ))}
                       </div>
                     )}
@@ -677,64 +533,20 @@ export default function ProfilePage() {
                 );
               })()}
 
-              {/* ============ TAB: PASSWORD ============ */}
-              {activeTab === 'password' && !isOAuth && (
-                <div className="space-y-6">
-                  <h2 className="text-2xl font-semibold text-text-primary">Đổi mật khẩu</h2>
-                  {passwordSuccess && <div className="p-3 rounded-lg bg-green-50 border border-green-200 text-green-600 text-sm">{passwordSuccess}</div>}
-                  {passwordError && <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">{passwordError}</div>}
-                  <div className="space-y-4 max-w-md">
-                    <TextInput
-                      label="Mật khẩu hiện tại"
-                      type="password"
-                      value={currentPassword}
-                      onChange={setCurrentPassword}
-                      placeholder="••••••••"
-                      size="md"
-                    />
-                    <TextInput
-                      label="Mật khẩu mới"
-                      type="password"
-                      value={newPassword}
-                      onChange={setNewPassword}
-                      placeholder="Tối thiểu 6 ký tự"
-                      size="md"
-                    />
-                    <TextInput
-                      label="Xác nhận mật khẩu mới"
-                      type="password"
-                      value={confirmPassword}
-                      onChange={setConfirmPassword}
-                      placeholder="Nhập lại mật khẩu mới"
-                      size="md"
-                    />
-                    <Button
-                      label={passwordSaving ? 'Đang xử lý...' : 'Đổi mật khẩu'}
-                      variant="primary"
-                      isDisabled={passwordSaving}
-                      isLoading={passwordSaving}
-                      icon={<Key size={16} />}
-                      onClick={handleChangePassword}
-                    />
-                  </div>
-                </div>
+              {activeTab === 'password' && (
+                <PasswordManager accessToken={accessToken} />
+              )}
+
+              {activeTab === 'rank' && (
+                <RankManager user={user} ordersCount={orders.length} />
+              )}
+
+              {activeTab === 'voucher' && (
+                <VoucherManager />
               )}
             </div>
           </div>
         </div>
-      </div>
-    </div>
-  );
-}
-
-// Helper component for info rows
-function InfoRow({ icon: Icon, label, value }: { icon: any; label: string; value: string }) {
-  return (
-    <div className="flex items-start gap-4 p-5 rounded-xl bg-surface border border-border">
-      <Icon className="text-text-muted mt-0.5" size={20} />
-      <div className="flex-1">
-        <p className="text-xs text-text-muted uppercase tracking-wider mb-1">{label}</p>
-        <p className="text-base text-text-primary font-medium">{value}</p>
       </div>
     </div>
   );

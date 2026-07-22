@@ -1,14 +1,42 @@
 'use client';
 
+import { useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import type { GraphQLBrand } from '@/lib/graphql';
+import { useProductsFilterStore } from '@/store/useProductsFilterStore';
 
 interface BrandsMarqueeProps {
   brands?: GraphQLBrand[];
 }
 
 export function BrandsMarquee({ brands: initialBrands }: BrandsMarqueeProps) {
+  const router = useRouter();
+  const setFilterAndGo = useProductsFilterStore((s) => s.setFilterAndGo);
+
+  const handleBrandClick = useCallback((brandName: string) => {
+    router.push(setFilterAndGo({ pendingBrand: brandName }));
+  }, [router, setFilterAndGo]);
+
+  // Skeleton loading khi chưa có dữ liệu
+  if (initialBrands === undefined) {
+    return (
+      <section className="py-8 md:py-12 mb-12 md:mb-16 bg-transparent overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 mb-6 md:mb-8 text-center">
+          <h2 className="text-xs font-bold uppercase tracking-[0.45em] text-text-primary">
+            THƯƠNG HIỆU
+          </h2>
+        </div>
+        <div className="flex gap-4 md:gap-6 lg:gap-8 px-4">
+          {Array.from({ length: 10 }).map((_, i) => (
+            <div key={i} className="flex-shrink-0 w-32 md:w-36 lg:w-40 h-12 md:h-14 lg:h-16 bg-foreground/5 border border-border rounded-lg animate-pulse" />
+          ))}
+        </div>
+      </section>
+    );
+  }
+
   // Use brands from props (GraphQL server-side), or fallback to empty
   const brands = (initialBrands || [])
     .filter(b => b.status === 'active' && b.logo)
@@ -27,7 +55,7 @@ export function BrandsMarquee({ brands: initialBrands }: BrandsMarqueeProps) {
 
   return (
     <section
-      className="py-8 md:py-12 mb-12 md:mb-16 bg-transparent overflow-hidden border-b border-border"
+      className="py-8 md:py-12 mb-12 md:mb-16 bg-transparent overflow-hidden"
       style={{
         contain: 'content',
         contentVisibility: 'auto',
@@ -82,7 +110,7 @@ export function BrandsMarquee({ brands: initialBrands }: BrandsMarqueeProps) {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, ease: "easeOut" }}
-          className="text-[9px] md:text-xs font-bold uppercase tracking-[0.45em] text-[#2D2D2D]/50"
+          className="text-xs font-bold uppercase tracking-[0.45em] text-text-primary"
         >
           THƯƠNG HIỆU
         </motion.h2>
@@ -100,9 +128,10 @@ export function BrandsMarquee({ brands: initialBrands }: BrandsMarqueeProps) {
         {/* Pure CSS GPU Composited marquee track */}
         <div className="brands-marquee-gpu">
           {marqueeBrands.map((brand, index) => (
-            <div
+            <button
               key={`${brand.name}-${index}`}
-              className="flex items-center justify-center px-4 md:px-6 lg:px-8"
+              onClick={() => handleBrandClick(brand.name)}
+              className="flex items-center justify-center px-4 md:px-6 lg:px-8 cursor-pointer"
               aria-hidden={index >= repeatedList.length}
             >
               <div className="brand-logo-item relative h-12 w-32 md:h-14 md:w-36 lg:h-16 lg:w-40 cursor-pointer">
@@ -116,7 +145,7 @@ export function BrandsMarquee({ brands: initialBrands }: BrandsMarqueeProps) {
                   loading={index < 6 ? undefined : "lazy"}
                 />
               </div>
-            </div>
+            </button>
           ))}
         </div>
       </div>

@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Image as ImageIcon, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { resolveImageUrl } from '@/lib/api';
+import { getProductSlug } from '@/lib/utils';
 import Image from 'next/image';
 export interface ProductData {
   _id: string;
@@ -38,7 +39,7 @@ export function ChatProductCard({ product, loading }: ChatProductCardProps) {
   if (!product) return null;
 
   return (
-    <Link href={`/product/${product._id}`}>
+    <Link href={`/product/${getProductSlug(product.name, product._id)}`}>
       <motion.div 
         whileHover={{ y: -4, boxShadow: "0 10px 20px -10px rgba(45,45,45,0.3)" }}
         whileTap={{ scale: 0.98 }}
