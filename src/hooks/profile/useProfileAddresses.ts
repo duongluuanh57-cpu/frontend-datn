@@ -244,7 +244,6 @@ export function useProfileAddresses() {
     provinces, setProvinces,
     districts, setDistricts,
     wards, setWards,
-    setDistricts,
     loadingProvinces, setLoadingProvinces,
     loadingDistricts, setLoadingDistricts,
     loadingWards, setLoadingWards,
